@@ -1,0 +1,5 @@
+cd engine
+./abc.script
+./yosys.script
+./boolector.script
+cd ..
