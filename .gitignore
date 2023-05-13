@@ -9,3 +9,5 @@ lib/*
 cir1.v
 cir2.v
 yosys*
+top*
+map*
