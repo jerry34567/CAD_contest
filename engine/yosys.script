@@ -1,20 +1,20 @@
 # yosys
-# git clone https://github.com/YosysHQ/yosys.git
+git clone https://github.com/YosysHQ/yosys.git
 
 # go to yosys/
 cd yosys/;
 
 # switch to version 0.23 of yosys 
-# git checkout yosys-0.23
+git checkout yosys-0.23
 
 # enable the libyosys.so flag
-# sed -i -e "s/ENABLE_LIBYOSYS := 0/ENABLE_LIBYOSYS := 1/g" Makefile;
-# # modify the libyosys.so path
-# sed -i -e "s/-install_name,\$(LIBDIR)\/libyosys.so/-install_name,\@rpath\/libyosys.so/g" Makefile;
-# sed -i -e "s/-Wl,-soname,\$(LIBDIR)\/libyosys.so//g" Makefile;
+sed -i -e "s/ENABLE_LIBYOSYS := 0/ENABLE_LIBYOSYS := 1/g" Makefile;
+# modify the libyosys.so path
+sed -i -e "s/-install_name,\$(LIBDIR)\/libyosys.so/-install_name,\@rpath\/libyosys.so/g" Makefile;
+sed -i -e "s/-Wl,-soname,\$(LIBDIR)\/libyosys.so//g" Makefile;
 
 # make "yosys" shared library 
-# make config-gcc; make -j12; make libyosys.so; make install;
+make config-gcc; make -j12; make libyosys.so; make install;
 
 # create gv_src/ directory
 mkdir gv_src;

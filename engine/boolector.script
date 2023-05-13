@@ -1,16 +1,16 @@
 # boolector
-# git clone https://github.com/Boolector/boolector.git
+git clone https://github.com/Boolector/boolector.git
 cd boolector
 
 # switch to stable commit(13a8a06)
-# git reset 13a8a06
+git reset 13a8a06
 
 # build dependend tool
-# ./contrib/setup-lingeling.sh
-# ./contrib/setup-btor2tools.sh
+./contrib/setup-lingeling.sh
+./contrib/setup-btor2tools.sh
 
 # build boolector
-# ./configure.sh --no-minisat; cd build; make;
+./configure.sh --no-minisat; cd build; make;
 
 # back to engine/boolector
 cd ../

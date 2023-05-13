@@ -1,5 +1,5 @@
 # abc
-# git clone https://github.com/berkeley-abc/abc
+git clone https://github.com/jerry34567/abc.git
 cd abc
 
 # switch to stable commit(581c58b)
