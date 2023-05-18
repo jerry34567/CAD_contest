@@ -75,22 +75,20 @@ void print_map(unordered_map<K, V> const &m){
 
 void constraint2 (SatSolver& s){ // for solver1, j = 1 ~ mO :sum(cij+dij)  <= 1, for all i = 1 ~ nO
 // could be improved by pseudo boolean constraint
-   cout <<  "MO " << MO.size() << " " << MO[0].size() << endl;
+   // cout <<  "MO " << MO.size() << " " << MO[0].size() << endl;
    for (int i = 0; i < MO[0].size(); i++){
       /*test*/
       vec<Lit> lits_n0; // c_i 1 + d_i 1 + c_i 2 + d_i 2 + ... to prevent all zero 
       /*test*/
       
       for (int j1 = 0; j1 < MO.size(); j1++){
-         for (int j2 = 0; j2 < MO.size(); j2++){
+         for (int j2 = j1+1; j2 < MO.size(); j2++){
             vec<Lit> lits;
-            if(j1 < j2){ // (cij' + cij'), (cij' + dij') could be omitted by constraint 5
-               // && !(j1%2 == 0 && j2 == j1 + 1)
-               // cout << "A" << endl;
-               Lit a = ~Lit(MO[j1][i]->getVar()); lits.push(a);
-               Lit b = ~Lit(MO[j2][i]->getVar()); lits.push(b);
-               s.addClause(lits); lits.clear();
-            }
+            // (cij' + cij'), (cij' + dij') could be omitted by constraint 5
+            // && !(j1%2 == 0 && j2 == j1 + 1)
+            Lit a = ~Lit(MO[j1][i]->getVar()); lits.push(a);
+            Lit b = ~Lit(MO[j2][i]->getVar()); lits.push(b);
+            s.addClause(lits); lits.clear();
          }
          /*test*/
          Lit c = Lit(MO[j1][i]->getVar()); lits_n0.push(c);
@@ -98,23 +96,22 @@ void constraint2 (SatSolver& s){ // for solver1, j = 1 ~ mO :sum(cij+dij)  <= 1,
       
       }
       /*test*/
-      // s.addClause(lits_n0); lits_n0.clear();
+      s.addClause(lits_n0); lits_n0.clear();
       /*test*/
    }
-   cout << "GN" << MI[0][0]->getName() << endl;
+   // cout << "GN" << MI[0][0]->getName() << endl;
 }
 void constraint3 (SatSolver& s){ // for solver1, j = 1 ~ mI+1 :sum(aij+bij)  = 1, for all i = 1 ~ nI
 // could be improved by pseudo boolean constraint
    for (int i = 0; i < MI[0].size(); i++){
       vec<Lit> lits_n0; // a_i 1 + b_i 1 + a_i 2 + b_i 2 + ... to prevent all zero 
       for (int j1 = 0; j1 < MI.size(); j1++){
-         for (int j2 = 0; j2 < MI.size(); j2++){
+         for (int j2 = j1+1; j2 < MI.size(); j2++){
             vec<Lit> lits;
-            if(j1 < j2){ // (aij' + aij'), (aij' + bij') could be omitted by constraint 5
-               Lit a = ~Lit(MI[j1][i]->getVar()); lits.push(a);
-               Lit b = ~Lit(MI[j2][i]->getVar()); lits.push(b);
-               s.addClause(lits); lits.clear();
-            }
+            // (aij' + aij'), (aij' + bij') could be omitted by constraint 5
+            Lit a = ~Lit(MI[j1][i]->getVar()); lits.push(a);
+            Lit b = ~Lit(MI[j2][i]->getVar()); lits.push(b);
+            s.addClause(lits); lits.clear();
          }
          Lit c = Lit(MI[j1][i]->getVar()); lits_n0.push(c);
       }
@@ -123,34 +120,21 @@ void constraint3 (SatSolver& s){ // for solver1, j = 1 ~ mI+1 :sum(aij+bij)  = 1
 
 }
 void constraint4_miter (SatSolver& s){ // for mitersolver, intentionally make cji -> fi != gj
+   vec<Lit> lit_vec;
    for (int j = 0; j < MO[0].size(); j++){
-      for (int i = 0; i < MO.size(); i++){
-         if(i%2 == 1){ // intentionally make cji -> fi != gj, for solver_miter
-            vec<Lit> lits;
-            Lit cd = ~Lit(MO[i][j]->getVar2());  lits.push(cd);
-            Lit fv =  Lit(f[i/2]->getVar2());    lits.push(fv);
-            Lit gv = ~Lit(g[j]->getVar2());    lits.push(gv);
-            s.addClause(lits); lits.clear();
-         
-            lits.push(cd);
-            fv = ~Lit(f[i/2]->getVar2());        lits.push(fv); 
-            gv =  Lit(g[j]->getVar2());        lits.push(gv);
-            s.addClause(lits); lits.clear();
-         }
-         else{
-            vec<Lit> lits;
-            Lit cd = ~Lit(MO[i][j]->getVar2());  lits.push(cd);
-            Lit fv =  Lit(f[i/2]->getVar2());    lits.push(fv);
-            Lit gv =  Lit(g[j]->getVar2());    lits.push(gv);
-            s.addClause(lits); lits.clear();
-         
-            lits.push(cd);
-            fv = ~Lit(f[i/2]->getVar2());        lits.push(fv); 
-            gv = ~Lit(g[j]->getVar2());        lits.push(gv);
-            s.addClause(lits); lits.clear();
-         }
+      for (int i = 0; i < MO.size(); i = i+2){
+         Var temp1 = s.newVar(); // fi xor gj = temp1
+         Var temp2 = s.newVar(); // ~temp1 and c_ij = temp2
+         Var temp3 = s.newVar(); // temp1 and d_ij = temp3
+         Var result = s.newVar(); // ~temp2 and ~temp3 = result 
+         s.addXorCNF(temp1, f[i/2]->getVar2(), false, g[j]->getVar2(), false);
+         s.addAigCNF(temp2, temp1, true, MO[i][j]->getVar2(), false);
+         s.addAigCNF(temp3, temp1, false, MO[i+1][j]->getVar2(), false);
+         s.addAigCNF(result, temp2, true, temp3, true);
+         lit_vec.push(Lit(result));
       }
    }
+   s.addClause(lit_vec); lit_vec.clear();
 }
 void constraint5_miter (SatSolver& s){ // for mitersolver, aji -> xi == yj;  bji -> xi != yj;  aj MI+1 -> 0 == yj; bj MI+1 -> 1 == yj;  
    for (int j = 0; j < MI[0].size(); j++){
@@ -317,8 +301,8 @@ void readAAG(){ // read aag file: top1.aag, top2.aag
 }
 void readMAP(){ // read map     : map1.txt, map2.txt
    ifstream fmap1, fmap2;
-   fmap1.open("map1.txt");
-   fmap2.open("map2.txt");
+   fmap1.open("map1");
+   fmap2.open("map2");
    int inout, aagVar, cnfVar;
    int i = 0, j = 0;
    while(fmap1 >> inout >> aagVar >> cnfVar){ 
@@ -360,7 +344,7 @@ void readCNF(SatSolver& s_miter){ //read cnf file: top1.cnf, top2.cnf
                   Var nV = s_miter.newVar();
                   umapInterVar_ckt1[abs(litTmp)] = nV;
                   Lit li;
-                  if(litTmp >0)
+                  if(litTmp > 0)
                      li =  Lit(nV);
                   else
                      li = ~Lit(nV);
@@ -482,9 +466,10 @@ void readCNF(SatSolver& s_miter){ //read cnf file: top1.cnf, top2.cnf
 }
 void AddLearnedClause(SatSolver& s, SatSolver& s_miter){ // probably wrong
    vec<Lit> lits, lits_e;   // ex: lits_e:  (not e + not c11)...
-   Var eV = s.newVar();
-   Lit e  =  Lit(eV); // ex: e = c11' · c12' · d11' · d12'
-   Lit Ne = ~Lit(eV); // ex: e = c11' · c12' · d11' · d12'
+   vec<Lit> temp_lits;
+   // Var eV = s.newVar();
+   // Lit e  =  Lit(eV); // ex: e = c11' · c12' · d11' · d12'
+   // Lit Ne = ~Lit(eV); // ex: e = c11' · c12' · d11' · d12'
    // cout << x.size() << " " << y.size() << " " << MI.size() << " " << MI[0].size() << endl;
    for(int i=0; i < x.size(); i++){
       for(int j=0; j < y.size(); j++){
@@ -497,29 +482,36 @@ void AddLearnedClause(SatSolver& s, SatSolver& s_miter){ // probably wrong
          }
       }
    }
-   lits.push(e); s.addClause(lits); lits.clear();
+   // lits.push(e); s.addClause(lits); lits.clear();
 
    for(int i=0; i < f.size(); i++){
       for(int j=0; j < g.size(); j++){
+         lits.copyTo(temp_lits);
+         if(s_miter.getValue(f[i]->getVar2()) == -1){
+            cout << "abcdabcd" << endl;
+         }
          if(s_miter.getValue(f[i]->getVar2()) == s_miter.getValue(g[j]->getVar2())){
             Var dV = MO[2*i+1][j]->getVar();
-            lits.push(Lit(dV)); // ex: f2 == g5 -> not d2,5      f2@f[1]; g5@g[4]; d2,5@MI[9][1]
-            lits_e.push(Ne); lits_e.push(~Lit(dV)); s.addClause(lits_e); lits_e.clear();
+            temp_lits.push(~Lit(dV)); // ex: f2 == g5 -> not d2,5      f2@f[1]; g5@g[4]; d2,5@MI[9][1]
+            // lits_e.push(Ne); lits_e.push(~Lit(dV)); s.addClause(lits_e); lits_e.clear();
+            s.addClause(temp_lits); temp_lits.clear();
          }
          else{
             Var cV = MO[2*i][j]->getVar();
-            lits.push(Lit(cV)); // ex: f2 != g5 -> not c2,5      f2@x[1]; g5@y[4]; c2,5@MI[8][1]
-            lits_e.push(Ne); lits_e.push(~Lit(cV)); s.addClause(lits_e); lits_e.clear();   
+            temp_lits.push(~Lit(cV)); // ex: f2 != g5 -> not c2,5      f2@x[1]; g5@y[4]; c2,5@MI[8][1]
+            // lits_e.push(Ne); lits_e.push(~Lit(cV)); s.addClause(lits_e); lits_e.clear();   
+            s.addClause(temp_lits); temp_lits.clear();
          }
       }
    }
-   lits.push(e); s.addClause(lits); lits.clear();
+   // lits.push(e); s.addClause(lits); lits.clear();
 }
 void AddLearnedClause_const(SatSolver& s, SatSolver& s_miter){ // for const 0, 1
    vec<Lit> lits, lits_e;   // ex: lits_e:  (not e + not c11)...
-   Var eV = s.newVar();
-   Lit e  =  Lit(eV); // ex: e = c11' · c12' · d11' · d12'
-   Lit Ne = ~Lit(eV); // ex: e = c11' · c12' · d11' · d12'
+   vec<Lit> temp_lits;
+   // Var eV = s.newVar();
+   // Lit e  =  Lit(eV); // ex: e = c11' · c12' · d11' · d12'
+   // Lit Ne = ~Lit(eV); // ex: e = c11' · c12' · d11' · d12'
    // cout << x.size() << " " << y.size() << " " << MI.size() << " " << MI[0].size() << endl;
    for(int j=0; j < y.size(); j++){
       // cout << "xy" << endl;
@@ -530,23 +522,26 @@ void AddLearnedClause_const(SatSolver& s, SatSolver& s_miter){ // for const 0, 1
          lits.push(Lit(MI[2*inputNum_ckt1+1][j]->getVar()));   // ex: x2 != y5 -> a2,5      x2@x[1]; y5@y[4]; b2,5@MI[8][1]
       }
    }
-   lits.push(e); s.addClause(lits); lits.clear();
+   // lits.push(e); s.addClause(lits); lits.clear();
 
    for(int i=0; i < f.size(); i++){
       for(int j=0; j < g.size(); j++){
+         lits.copyTo(temp_lits);
          if(s_miter.getValue(f[i]->getVar2()) == s_miter.getValue(g[j]->getVar2())){
             Var dV = MO[2*i+1][j]->getVar();
-            lits.push(Lit(dV)); // ex: f2 == g5 -> not d2,5      f2@f[1]; g5@g[4]; d2,5@MI[9][1]
-            lits_e.push(Ne); lits_e.push(~Lit(dV)); s.addClause(lits_e); lits_e.clear();
+            temp_lits.push(~Lit(dV)); // ex: f2 == g5 -> not d2,5      f2@f[1]; g5@g[4]; d2,5@MI[9][1]
+            // lits_e.push(Ne); lits_e.push(~Lit(dV)); s.addClause(lits_e); lits_e.clear();
+            s.addClause(temp_lits); temp_lits.clear();
          }
          else{
             Var cV = MO[2*i][j]->getVar();
-            lits.push(Lit(cV)); // ex: f2 != g5 -> not c2,5      f2@x[1]; g5@y[4]; c2,5@MI[8][1]
-            lits_e.push(Ne); lits_e.push(~Lit(cV)); s.addClause(lits_e); lits_e.clear();   
+            temp_lits.push(~Lit(cV)); // ex: f2 != g5 -> not c2,5      f2@x[1]; g5@y[4]; c2,5@MI[8][1]
+            // lits_e.push(Ne); lits_e.push(~Lit(cV)); s.addClause(lits_e); lits_e.clear();   
+            s.addClause(temp_lits); temp_lits.clear();
          }
       }
    }
-   lits.push(e); s.addClause(lits); lits.clear();
+   // lits.push(e); s.addClause(lits); lits.clear();
 }
 
 void reportResult(const SatSolver& solver, bool result){
@@ -589,20 +584,21 @@ int main(){
          vec<Lit> assump;
          for(int i=0; i<MI.size(); i++){
             for(int j=0; j<MI[0].size(); j++){
-               cout << "i: " << i << " j: " << j << " val: " << solver.getValue(MI[i][j]->getVar()) << endl;
                if(solver.getValue(MI[i][j]->getVar()) == 1){
                   Lit v =  Lit(MI[i][j]->getVar2()); assump.push(v);
+                  cout << "i: " << i << " j: " << j << " val: " << solver.getValue(MI[i][j]->getVar()) << endl;
                }
                else if(solver.getValue(MI[i][j]->getVar()) == 0){
                   Lit v = ~Lit(MI[i][j]->getVar2()); assump.push(v);
                }
             }
          }
+         cout << "below is MO " << endl;
          for(int i=0; i<MO.size(); i++){
             for(int j=0; j<MO[0].size(); j++){
-               cout << "i: " << i << " j: " << j << " val: " << solver.getValue(MO[i][j]->getVar()) << endl;
                if(solver.getValue(MO[i][j]->getVar()) == 1){
                   Lit v =  Lit(MO[i][j]->getVar2()); assump.push(v);
+                  cout << "i: " << i << " j: " << j << " val: " << solver.getValue(MO[i][j]->getVar()) << endl;
                }
                else if(solver.getValue(MO[i][j]->getVar()) == 0){
                   Lit v = ~Lit(MO[i][j]->getVar2()); assump.push(v);
@@ -610,6 +606,10 @@ int main(){
             }
          }
          cout << endl;
+         
+         string temp;
+         // cin >> temp;
+
          SAT2_result = miterSolver.assumpSolve(assump);
          if(!SAT2_result){
             cout << "Match found!!" << endl;
@@ -621,11 +621,10 @@ int main(){
             // cout << "ELSE" << endl;
             AddLearnedClause(solver, miterSolver);
             AddLearnedClause_const(solver, miterSolver);
-            
          }
+         assump.clear();
       }
    }
-
 }
 
 
