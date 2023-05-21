@@ -1,3 +1,13 @@
+# the sat files are now placed in SAT/test_NP3/src/sat
+
+# ~~satTest.cpp is now renamed as sat.cpp~~
+# satTest.cpp are now packed in satMgr.h, the original main() function are now packed in solveNP3()
+
+# those *.aag , *.cnf, map are moved to SAT/test_NP3/files/aag, SAT/test_NP3/files/cnf, SAT/test_NP3/files/map
+
+# usage : 
+#     $make; $./satTest $NP3Solver> NP3Solve
+
 1. What can a SAT solver do?
 
       Given a circuit and a satisfiability target (e.g. a PO assignment),
