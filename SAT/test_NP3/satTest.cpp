@@ -42,6 +42,7 @@ unordered_map<int, string> umapNum_ckt1, umapName_ckt1, umapNum_ckt2, umapName_c
 unordered_map<int, Var>    umapInterVar_ckt1, umapInterVar_ckt2; // those intervariable that doesn't exist in x/y/f/g 
 vector<vector<variable*>> MI, MO;
 vector<variable*> x, y, f, g; // sub2 = -1
+vector<vector<Var>> big_or;
 
 
 // how to check if this MIMO is feasible solution fast? 
@@ -121,6 +122,9 @@ void constraint3 (SatSolver& s){ // for solver1, j = 1 ~ mI+1 :sum(aij+bij)  = 1
 }
 void constraint4_miter (SatSolver& s){ // for mitersolver, intentionally make cji -> fi != gj
    vec<Lit> lit_vec;
+   vec<Lit> lit_vec2; // let (result + constant 1), this can prevent that if I assume result = 0 when cij + dij = 0
+   vector<Var> temp;
+   // cout << "miter: " << endl;
    for (int j = 0; j < MO[0].size(); j++){
       for (int i = 0; i < MO.size(); i = i+2){
          Var temp1 = s.newVar(); // fi xor gj = temp1
@@ -131,8 +135,16 @@ void constraint4_miter (SatSolver& s){ // for mitersolver, intentionally make cj
          s.addAigCNF(temp2, temp1, true, MO[i][j]->getVar2(), false);
          s.addAigCNF(temp3, temp1, false, MO[i+1][j]->getVar2(), false);
          s.addAigCNF(result, temp2, true, temp3, true);
-         lit_vec.push(Lit(result));
+         Var enable = s.newVar();
+         lit_vec2.push(Lit(result));
+         lit_vec2.push(Lit(enable));
+         s.addClause(lit_vec2); lit_vec2.clear();
+         // cout << f[i/2]->getVar2() << " " << g[j]->getVar2() << " " << MO[i][j]->getVar2() << " " << MO[i+1][j]->getVar2() << endl;
+         lit_vec.push(~Lit(enable));
+         temp.push_back(enable);
+         // cout << "enable: " << enable << endl;
       }
+      big_or.push_back(temp); temp.clear();
    }
    s.addClause(lit_vec); lit_vec.clear();
 }
@@ -475,6 +487,7 @@ void AddLearnedClause(SatSolver& s, SatSolver& s_miter){ // probably wrong
       for(int j=0; j < y.size(); j++){
          // cout << "xy" << endl;
          if(s_miter.getValue(x[i]->getVar2()) == s_miter.getValue(y[j]->getVar2())){
+            // cout << "x" << i << ": " << s_miter.getValue(x[i]->getVar2()) << "  y" << j << ": " << s_miter.getValue(y[j]->getVar2()) << endl;
             lits.push(Lit(MI[2*i+1][j]->getVar())); // ex: x2 == y5 -> b2,5      x2@x[1]; y5@y[4]; b2,5@MI[9][1]
          }
          else{
@@ -482,24 +495,44 @@ void AddLearnedClause(SatSolver& s, SatSolver& s_miter){ // probably wrong
          }
       }
    }
+   
+
+   for(int j=0; j < y.size(); j++){
+      // cout << "xy" << endl;
+      if(s_miter.getValue(y[j]->getVar2()) == 1){
+         lits.push(Lit(MI[MI.size()-2][j]->getVar())); // ex: x2 == y5 -> b2,5      x2@x[1]; y5@y[4]; b2,5@MI[9][1]
+      }
+      else{
+         lits.push(Lit(MI[MI.size()-1][j]->getVar()));   // ex: x2 != y5 -> a2,5      x2@x[1]; y5@y[4]; b2,5@MI[8][1]
+      }
+   }
+
+
    // lits.push(e); s.addClause(lits); lits.clear();
 
    for(int i=0; i < f.size(); i++){
       for(int j=0; j < g.size(); j++){
          lits.copyTo(temp_lits);
-         if(s_miter.getValue(f[i]->getVar2()) == -1){
-            cout << "abcdabcd" << endl;
-         }
+         // cout << "f" << i << ": " << s_miter.getValue(f[i]->getVar2()) << "  g" << j << ": " << s_miter.getValue(g[j]->getVar2()) << endl; 
          if(s_miter.getValue(f[i]->getVar2()) == s_miter.getValue(g[j]->getVar2())){
             Var dV = MO[2*i+1][j]->getVar();
             temp_lits.push(~Lit(dV)); // ex: f2 == g5 -> not d2,5      f2@f[1]; g5@g[4]; d2,5@MI[9][1]
             // lits_e.push(Ne); lits_e.push(~Lit(dV)); s.addClause(lits_e); lits_e.clear();
+            // for(int i = 0; i < temp_lits.size(); i++){
+            //    cout << temp_lits[i] << " ";
+            // }
+            // cout << endl;
             s.addClause(temp_lits); temp_lits.clear();
+            
          }
          else{
             Var cV = MO[2*i][j]->getVar();
             temp_lits.push(~Lit(cV)); // ex: f2 != g5 -> not c2,5      f2@x[1]; g5@y[4]; c2,5@MI[8][1]
             // lits_e.push(Ne); lits_e.push(~Lit(cV)); s.addClause(lits_e); lits_e.clear();   
+            // for(int i = 0; i < temp_lits.size(); i++){
+            //    cout << temp_lits[i] << " ";
+            // }
+            // cout << endl;
             s.addClause(temp_lits); temp_lits.clear();
          }
       }
@@ -567,6 +600,7 @@ int main(){
    initCircuit(solver, miterSolver);
    readCNF(miterSolver);
    
+   
    /*
    bool result;
    result = solver.solve();
@@ -574,6 +608,7 @@ int main(){
    */
 
    while(true){
+   // for(int i = 0; i < 10; i++){
       bool SAT1_result, SAT2_result;
       SAT1_result = solver.solve();
       if(!SAT1_result){
@@ -596,6 +631,11 @@ int main(){
          cout << "below is MO " << endl;
          for(int i=0; i<MO.size(); i++){
             for(int j=0; j<MO[0].size(); j++){
+               if(i % 2 == 0){
+                  if((solver.getValue(MO[i][j]->getVar()) + solver.getValue(MO[i+1][j]->getVar())) == 0){
+                     assump.push(Lit(big_or[j][i/2]));
+                  }
+               }
                if(solver.getValue(MO[i][j]->getVar()) == 1){
                   Lit v =  Lit(MO[i][j]->getVar2()); assump.push(v);
                   cout << "i: " << i << " j: " << j << " val: " << solver.getValue(MO[i][j]->getVar()) << endl;
@@ -620,7 +660,7 @@ int main(){
          else{
             // cout << "ELSE" << endl;
             AddLearnedClause(solver, miterSolver);
-            AddLearnedClause_const(solver, miterSolver);
+            // AddLearnedClause_const(solver, miterSolver);
          }
          assump.clear();
       }
