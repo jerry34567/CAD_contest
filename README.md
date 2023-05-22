@@ -2,7 +2,13 @@
 
 # setup
 if you don't have setuped environment, you have to type command below. (if you have setuped once, ommit the step.)
+
 ```json=
+cd src/
+mkdir eng
+cd ..
+mkdir include
+mkdir lib
 sudo ./SETUP.sh 
 sudo ./INSTALL.sh
 ```
