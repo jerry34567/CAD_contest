@@ -138,16 +138,50 @@ class SatMgr
             }
         }
         // how to check if this MIMO is feasible solution fast?
-        void printMatrix(const SatSolver&                 s,
-                         vector<vector<variable*>> const& M) {
+        //   void printMatrix(const SatSolver&                 s,
+        //                    vector<vector<variable*>> const& M) {
+        //       for (int j = 0; j < M.size(); j++) {
+        //           for (int i = 0; i < M[0].size(); i++) {
+        //               cout << M[j][i]->getName() << " " << M[j][i]->getSub1()
+        //                    << " " << M[j][i]->getSub2() << " ";
+        //               cout << M[j][i]->getVar() << " " << M[j][i]->getVar2()
+        //                    << "\tAssign: ";
+        //               cout << s.getValue(M[j][i]->getVar());
+        //               cout << endl;
+        //           }
+        //       }
+        //       cout << endl;
+        //   }
+        void printMatrix(const SatSolver& s, vector<vector<variable*>> const& M,
+                         int IO) { // IO: 1 -> MI, 2 -> MO
             for (int j = 0; j < M.size(); j++) {
                 for (int i = 0; i < M[0].size(); i++) {
-                    cout << M[j][i]->getName() << " " << M[j][i]->getSub1()
-                         << " " << M[j][i]->getSub2() << " ";
-                    cout << M[j][i]->getVar() << " " << M[j][i]->getVar2()
-                         << "\tAssign: ";
-                    cout << s.getValue(M[j][i]->getVar());
-                    cout << endl;
+                    // cout << M[j][i]->getName() << " " << M[j][i]->getSub1()
+                    // << " " << M[j][i]->getSub2() << " "; cout <<
+                    // M[j][i]->getVar() << " " << M[j][i]->getVar2() <<
+                    // "\tAssign: "; cout << s.getValue(M[j][i]->getVar()); cout
+                    // << endl;
+                    if (s.getValue(M[j][i]->getVar()) == 1 && IO == 1) {
+                        if (j == 2 * inputNum_ckt1)
+                            cout << portname_ckt2[i] << " ==  " << 0 << endl;
+                        else if (j == 2 * inputNum_ckt1 + 1)
+                            cout << portname_ckt2[i] << " ==  " << 1 << endl;
+                        else if (j % 2 == 0)
+                            cout << portname_ckt2[i]
+                                 << " ==  " << portname_ckt1[j / 2] << endl;
+                        else
+                            cout << portname_ckt2[i] << " == !"
+                                 << portname_ckt1[j / 2] << endl;
+                    } else if (s.getValue(M[j][i]->getVar()) == 1 && IO == 2) {
+                        if (j % 2 == 0)
+                            cout << portname_ckt2[i + inputNum_ckt2] << " ==  "
+                                 << portname_ckt1[j / 2 + inputNum_ckt1]
+                                 << endl;
+                        else
+                            cout << portname_ckt2[i + inputNum_ckt2] << " == !"
+                                 << portname_ckt1[j / 2 + inputNum_ckt1]
+                                 << endl;
+                    }
                 }
             }
             cout << endl;
@@ -794,8 +828,8 @@ class SatMgr
             solver.printStats();
             cout << (result ? "SAT" : "UNSAT") << endl;
             if (result) {
-                printMatrix(solver, MI);
-                printMatrix(solver, MO);
+                printMatrix(solver, MI, 1);
+                printMatrix(solver, MO, 2);
                 // printArr(solver, x);
                 // printArr(solver, y);
                 // printArr(solver, f);
