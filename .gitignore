@@ -5,6 +5,14 @@ engine/yoysy
 engine/boolector
 include/*
 lib/*
+!lib/libcmd-linux18.a
+!lib/libcmd-linux16.a
+!lib/libcmd-mac.a
+!include/cmdCharDef.h
+!include/cmdParser.h
+!include/myUsage.h
+!include/rnGen.h
+!include/util.h
 
 cir1.v
 cir2.v
