@@ -55,7 +55,6 @@ class SatMgr
         ~SatMgr() {}
 
         void solveNP3() {
-
             SatSolver solver, miterSolver;
             solver.initialize();
             miterSolver.initialize();
