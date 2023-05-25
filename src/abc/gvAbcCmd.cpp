@@ -99,7 +99,6 @@ GVABCOriginalCmd ::exec(const string& option) {
             command += " ";
         }
     }
-
     // calling abc's command
     char Command[1024], abcCmd[128];
     strcpy(abcCmd, command.c_str());

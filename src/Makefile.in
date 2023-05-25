@@ -20,8 +20,8 @@ YOSYSFLGS = -D_YOSYS_ -DYOSYS_ENABLE_PLUGINS -DYOSYS_ENABLE_GLOB -DYOSYS_ENABLE_
 ABCFLGS = -DABC_USE_STDINT_H
 
 #when submitting, -O3 should below -g
-CFLAGS	= $(ENGFLGS) $(PKGFLAG) -g -Wall -Wno-parentheses -Wno-unused-function
 CFLAGS	= $(ENGFLGS) $(PKGFLAG) -O3 -DNDEBUG -Wall -Wno-parentheses -Wno-unused-function 
+CFLAGS	= $(ENGFLGS) $(PKGFLAG) -g -Wall -Wno-parentheses -Wno-unused-function
 
 # DISABLE ALL WARNINGS
 CFLAGS += -w -std=c++14
