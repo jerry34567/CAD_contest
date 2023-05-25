@@ -33,11 +33,13 @@ class variable
         Var  getSub2() const { return _sub2; }
         Var  getVar() const { return _var; }
         Var  getVar2() const { return _var2; }
+        Var  getVar3() const { return _var3; }
         void setName(const char& v) { _name = v; }
         void setSub1(const Var& v) { _sub1 = v; }
         void setSub2(const Var& v) { _sub2 = v; }
         void setVar(const Var& v) { _var = v; }
         void setVar2(const Var& v) { _var2 = v; }
+        void setVar3(const Var& v) { _var3 = v; }
 
     private:
         char _name;
@@ -45,6 +47,7 @@ class variable
         Var  _sub2;
         Var  _var;  // for solver1
         Var  _var2; // for miter solver
+        Var  _var3; // for verification solver
                     // Var _aigVar; do we need this??
 };
 class SatMgr
@@ -55,9 +58,11 @@ class SatMgr
         ~SatMgr() {}
 
         void solveNP3() {
-            SatSolver solver, miterSolver;
+            SatSolver solver, miterSolver,
+                verifySolver; // verifysolver is for verification usage
             solver.initialize();
             miterSolver.initialize();
+            verifySolver.initialize();
 
             readAAG();
             readMAP();
@@ -162,14 +167,19 @@ class SatMgr
                     // "\tAssign: "; cout << s.getValue(M[j][i]->getVar()); cout
                     // << endl;
                     if (s.getValue(M[j][i]->getVar()) == 1 && IO == 1) {
-                        if (j == 2 * inputNum_ckt1)
+                        if (j == 2 * inputNum_ckt1) {
                             cout << portname_ckt2[i] << " ==  " << 0 << endl;
-                        else if (j == 2 * inputNum_ckt1 + 1)
+                            inputMatch.push_back(
+                                pair<Var, Var>(-1, M[j][i]->getVar()));
+                        } else if (j == 2 * inputNum_ckt1 + 1) {
                             cout << portname_ckt2[i] << " ==  " << 1 << endl;
-                        else if (j % 2 == 0)
+                            inputMatch.push_back(
+                                pair<Var, Var>(-2, M[j][i]->getVar()));
+                        } else if (j % 2 == 0) {
                             cout << portname_ckt2[i]
                                  << " ==  " << portname_ckt1[j / 2] << endl;
-                        else
+
+                        } else
                             cout << portname_ckt2[i] << " == !"
                                  << portname_ckt1[j / 2] << endl;
                     } else if (s.getValue(M[j][i]->getVar()) == 1 && IO == 2) {
@@ -852,6 +862,9 @@ class SatMgr
         vector<vector<variable*>> MI, MO;
         vector<variable*>         x, y, f, g; // sub2 = -1
         vector<vector<Var>>       big_or;
+
+        vector<pair<Var, Var>> inputMatch;  // record those match input pairs
+        vector<pair<Var, Var>> outputMatch; // record those match output pairs
 };
 
 #endif // SATMGR_H
