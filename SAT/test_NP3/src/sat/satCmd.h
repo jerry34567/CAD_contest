@@ -11,6 +11,8 @@
 #include "cmdParser.h"
 
 CmdClass(NP3SolveCmd);
+CmdClass(NP3VerifyCmd);
+CmdClass(NP3BindCmd);
 // CmdClass(MTNewCmd);
 // CmdClass(MTDeleteCmd);
 // CmdClass(MTPrintCmd);

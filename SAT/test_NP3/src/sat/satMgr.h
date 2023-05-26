@@ -56,19 +56,30 @@ class SatMgr
     public:
         SatMgr() {}
         ~SatMgr() {}
+        void verification() {
+            vec<Lit> assump;
+            for (auto i : inputMatch)
+                addBindClause(get<0>(i), get<1>(i), get<2>(i), assump);
+            for (auto i : outputMatch)
+                addBindClause(get<0>(i), get<1>(i), get<2>(i), assump);
+
+            bool result = verifierSolver.assumpSolve(assump);
+            verifierSolver.printStats();
+            cout << (result ? "SAT" : "UNSAT") << endl;
+            assump.clear();
+        }
 
         void solveNP3() {
-            SatSolver solver, miterSolver,
-                verifySolver; // verifysolver is for verification usage
+            SatSolver solver, miterSolver;
             solver.initialize();
             miterSolver.initialize();
-            verifySolver.initialize();
+            verifierSolver.initialize();
 
             readAAG();
             readMAP();
-            initCircuit(solver, miterSolver);
-            readCNF(miterSolver);
-
+            initCircuit(solver, miterSolver, verifierSolver);
+            readCNF(miterSolver, verifierSolver);
+            // return;
             /*
             bool result;
             result = solver.solve();
@@ -170,27 +181,37 @@ class SatMgr
                         if (j == 2 * inputNum_ckt1) {
                             cout << portname_ckt2[i] << " ==  " << 0 << endl;
                             inputMatch.push_back(
-                                pair<Var, Var>(-1, M[j][i]->getVar()));
+                                tuple<bool, Var, Var>(0, -1, y[i]->getVar3()));
                         } else if (j == 2 * inputNum_ckt1 + 1) {
                             cout << portname_ckt2[i] << " ==  " << 1 << endl;
                             inputMatch.push_back(
-                                pair<Var, Var>(-2, M[j][i]->getVar()));
+                                tuple<bool, Var, Var>(0, -2, y[i]->getVar3()));
                         } else if (j % 2 == 0) {
                             cout << portname_ckt2[i]
                                  << " ==  " << portname_ckt1[j / 2] << endl;
-
-                        } else
+                            inputMatch.push_back(tuple<bool, Var, Var>(
+                                0, x[j / 2]->getVar3(), y[i]->getVar3()));
+                        } else {
                             cout << portname_ckt2[i] << " == !"
                                  << portname_ckt1[j / 2] << endl;
+                            inputMatch.push_back(tuple<bool, Var, Var>(
+                                1, x[j / 2]->getVar3(), y[i]->getVar3()));
+                        }
                     } else if (s.getValue(M[j][i]->getVar()) == 1 && IO == 2) {
-                        if (j % 2 == 0)
+                        if (j % 2 == 0) {
                             cout << portname_ckt2[i + inputNum_ckt2] << " ==  "
                                  << portname_ckt1[j / 2 + inputNum_ckt1]
                                  << endl;
-                        else
+                            outputMatch.push_back(tuple<bool, Var, Var>(
+                                0, f[j / 2]->getVar3(), g[i]->getVar3()));
+
+                        } else {
                             cout << portname_ckt2[i + inputNum_ckt2] << " == !"
                                  << portname_ckt1[j / 2 + inputNum_ckt1]
                                  << endl;
+                            outputMatch.push_back(tuple<bool, Var, Var>(
+                                1, f[j / 2]->getVar3(), g[i]->getVar3()));
+                        }
                     }
                 }
             }
@@ -380,20 +401,22 @@ class SatMgr
 
         // inputNum_ckt1, outputNum_ckt1, inputNum_ckt2, outputNum_ckt2;
         // Construct PHI<0>  (Preprocess not implemented yet.)
-        void initCircuit(SatSolver& s,
-                         SatSolver& s_miter) { // create 2D array ETs
+        void initCircuit(SatSolver& s, SatSolver& s_miter,
+                         SatSolver& s_verifier) { // create 2D array ETs
 
             // construct x, y
             for (int i = 1; i <= inputNum_ckt1; i++) {
                 variable* tmpX = new variable('x', i, -1);
                 tmpX->setVar(s.newVar());
                 tmpX->setVar2(s_miter.newVar());
+                tmpX->setVar3(s_verifier.newVar());
                 x.push_back(tmpX);
             }
             for (int i = 1; i <= inputNum_ckt2; i++) {
                 variable* tmpY = new variable('y', i, -1);
                 tmpY->setVar(s.newVar());
                 tmpY->setVar2(s_miter.newVar());
+                tmpY->setVar3(s_verifier.newVar());
                 y.push_back(tmpY);
             }
 
@@ -402,12 +425,14 @@ class SatMgr
                 variable* tmpF = new variable('f', i, -1);
                 tmpF->setVar(s.newVar());
                 tmpF->setVar2(s_miter.newVar());
+                tmpF->setVar3(s_verifier.newVar());
                 f.push_back(tmpF);
             }
             for (int i = 1; i <= outputNum_ckt2; i++) {
                 variable* tmpG = new variable('g', i, -1);
                 tmpG->setVar(s.newVar());
                 tmpG->setVar2(s_miter.newVar());
+                tmpG->setVar3(s_verifier.newVar());
                 g.push_back(tmpG);
             }
 
@@ -530,7 +555,9 @@ class SatMgr
                 j++;
             }
         }
-        void readCNF(SatSolver& s_miter) { // read cnf file: top1.cnf, top2.cnf
+        void
+        readCNF(SatSolver& s_miter,
+                SatSolver& s_verifier) { // read cnf file: top1.cnf, top2.cnf
             // read CNF into miter solver to constraint functionality
             // correctness
             ifstream fcnf1, fcnf2;
@@ -542,30 +569,41 @@ class SatMgr
             fcnf2.open(fcnf2_name);
             string tmp, cnf;
             int    varnum, clsnum, litTmp;
+            size_t ct1 = 0, ct2 = 0;
             while (true) {
+
                 fcnf1 >> tmp;
                 if (tmp == "p") {
                     fcnf1 >> cnf >> varnum >> clsnum;
                     // cout<<"CC: " << cnf << " " << varnum  << " " << clsnum <<
                     // endl;
-                    vec<Lit> lits;
+                    vec<Lit> lits, lits_veri;
 
                     vector<Var> test; // test addClause
 
                     while (fcnf1 >> litTmp) {
+
                         // cout << "LL: " << litTmp << endl;
                         if (litTmp != 0) {
                             if (umapNum_ckt1.find(abs(litTmp)) ==
                                 umapNum_ckt1.end()) { // doesn't exist
                                 umapNum_ckt1[abs(litTmp)] =
                                     "n" + to_string(abs(litTmp));
-                                Var nV = s_miter.newVar();
-                                umapInterVar_ckt1[abs(litTmp)] = nV;
-                                Lit li;
-                                if (litTmp > 0) li = Lit(nV);
-                                else li = ~Lit(nV);
+                                Var nV      = s_miter.newVar();
+                                Var nV_veri = s_verifier.newVar();
+                                umapInterVar_ckt1[abs(litTmp)]      = nV;
+                                umapInterVar_ckt1_veri[abs(litTmp)] = nV_veri;
+                                Lit li, li_veri;
+                                if (litTmp > 0) {
+                                    li      = Lit(nV);
+                                    li_veri = Lit(nV_veri);
+                                } else {
+                                    li      = ~Lit(nV);
+                                    li_veri = ~Lit(nV_veri);
+                                }
 
                                 lits.push(li);
+                                lits_veri.push(li_veri);
                                 test.push_back(nV);
                             } else {
                                 string portNumTmp =
@@ -573,47 +611,76 @@ class SatMgr
                                 // cout << "PPP: " << portNumTmp << endl;
                                 // add clause to s_miter according to i/o and
                                 // num. ex: i0 --->  x[0]->getVar2()
-                                if (portNumTmp[0] == 'i') {
-                                    Lit li;
-                                    if (litTmp > 0)
+                                if (portNumTmp[0] == 'i') { // those var in x
+                                    Lit li, li_veri;
+                                    if (litTmp > 0) {
                                         li = Lit(x[stoi(portNumTmp.substr(1))]
                                                      ->getVar2());
-                                    else
+                                        li_veri =
+                                            Lit(x[stoi(portNumTmp.substr(1))]
+                                                    ->getVar3());
+
+                                    } else {
                                         li = ~Lit(x[stoi(portNumTmp.substr(1))]
                                                       ->getVar2());
-
+                                        li_veri =
+                                            ~Lit(x[stoi(portNumTmp.substr(1))]
+                                                     ->getVar3());
+                                    }
                                     lits.push(li);
+                                    lits_veri.push(li_veri);
                                     test.push_back(x[stoi(portNumTmp.substr(1))]
                                                        ->getVar2());
                                 } else if (portNumTmp[0] == 'o') { // o
-                                    Lit li;
-                                    if (litTmp > 0)
+                                    Lit li, li_veri;
+                                    if (litTmp > 0) {
                                         li = Lit(f[stoi(portNumTmp.substr(1))]
                                                      ->getVar2());
-                                    else
+                                        li_veri =
+                                            Lit(f[stoi(portNumTmp.substr(1))]
+                                                    ->getVar3());
+
+                                    } else {
                                         li = ~Lit(f[stoi(portNumTmp.substr(1))]
                                                       ->getVar2());
-
+                                        li_veri =
+                                            ~Lit(f[stoi(portNumTmp.substr(1))]
+                                                     ->getVar3());
+                                    }
                                     lits.push(li);
+                                    lits_veri.push(li_veri);
                                     test.push_back(f[stoi(portNumTmp.substr(1))]
                                                        ->getVar2());
                                 } else { // n (intervariable)
-                                    Lit li;
-                                    if (litTmp > 0)
+                                    Lit li, li_veri;
+                                    if (litTmp > 0) {
                                         li =
                                             Lit(umapInterVar_ckt1[abs(litTmp)]);
-                                    else
+                                        li_veri =
+                                            Lit(umapInterVar_ckt1_veri[abs(
+                                                litTmp)]);
+
+                                    } else {
                                         li = ~Lit(
                                             umapInterVar_ckt1[abs(litTmp)]);
+                                        li_veri =
+                                            ~Lit(umapInterVar_ckt1_veri[abs(
+                                                litTmp)]);
+                                    }
 
                                     lits.push(li);
+                                    lits_veri.push(li_veri);
                                     test.push_back(
                                         umapInterVar_ckt1[abs(litTmp)]);
                                 }
                             }
                         } else {
+                            ++ct1;
+                            cout << lits_veri.size() << endl;
                             s_miter.addClause(lits);
+                            s_verifier.addClause(lits_veri);
                             lits.clear();
+                            lits_veri.clear();
                             // for(int i=0;i<test.size();i++){
                             //    cout << test[i] << " ";
                             // }
@@ -626,26 +693,36 @@ class SatMgr
                 }
             }
             while (true) {
+
                 fcnf2 >> tmp;
                 if (tmp == "p") {
                     fcnf2 >> cnf >> varnum >> clsnum;
                     // cout<<"CC: " << cnf << " " << varnum  << " " << clsnum <<
                     // endl;
-                    vec<Lit> lits;
+                    vec<Lit> lits, lits_veri;
                     while (fcnf2 >> litTmp) {
+
                         // cout << "LL: " << litTmp << endl;
                         if (litTmp != 0) {
                             if (umapNum_ckt2.find(abs(litTmp)) ==
                                 umapNum_ckt2.end()) { // doesn't exist
                                 umapNum_ckt2[abs(litTmp)] =
                                     "n" + to_string(abs(litTmp));
-                                Var nV = s_miter.newVar();
-                                umapInterVar_ckt2[abs(litTmp)] = nV;
-                                Lit li;
-                                if (litTmp > 0) li = Lit(nV);
-                                else li = ~Lit(nV);
+                                Var nV      = s_miter.newVar();
+                                Var nV_veri = s_verifier.newVar();
+                                umapInterVar_ckt2[abs(litTmp)]      = nV;
+                                umapInterVar_ckt2_veri[abs(litTmp)] = nV_veri;
+                                Lit li, li_veri;
+                                if (litTmp > 0) {
+                                    li      = Lit(nV);
+                                    li_veri = Lit(nV_veri);
+                                } else {
+                                    li      = ~Lit(nV);
+                                    li_veri = ~Lit(nV_veri);
+                                }
 
                                 lits.push(li);
+                                lits_veri.push(li_veri);
                             } else {
                                 string portNumTmp =
                                     umapNum_ckt2[abs(litTmp)]; // i0, i1 ..
@@ -653,46 +730,77 @@ class SatMgr
                                 // add clause to s_miter according to i/o and
                                 // num. ex: i0 --->  x[0]->getVar2()
                                 if (portNumTmp[0] == 'i') {
-                                    Lit li;
-                                    if (litTmp > 0)
+                                    Lit li, li_veri;
+                                    if (litTmp > 0) {
                                         li = Lit(y[stoi(portNumTmp.substr(1))]
                                                      ->getVar2());
-                                    else
+                                        li_veri =
+                                            Lit(y[stoi(portNumTmp.substr(1))]
+                                                    ->getVar3());
+
+                                    } else {
                                         li = ~Lit(y[stoi(portNumTmp.substr(1))]
                                                       ->getVar2());
+                                        li_veri =
+                                            ~Lit(y[stoi(portNumTmp.substr(1))]
+                                                     ->getVar3());
+                                    }
 
                                     lits.push(li);
+                                    lits_veri.push(li_veri);
                                 } else if (portNumTmp[0] == 'o') { // o
-                                    Lit li;
-                                    if (litTmp > 0)
+                                    Lit li, li_veri;
+                                    if (litTmp > 0) {
                                         li = Lit(g[stoi(portNumTmp.substr(1))]
                                                      ->getVar2());
-                                    else
+                                        li_veri =
+                                            Lit(g[stoi(portNumTmp.substr(1))]
+                                                    ->getVar3());
+
+                                    } else {
                                         li = ~Lit(g[stoi(portNumTmp.substr(1))]
                                                       ->getVar2());
+                                        li_veri =
+                                            ~Lit(g[stoi(portNumTmp.substr(1))]
+                                                     ->getVar3());
+                                    }
 
                                     lits.push(li);
+                                    lits_veri.push(li_veri);
                                 } else { // n (intervariable)
-                                    Lit li;
-                                    if (litTmp > 0)
+                                    Lit li, li_veri;
+                                    if (litTmp > 0) {
                                         li =
                                             Lit(umapInterVar_ckt2[abs(litTmp)]);
-                                    else
+                                        li_veri =
+                                            Lit(umapInterVar_ckt2_veri[abs(
+                                                litTmp)]);
+
+                                    } else {
                                         li = ~Lit(
                                             umapInterVar_ckt2[abs(litTmp)]);
+                                        li_veri =
+                                            ~Lit(umapInterVar_ckt2_veri[abs(
+                                                litTmp)]);
+                                    }
 
                                     lits.push(li);
+                                    lits_veri.push(li_veri);
                                 }
                             }
                         } else {
+                            ++ct2;
                             s_miter.addClause(lits);
+                            s_verifier.addClause(lits_veri);
                             lits.clear();
+                            lits_veri.clear();
                         }
                     }
 
                     break;
                 }
             }
+            cout << "ct1 = " << ct1 << ", ct2 = " << ct2 << endl;
         }
         void AddLearnedClause(SatSolver& s,
                               SatSolver& s_miter) { // probably wrong
@@ -833,7 +941,35 @@ class SatMgr
             }
             // lits.push(e); s.addClause(lits); lits.clear();
         }
-
+        void addBindClause(bool isnegate, Var _port1, Var _port2,
+                           vec<Lit>& assump) {
+            vec<Lit> lits;
+            if (_port1 < 0) {
+                assump.push(_port1 == -1 ? ~Lit(_port2) : Lit(_port2));
+            } else if (isnegate) {
+                // ~_port1 -> _port2
+                lits.push(Lit(_port1));
+                lits.push(Lit(_port2));
+                verifierSolver.addClause(lits);
+                lits.clear();
+                // _port2 -> ~_port1
+                lits.push(~Lit(_port1));
+                lits.push(~Lit(_port2));
+                verifierSolver.addClause(lits);
+                lits.clear();
+            } else {
+                // _port1 -> _port2
+                lits.push(~Lit(_port1));
+                lits.push(Lit(_port2));
+                verifierSolver.addClause(lits);
+                lits.clear();
+                // _port2 -> _port1
+                lits.push(Lit(_port1));
+                lits.push(~Lit(_port2));
+                verifierSolver.addClause(lits);
+                lits.clear();
+            }
+        }
         void reportResult(const SatSolver& solver, bool result) {
             solver.printStats();
             cout << (result ? "SAT" : "UNSAT") << endl;
@@ -850,21 +986,32 @@ class SatMgr
     private:
         /* Global */
         vector<string> portnum_ckt1, portname_ckt1, portnum_ckt2, portname_ckt2;
-        int inputNum_ckt1, outputNum_ckt1, inputNum_ckt2, outputNum_ckt2;
+        int       inputNum_ckt1, outputNum_ckt1, inputNum_ckt2, outputNum_ckt2;
+        SatSolver verifierSolver; // verifysolver is for verification
         // portnum: i0, i1.., o0, o1..
         // portname: a,  b... , g, f..
 
         unordered_map<int, string> umapNum_ckt1, umapName_ckt1, umapNum_ckt2,
             umapName_ckt2; // umap[real CNF_VAR] -> real input/output port name
-        unordered_map<int, Var> umapInterVar_ckt1,
-            umapInterVar_ckt2; // those intervariable that doesn't exist in
-                               // x/y/f/g
+        unordered_map<int, Var> umapInterVar_ckt1, umapInterVar_ckt1_veri,
+            umapInterVar_ckt2,
+            umapInterVar_ckt2_veri; // those intervariable that doesn't exist in
+                                    // x/y/f/g
+                                    // umapInterVar_ckti_veri is for
+                                    // verifySolver
         vector<vector<variable*>> MI, MO;
         vector<variable*>         x, y, f, g; // sub2 = -1
         vector<vector<Var>>       big_or;
 
-        vector<pair<Var, Var>> inputMatch;  // record those match input pairs
-        vector<pair<Var, Var>> outputMatch; // record those match output pairs
+        vector<tuple<bool, Var, Var>>
+            inputMatch; // record those match input pairs
+        // tuple<isNegate, ckt1's input, ckt2's input>
+        // if ckt2's input connect to 0(1) -> the second element
+        // would be -1(-2)
+        // isNegate == 0 -> negate
+        vector<tuple<bool, Var, Var>>
+            outputMatch; // record those match output pairs
+                         // tuple<isNegate, ckt1's output, ckt2's output>
 };
 
 #endif // SATMGR_H

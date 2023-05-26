@@ -25,15 +25,17 @@ initSatCmd() {
     //        cmdMgr->regCmd("MTNew", 3, new MTNewCmd) &&
     //        cmdMgr->regCmd("MTDelete", 3, new MTDeleteCmd) &&
     //        cmdMgr->regCmd("MTPrint", 3, new MTPrintCmd)))
-    if (!(cmdMgr->regCmd("NP3Solve", 4, new NP3SolveCmd))) {
-        cerr << "Registering \"mem\" commands fails... exiting" << endl;
+    if (!(cmdMgr->regCmd("NP3Solve", 4, new NP3SolveCmd) &&
+          cmdMgr->regCmd("NP3Verify", 4, new NP3VerifyCmd) &&
+          cmdMgr->regCmd("NP3Bind", 4, new NP3BindCmd))) {
+        cerr << "Registering \"NP3\" commands fails... exiting" << endl;
         return false;
     }
     return true;
 }
 
 //----------------------------------------------------------------------
-//    MTReset [(size_t blockSize)]
+//    NP3Solve
 //----------------------------------------------------------------------
 CmdExecStatus
 NP3SolveCmd::exec(const string& option) {
@@ -43,13 +45,55 @@ NP3SolveCmd::exec(const string& option) {
 
 void
 NP3SolveCmd::usage(ostream& os) const {
-    // os << "Usage: MTReset [(size_t blockSize)]" << endl;
+    os << "Usage: NP3Solve" << endl;
 }
 
 void
 NP3SolveCmd::help() const {
-    // cout << setw(15) << left << "MTReset: "
-    //      << "(memory test) reset memory manager" << endl;
+    cout << setw(15) << left << "NP3Solve: "
+         << "check if top1.cir is NP3 equilivance with top2.cir. If true, show "
+            "the IO mapping."
+         << endl;
+}
+
+//----------------------------------------------------------------------
+//    NP3Verify
+//----------------------------------------------------------------------
+CmdExecStatus
+NP3VerifyCmd::exec(const string& option) {
+    satmgr.verification();
+    return CMD_EXEC_DONE;
+}
+
+void
+NP3VerifyCmd::usage(ostream& os) const {
+    os << "Usage: NP3Verify" << endl;
+}
+
+void
+NP3VerifyCmd::help() const {
+    cout << setw(15) << left << "NP3Verify: "
+         << "check if the IO mapping is correct." << endl;
+}
+
+//----------------------------------------------------------------------
+//    NP3Bind <char port1> <char port2>
+//----------------------------------------------------------------------
+CmdExecStatus
+NP3BindCmd::exec(const string& option) {
+    satmgr.verification();
+    return CMD_EXEC_DONE;
+}
+
+void
+NP3BindCmd::usage(ostream& os) const {
+    os << "Usage: NP3Verify" << endl;
+}
+
+void
+NP3BindCmd::help() const {
+    cout << setw(15) << left << "NP3Verify: "
+         << "check if the IO mapping is correct." << endl;
 }
 
 // //----------------------------------------------------------------------
