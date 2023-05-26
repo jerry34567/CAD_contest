@@ -60,8 +60,8 @@ class SatMgr
             vec<Lit> assump;
             for (auto i : inputMatch)
                 addBindClause(get<0>(i), get<1>(i), get<2>(i), assump);
-            for (auto i : outputMatch)
-                addBindClause(get<0>(i), get<1>(i), get<2>(i), assump);
+            // for (auto i : outputMatch)
+            //     addBindClause(get<0>(i), get<1>(i), get<2>(i), assump);
 
             bool result = verifierSolver.assumpSolve(assump);
             verifierSolver.printStats();
