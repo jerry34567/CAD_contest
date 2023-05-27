@@ -57,15 +57,45 @@ class SatMgr
         SatMgr() {}
         ~SatMgr() {}
         void verification() {
-            vec<Lit> assump;
+            vec<Lit>    assump, lits; // cls : clause xor gate
+            vector<Var> xorVar;
+            Var         f = verifierSolver
+                        .newVar(); // f should be 0 for two equilivance circuit
+            lits.push(~Lit(f));
             for (auto i : inputMatch)
                 addBindClause(get<0>(i), get<1>(i), get<2>(i), assump);
-            // for (auto i : outputMatch)
-            //     addBindClause(get<0>(i), get<1>(i), get<2>(i), assump);
+            for (auto i : outputMatch) {
+                xorVar.push_back(verifierSolver.newVar());
+                verifierSolver.addXorCNF(xorVar.back(), get<1>(i), get<0>(i),
+                                         get<2>(i), 0);
+            }
+            for (size_t i = 0, n = xorVar.size(); i < n; ++i) {
+                // cout << xorVar[i] << endl;
+                vec<Lit> cls;
+                lits.push(Lit(xorVar[i]));
+                Lit _i = ~Lit(xorVar[i]), _f = Lit(f);
+                cls.push(_i);
+                cls.push(_f);
+                verifierSolver.addClause(cls);
+                cls.clear();
+            }
+            verifierSolver.addClause(lits);
+            assump.push(Lit(f)); //  要negate嗎？
+            // addBindClause(get<0>(i), get<1>(i), get<2>(i), assump);
 
             bool result = verifierSolver.assumpSolve(assump);
             verifierSolver.printStats();
             cout << (result ? "SAT" : "UNSAT") << endl;
+            if (result)
+                for (auto i : inputMatch)
+                    cout << (get<0>(i) ? '~' : ' ')
+                         << verifierSolver.getValue(get<1>(i)) << ' '
+                         << verifierSolver.getValue(get<2>(i)) << endl;
+            // cout << endl;
+            // for (auto i : outputMatch)
+            //     cout << (get<0>(i) ? '~' : ' ')
+            //          << verifierSolver.getValue(get<1>(i)) << ' '
+            //          << verifierSolver.getValue(get<2>(i)) << endl;
             assump.clear();
         }
 
