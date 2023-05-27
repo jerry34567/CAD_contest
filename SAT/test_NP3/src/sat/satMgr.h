@@ -57,13 +57,13 @@ class SatMgr
         SatMgr() {}
         ~SatMgr() {}
         void verification() {
-            vec<Lit>    assump, lits; // cls : clause xor gate
+            vec<Lit>    lits; // cls : clause xor gate
             vector<Var> xorVar;
             Var         f = verifierSolver
                         .newVar(); // f should be 0 for two equilivance circuit
             lits.push(~Lit(f));
             for (auto i : inputMatch)
-                addBindClause(get<0>(i), get<1>(i), get<2>(i), assump);
+                addBindClause(get<0>(i), get<1>(i), get<2>(i));
             for (auto i : outputMatch) {
                 xorVar.push_back(verifierSolver.newVar());
                 verifierSolver.addXorCNF(xorVar.back(), get<1>(i), get<0>(i),
@@ -80,10 +80,11 @@ class SatMgr
                 cls.clear();
             }
             verifierSolver.addClause(lits);
-            assump.push(Lit(f)); //  要negate嗎？
+            verifierSolver.assumeProperty(f, 1); // 要negate嗎
+            // assump.push(Lit(f)); //  要negate嗎？
             // addBindClause(get<0>(i), get<1>(i), get<2>(i), assump);
 
-            bool result = verifierSolver.assumpSolve(assump);
+            bool result = verifierSolver.assumpSolve();
             verifierSolver.printStats();
             cout << (result ? "SAT" : "UNSAT") << endl;
             if (result)
@@ -96,7 +97,7 @@ class SatMgr
             //     cout << (get<0>(i) ? '~' : ' ')
             //          << verifierSolver.getValue(get<1>(i)) << ' '
             //          << verifierSolver.getValue(get<2>(i)) << endl;
-            assump.clear();
+            // assump.clear();
         }
 
         void solveNP3() {
@@ -971,11 +972,28 @@ class SatMgr
             }
             // lits.push(e); s.addClause(lits); lits.clear();
         }
-        void addBindClause(bool isnegate, Var _port1, Var _port2,
-                           vec<Lit>& assump) {
+        bool addBindClause(bool isnegate, Var _port1,
+                           Var    _port2, // _p1, _p2 is for command to bind two
+                                          // port with their mnemonics
+                           string _p1 = "", string _p2 = "") {
             vec<Lit> lits;
+            if (!_p1.empty()) {
+                for (size_t i = 0, n = portname_ckt1.size(); i < n; ++i) {
+                    if (portname_ckt1[i] == _p1) _port1 = x[i]->getVar3();
+                    else if (i == n - 1) return 0;
+                }
+            }
+            if (!_p2.empty()) {
+                for (size_t i = 0, n = portname_ckt2.size(); i < n; ++i) {
+                    if (portname_ckt2[i] == _p2) _port2 = y[i]->getVar3();
+                    else if (i == n - 1) return 0;
+                }
+            }
             if (_port1 < 0) {
-                assump.push(_port1 == -1 ? ~Lit(_port2) : Lit(_port2));
+                verifierSolver.assumeProperty(
+                    _port2, !(_port1 ==
+                              -1)); // port1 == -1 -> _port2 bind to constant 0
+                // assump.push(_port1 == -1 ? ~Lit(_port2) : Lit(_port2));
             } else if (isnegate) {
                 // ~_port1 -> _port2
                 lits.push(Lit(_port1));
@@ -999,6 +1017,7 @@ class SatMgr
                 verifierSolver.addClause(lits);
                 lits.clear();
             }
+            return 1;
         }
         void reportResult(const SatSolver& solver, bool result) {
             solver.printStats();

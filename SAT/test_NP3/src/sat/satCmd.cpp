@@ -12,6 +12,7 @@
 #include "util.h"
 #include <iomanip>
 #include <iostream>
+#include <string>
 
 using namespace std;
 
@@ -77,11 +78,13 @@ NP3VerifyCmd::help() const {
 }
 
 //----------------------------------------------------------------------
-//    NP3Bind <char port1> <char port2>
+//    NP3Bind <string port1> <string port2>
 //----------------------------------------------------------------------
 CmdExecStatus
 NP3BindCmd::exec(const string& option) {
-    satmgr.verification();
+    // vector<string> options;
+    // if (!CmdExec::lexOptions(option, options)) return CMD_EXEC_ERROR;
+    // satmgr.addBindClause(0,-1,-1,)
     return CMD_EXEC_DONE;
 }
 
