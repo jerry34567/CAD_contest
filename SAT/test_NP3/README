@@ -8,6 +8,12 @@
 # usage : 
 #     $make; $./satTest $NP3Solver> NP3Solve
 
+# verification usage:
+## 1. $NP3Solver> NP3Solve; $NP3Solver> NP3Verification // to check if the generated answer is correct
+## 2. $NP3Solver> NP3Solve; $NP3Solver> NP3Verification 1; $NP3Solver> NP3Bind <bool isInput> <bool isNegate> <string port1> <string ##     port2> ... // for manually binding
+## can also use $./satTest -f do/do2 & $./satTest -f do/do3 to check the written testcase(do2 : all ckt2 input port are connect to const 0; do3 : 2016 
+## TeamA's answer)
+
 1. What can a SAT solver do?
 
       Given a circuit and a satisfiability target (e.g. a PO assignment),

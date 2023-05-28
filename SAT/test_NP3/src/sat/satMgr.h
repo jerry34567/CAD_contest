@@ -56,18 +56,59 @@ class SatMgr
     public:
         SatMgr() {}
         ~SatMgr() {}
-        void verification() {
-            vec<Lit>    lits; // cls : clause xor gate
-            vector<Var> xorVar;
-            Var         f = verifierSolver
+        int string2Var(string _s, bool isckt1, bool isinput) {
+            if (isckt1) {
+                for (size_t i = 0, n = portname_ckt1.size(); i < n; ++i) {
+                    if (portname_ckt1[i] == _s) {
+                        return isinput ? x[i]->getVar3()
+                                       : f[i - inputNum_ckt1]->getVar3();
+                    }
+                }
+            } else {
+                for (size_t i = 0, n = portname_ckt2.size(); i < n; ++i) {
+                    if (portname_ckt2[i] == _s) {
+                        return isinput ? y[i]->getVar3()
+                                       : g[i - inputNum_ckt2]->getVar3();
+                    }
+                }
+            }
+            return -100;
+        }
+        bool outputBind(int _port1, bool _isPositive1, int _port2,
+                        string _p1 = "", string _p2 = "") {
+            if (!_p1.empty()) _port1 = string2Var(_p1, 1, 0);
+            if (!_p2.empty()) _port2 = string2Var(_p2, 0, 0);
+            if (_port1 == -100 || _port2 == -100) return 0;
+            xorVar.push_back(verifierSolver.newVar());
+            verifierSolver.addXorCNF(xorVar.back(), _port1, _isPositive1,
+                                     _port2, 0);
+            outputMatch.push_back(
+                tuple<bool, Var, Var>(!_isPositive1, _port1, _port2));
+        }
+        void verification(bool isManualBinded = 0) {
+            // cout << "inputMatch = \n";
+            // for (auto i : inputMatch)
+            //     cout << get<0>(i) << ' ' << get<1>(i) << ' ' << get<2>(i)
+            //          << endl;
+            // cout << "\noutputMatch = \n";
+            // for (auto i : outputMatch)
+            //     cout << get<0>(i) << ' ' << get<1>(i) << ' ' << get<2>(i)
+            //          << endl;
+            vec<Lit> lits;
+            // vector<Var> xorVar;
+            Var      f = verifierSolver
                         .newVar(); // f should be 0 for two equilivance circuit
             lits.push(~Lit(f));
-            for (auto i : inputMatch)
-                addBindClause(get<0>(i), get<1>(i), get<2>(i));
-            for (auto i : outputMatch) {
-                xorVar.push_back(verifierSolver.newVar());
-                verifierSolver.addXorCNF(xorVar.back(), get<1>(i), get<0>(i),
-                                         get<2>(i), 0);
+            if (!isManualBinded) {
+                for (auto i : inputMatch)
+                    addBindClause(get<0>(i), get<1>(i), get<2>(i));
+
+                for (auto i : outputMatch) {
+                    outputBind(get<1>(i), get<0>(i), get<2>(i));
+                    // xorVar.push_back(verifierSolver.newVar());
+                    // verifierSolver.addXorCNF(xorVar.back(), get<1>(i),
+                    //                          get<0>(i), get<2>(i), 0);
+                }
             }
             for (size_t i = 0, n = xorVar.size(); i < n; ++i) {
                 // cout << xorVar[i] << endl;
@@ -79,24 +120,23 @@ class SatMgr
                 verifierSolver.addClause(cls);
                 cls.clear();
             }
-            verifierSolver.addClause(lits);
+            if (lits.size() != 1) verifierSolver.addClause(lits);
             verifierSolver.assumeProperty(f, 1); // 要negate嗎
-            // assump.push(Lit(f)); //  要negate嗎？
-            // addBindClause(get<0>(i), get<1>(i), get<2>(i), assump);
 
             bool result = verifierSolver.assumpSolve();
             verifierSolver.printStats();
             cout << (result ? "SAT" : "UNSAT") << endl;
-            if (result)
+            if (result) {
                 for (auto i : inputMatch)
                     cout << (get<0>(i) ? '~' : ' ')
                          << verifierSolver.getValue(get<1>(i)) << ' '
                          << verifierSolver.getValue(get<2>(i)) << endl;
-            // cout << endl;
-            // for (auto i : outputMatch)
-            //     cout << (get<0>(i) ? '~' : ' ')
-            //          << verifierSolver.getValue(get<1>(i)) << ' '
-            //          << verifierSolver.getValue(get<2>(i)) << endl;
+                cout << endl;
+                for (auto i : outputMatch)
+                    cout << (get<0>(i) ? '~' : ' ')
+                         << verifierSolver.getValue(get<1>(i)) << ' '
+                         << verifierSolver.getValue(get<2>(i)) << endl;
+            }
             // assump.clear();
         }
 
@@ -972,28 +1012,25 @@ class SatMgr
             }
             // lits.push(e); s.addClause(lits); lits.clear();
         }
-        bool addBindClause(bool isnegate, Var _port1,
-                           Var    _port2, // _p1, _p2 is for command to bind two
-                                          // port with their mnemonics
-                           string _p1 = "", string _p2 = "") {
+        bool
+        addBindClause(bool   isnegate, // only bind input
+                      int    _port1, // use int to check if _port1 & _port2 < 0
+                      int    _port2, // _p1, _p2 is for command to bind two
+                                     // port with their mnemonics
+                      string _p1 = "", string _p2 = "") {
             vec<Lit> lits;
-            if (!_p1.empty()) {
-                for (size_t i = 0, n = portname_ckt1.size(); i < n; ++i) {
-                    if (portname_ckt1[i] == _p1) _port1 = x[i]->getVar3();
-                    else if (i == n - 1) return 0;
-                }
-            }
-            if (!_p2.empty()) {
-                for (size_t i = 0, n = portname_ckt2.size(); i < n; ++i) {
-                    if (portname_ckt2[i] == _p2) _port2 = y[i]->getVar3();
-                    else if (i == n - 1) return 0;
-                }
+            if (!_p1.empty()) _port1 = string2Var(_p1, 1, 1);
+            if (!_p2.empty()) _port2 = string2Var(_p2, 0, 1);
+            if (_port1 == -100 || _port2 == -100) {
+                cout << "_port1 and _port2 = " << _port1 << ' ' << _port2
+                     << endl;
+                return 0;
             }
             if (_port1 < 0) {
                 verifierSolver.assumeProperty(
                     _port2, !(_port1 ==
                               -1)); // port1 == -1 -> _port2 bind to constant 0
-                // assump.push(_port1 == -1 ? ~Lit(_port2) : Lit(_port2));
+                inputMatch.push_back(tuple<bool, Var, Var>(0, _port1, _port2));
             } else if (isnegate) {
                 // ~_port1 -> _port2
                 lits.push(Lit(_port1));
@@ -1003,8 +1040,10 @@ class SatMgr
                 // _port2 -> ~_port1
                 lits.push(~Lit(_port1));
                 lits.push(~Lit(_port2));
+
                 verifierSolver.addClause(lits);
                 lits.clear();
+                inputMatch.push_back(tuple<bool, Var, Var>(1, _port1, _port2));
             } else {
                 // _port1 -> _port2
                 lits.push(~Lit(_port1));
@@ -1016,6 +1055,7 @@ class SatMgr
                 lits.push(~Lit(_port2));
                 verifierSolver.addClause(lits);
                 lits.clear();
+                inputMatch.push_back(tuple<bool, Var, Var>(0, _port1, _port2));
             }
             return 1;
         }
@@ -1031,6 +1071,8 @@ class SatMgr
                 // printArr(solver, g);
             }
         }
+        vector<tuple<bool, Var, Var>>& getInputMatch() { return inputMatch; }
+        vector<tuple<bool, Var, Var>>& getOutputMatch() { return outputMatch; }
 
     private:
         /* Global */
@@ -1059,8 +1101,9 @@ class SatMgr
         // would be -1(-2)
         // isNegate == 0 -> negate
         vector<tuple<bool, Var, Var>>
-            outputMatch; // record those match output pairs
+                    outputMatch; // record those match output pairs
                          // tuple<isNegate, ckt1's output, ckt2's output>
+        vector<Var> xorVar; // record the xorvar of two binded outputs' miter
 };
 
 #endif // SATMGR_H

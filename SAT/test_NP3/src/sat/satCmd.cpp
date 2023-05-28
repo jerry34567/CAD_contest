@@ -58,17 +58,19 @@ NP3SolveCmd::help() const {
 }
 
 //----------------------------------------------------------------------
-//    NP3Verify
+//    NP3Verify [bool isManualBinded]
 //----------------------------------------------------------------------
 CmdExecStatus
 NP3VerifyCmd::exec(const string& option) {
-    satmgr.verification();
+    string _opt;
+    if (!CmdExec::lexSingleOption(option, _opt)) return CMD_EXEC_ERROR;
+    satmgr.verification(!_opt.empty());
     return CMD_EXEC_DONE;
 }
 
 void
 NP3VerifyCmd::usage(ostream& os) const {
-    os << "Usage: NP3Verify" << endl;
+    os << "Usage: NP3Verify [bool isManualBinded]" << endl;
 }
 
 void
@@ -78,25 +80,46 @@ NP3VerifyCmd::help() const {
 }
 
 //----------------------------------------------------------------------
-//    NP3Bind <string port1> <string port2>
+//    NP3Bind <bool isInput> <bool isNegate> <string port1> <string port2>
 //----------------------------------------------------------------------
 CmdExecStatus
 NP3BindCmd::exec(const string& option) {
-    // vector<string> options;
-    // if (!CmdExec::lexOptions(option, options)) return CMD_EXEC_ERROR;
-    // satmgr.addBindClause(0,-1,-1,)
-    return CMD_EXEC_DONE;
+    vector<string> options; // is port1 == -1(-2) -> bind port2 to constant 0(1)
+                            // *** input only
+    if (!CmdExec::lexOptions(option, options) || options.size() != 4)
+        return CMD_EXEC_ERROR;
+    if (options[0] == "1") {
+        if (options[2] == "-1" &&
+            satmgr.addBindClause((options[1] == "1"), -1, -100, "",
+                                 options[3])) // port2 bind to const 0
+            return CMD_EXEC_DONE;
+        else if (options[2] == "-2" &&
+                 satmgr.addBindClause((options[1] == "1"), -2, -100, "",
+                                      options[3])) // port2 bind to const 1
+            return CMD_EXEC_DONE;
+        else if (satmgr.addBindClause((options[1] == "1"), -100, -100,
+                                      options[2],
+                                      options[3])) // input binding
+            return CMD_EXEC_DONE;
+
+    } else if (options[0] == "0" &&
+               satmgr.outputBind(-100, (options[1] == "1"), -100, options[2],
+                                 options[3])) // output binding
+        return CMD_EXEC_DONE;
+    return CMD_EXEC_ERROR;
 }
 
 void
 NP3BindCmd::usage(ostream& os) const {
-    os << "Usage: NP3Verify" << endl;
+    os << "Usage: NP3Bind <bool isInput> <bool isNegate> <string port1> "
+          "<string port2>"
+       << endl;
 }
 
 void
 NP3BindCmd::help() const {
-    cout << setw(15) << left << "NP3Verify: "
-         << "check if the IO mapping is correct." << endl;
+    cout << setw(15) << left << "NP3Bind: "
+         << "bind the two given ports together." << endl;
 }
 
 // //----------------------------------------------------------------------
