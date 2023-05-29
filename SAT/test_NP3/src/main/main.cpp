@@ -17,7 +17,7 @@ using namespace std;
 CmdParser* cmdMgr = new CmdParser("NP3Solver> ");
 
 extern bool initCommonCmd();
-extern bool initSatCmd();
+extern bool initSolverCmd();
 
 static void
 usage() {
@@ -51,7 +51,7 @@ main(int argc, char** argv) {
         myexit();
     }
 
-    if (!initCommonCmd() || !initSatCmd()) return 1;
+    if (!initCommonCmd() || !initSolverCmd()) return 1;
 
     CmdExecStatus status = CMD_EXEC_DONE;
     while (status != CMD_EXEC_QUIT) { // until "quit" or command error

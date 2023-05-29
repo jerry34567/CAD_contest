@@ -5,10 +5,10 @@
   Author       [ Chung-Yang (Ric) Huang ]
   Copyright    [ Copyleft(c) 2007-present LaDs(III), GIEE, NTU, Taiwan ]
 ****************************************************************************/
-#include "satCmd.h"
+#include "solverCmd.h"
 #include "cmdParser.h"
 #include "sat.h"
-#include "satMgr.h"
+#include "solverMgr.h"
 #include "util.h"
 #include <iomanip>
 #include <iostream>
@@ -18,10 +18,10 @@ using namespace std;
 
 // extern MemTest mtest; // defined in memTest.cpp
 
-SatMgr satmgr;
+SolverMgr solvermgr;
 
 bool
-initSatCmd() {
+initSolverCmd() {
     //  if (!(cmdMgr->regCmd("NP3Solve", 3, new NP3SolveCmd) &&
     //        cmdMgr->regCmd("MTNew", 3, new MTNewCmd) &&
     //        cmdMgr->regCmd("MTDelete", 3, new MTDeleteCmd) &&
@@ -40,7 +40,7 @@ initSatCmd() {
 //----------------------------------------------------------------------
 CmdExecStatus
 NP3SolveCmd::exec(const string& option) {
-    satmgr.solveNP3();
+    solvermgr.solveNP3();
     return CMD_EXEC_DONE;
 }
 
@@ -64,7 +64,7 @@ CmdExecStatus
 NP3VerifyCmd::exec(const string& option) {
     string _opt;
     if (!CmdExec::lexSingleOption(option, _opt)) return CMD_EXEC_ERROR;
-    satmgr.verification(!_opt.empty());
+    solvermgr.verification(!_opt.empty());
     return CMD_EXEC_DONE;
 }
 
@@ -89,22 +89,23 @@ NP3BindCmd::exec(const string& option) {
     if (!CmdExec::lexOptions(option, options) || options.size() != 4)
         return CMD_EXEC_ERROR;
     if (options[0] == "1") {
-        if (options[2] == "-1" &&
-            satmgr.addBindClause((options[1] == "1"), -1, -100, "",
-                                 options[3])) // port2 bind to const 0
+        if (options[2] == "-1" && solvermgr.getSatmgr().addBindClause(
+                                      (options[1] == "1"), -1, -100, "",
+                                      options[3])) // port2 bind to const 0
             return CMD_EXEC_DONE;
-        else if (options[2] == "-2" &&
-                 satmgr.addBindClause((options[1] == "1"), -2, -100, "",
-                                      options[3])) // port2 bind to const 1
+        else if (options[2] == "-2" && solvermgr.getSatmgr().addBindClause(
+                                           (options[1] == "1"), -2, -100, "",
+                                           options[3])) // port2 bind to const 1
             return CMD_EXEC_DONE;
-        else if (satmgr.addBindClause((options[1] == "1"), -100, -100,
-                                      options[2],
-                                      options[3])) // input binding
+        else if (solvermgr.getSatmgr().addBindClause(
+                     (options[1] == "1"), -100, -100, options[2],
+                     options[3])) // input binding
             return CMD_EXEC_DONE;
 
     } else if (options[0] == "0" &&
-               satmgr.outputBind(-100, (options[1] == "1"), -100, options[2],
-                                 options[3])) // output binding
+               solvermgr.getSatmgr().outputBind(-100, (options[1] == "1"), -100,
+                                                options[2],
+                                                options[3])) // output binding
         return CMD_EXEC_DONE;
     return CMD_EXEC_ERROR;
 }

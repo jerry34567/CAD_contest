@@ -5,8 +5,8 @@
   Author       [ Chung-Yang (Ric) Huang ]
   Copyright    [ Copyleft(c) 2007-present LaDs(III), GIEE, NTU, Taiwan ]
 ****************************************************************************/
-#ifndef SAT_CMD_H
-#define SAT_CMD_H
+#ifndef SOLVERCMD_H
+#define SOLVERCMD_H
 
 #include "cmdParser.h"
 
@@ -17,4 +17,4 @@ CmdClass(NP3BindCmd);
 // CmdClass(MTDeleteCmd);
 // CmdClass(MTPrintCmd);
 
-#endif // SAT_CMD_H
+#endif // SOLVERCMD_H
