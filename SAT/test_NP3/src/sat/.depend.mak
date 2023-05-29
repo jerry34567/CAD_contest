@@ -6,6 +6,8 @@ satCmd.o: satCmd.cpp satCmd.h ../../include/cmdParser.h \
  ../../include/rnGen.h ../../include/myUsage.h
 sat.o: sat.cpp sat.h Solver.h SolverTypes.h Global.h VarOrder.h Heap.h \
  Proof.h File.h
+satMgr.o: satMgr.cpp satMgr.h sat.h Solver.h SolverTypes.h Global.h \
+ VarOrder.h Heap.h Proof.h File.h
 satTest_ETold.o: satTest_ETold.cpp sat.h Solver.h SolverTypes.h Global.h \
  VarOrder.h Heap.h Proof.h File.h
 satTest_NP3classMIMO.o: satTest_NP3classMIMO.cpp sat.h Solver.h \
