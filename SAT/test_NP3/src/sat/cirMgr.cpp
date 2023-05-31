@@ -33,8 +33,8 @@ CirMgr::readAAG() {
     ifstream faag1, faag2;
     string   faag1_name = "", faag2_name = "";
     faag1_name = faag2_name = "./files/aag/";
-    faag1_name += "top1.aag";
-    faag2_name += "top2.aag";
+    faag1_name += "case01_1.aag";
+    faag2_name += "case01_2.aag";
     faag1.open(faag1_name);
     faag2.open(faag2_name);
 
@@ -88,8 +88,8 @@ CirMgr::readMAP() {
     ifstream fmap1, fmap2;
     string   fmap1_name = "", fmap2_name = "";
     fmap1_name = fmap2_name = "./files/map/";
-    fmap1_name += "map1";
-    fmap2_name += "map2";
+    fmap1_name += "case01map1";
+    fmap2_name += "case01map2";
     fmap1.open(fmap1_name);
     fmap2.open(fmap2_name);
     int inout, aagVar, cnfVar;
@@ -117,8 +117,8 @@ CirMgr::readCNF(SatSolver& s_miter,
     ifstream fcnf1, fcnf2;
     string   fcnf1_name = "", fcnf2_name = "";
     fcnf1_name = fcnf2_name = "./files/cnf/";
-    fcnf1_name += "top1.cnf";
-    fcnf2_name += "top2.cnf";
+    fcnf1_name += "case01_1.cnf";
+    fcnf2_name += "case01_2.cnf";
     fcnf1.open(fcnf1_name);
     fcnf2.open(fcnf2_name);
     string tmp, cnf;

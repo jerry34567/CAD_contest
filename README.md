@@ -17,7 +17,7 @@ sudo ./INSTALL.sh
 put cir1.v and cir2.v in this directory, then type
 ```
 make
-./gv test
+./gv <string input_file_name>
 ```
 it will generate 6 files
 ```
@@ -32,3 +32,10 @@ then you can use aigtoaig to conver .aig to .aag, type
 ```
 ./aigtoaig <file_name>.aig <file_name>.aag
 ``` 
+
+# do.sh
+usage:
+```json = 
+$ ./do.sh
+$ > Please enter the case you want to solve: <string case_to_test>
+```
