@@ -106,7 +106,10 @@ NP3BindCmd::exec(const string& option) {
                solvermgr.getSatmgr().outputBind(-100, (options[1] == "1"), -100,
                                                 options[2],
                                                 options[3])) // output binding
+    {
+        cout << "outputBind fail : NP3BindCmd\n";
         return CMD_EXEC_DONE;
+    }
     return CMD_EXEC_ERROR;
 }
 

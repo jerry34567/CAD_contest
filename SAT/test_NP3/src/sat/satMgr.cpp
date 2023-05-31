@@ -51,7 +51,9 @@ SatMgr::outputBind(int _port1, bool _isPositive1, int _port2, string _p1,
     if (_port1 == -100 || _port2 == -100) return 0;
     xorVar.push_back(verifierSolver.newVar());
     verifierSolver.addXorCNF(xorVar.back(), _port1, _isPositive1, _port2, 0);
-    outputMatch.push_back(tuple<bool, Var, Var>(!_isPositive1, _port1, _port2));
+    if (!_p1.empty() || !_p2.empty())
+        outputMatch.push_back(
+            tuple<bool, Var, Var>(!_isPositive1, _port1, _port2));
 }
 /*void
 SatMgr::verification(bool isManualBinded) {
@@ -109,91 +111,93 @@ SatMgr::verification(bool isManualBinded) {
     // assump.clear();
 }*/
 
-void
-SatMgr::solveNP3() {
-    reset();
-    cirmgr.reset();
-    // SatSolver solver, miterSolver;
-    solver.initialize();
-    miterSolver.initialize();
-    verifierSolver.initialize();
+// void
+// SatMgr::solveNP3() {
+//     reset();
+//     cirmgr.reset();
+//     // SatSolver solver, miterSolver;
+//     solver.initialize();
+//     miterSolver.initialize();
+//     verifierSolver.initialize();
 
-    cirmgr.readAAG();
-    cirmgr.readMAP();
-    initCircuit(solver, miterSolver, verifierSolver);
-    cirmgr.readCNF(miterSolver, verifierSolver);
-    // return;
-    /*
-    bool result;
-    result = solver.solve();
-    reportResult(solver, result);
-    */
+//     cirmgr.readAAG();
+//     cirmgr.readMAP();
+//     initCircuit(solver, miterSolver, verifierSolver);
+//     cirmgr.readCNF(miterSolver, verifierSolver);
+//     // return;
+//     /*
+//     bool result;
+//     result = solver.solve();
+//     reportResult(solver, result);
+//     */
 
-    while (true) {
-        // for(int i = 0; i < 10; i++){
-        vector<vector<variable*>>&MI = cirmgr.MI, &MO = cirmgr.MO;
-        bool                      SAT1_result, SAT2_result;
-        SAT1_result = solver.solve();
-        if (!SAT1_result) {
-            cout << "No match!!" << endl;
-            break;
-        } else {
-            vec<Lit> assump;
-            for (int i = 0; i < MI.size(); i++) {
-                for (int j = 0; j < MI[0].size(); j++) {
-                    if (solver.getValue(MI[i][j]->getVar()) == 1) {
-                        Lit v = Lit(MI[i][j]->getVar2());
-                        assump.push(v);
-                        cout << "i: " << i << " j: " << j
-                             << " val: " << solver.getValue(MI[i][j]->getVar())
-                             << endl;
-                    } else if (solver.getValue(MI[i][j]->getVar()) == 0) {
-                        Lit v = ~Lit(MI[i][j]->getVar2());
-                        assump.push(v);
-                    }
-                }
-            }
-            cout << "below is MO " << endl;
-            for (int i = 0; i < MO.size(); i++) {
-                for (int j = 0; j < MO[0].size(); j++) {
-                    if (i % 2 == 0) {
-                        if ((solver.getValue(MO[i][j]->getVar()) +
-                             solver.getValue(MO[i + 1][j]->getVar())) == 0) {
-                            assump.push(Lit(big_or[j][i / 2]));
-                        }
-                    }
-                    if (solver.getValue(MO[i][j]->getVar()) == 1) {
-                        Lit v = Lit(MO[i][j]->getVar2());
-                        assump.push(v);
-                        cout << "i: " << i << " j: " << j
-                             << " val: " << solver.getValue(MO[i][j]->getVar())
-                             << endl;
-                    } else if (solver.getValue(MO[i][j]->getVar()) == 0) {
-                        Lit v = ~Lit(MO[i][j]->getVar2());
-                        assump.push(v);
-                    }
-                }
-            }
-            cout << endl;
+//     while (true) {
+//         // for(int i = 0; i < 10; i++){
+//         vector<vector<variable*>>&MI = cirmgr.MI, &MO = cirmgr.MO;
+//         bool                      SAT1_result, SAT2_result;
+//         SAT1_result = solver.solve();
+//         if (!SAT1_result) {
+//             cout << "No match!!" << endl;
+//             break;
+//         } else {
+//             vec<Lit> assump;
+//             for (int i = 0; i < MI.size(); i++) {
+//                 for (int j = 0; j < MI[0].size(); j++) {
+//                     if (solver.getValue(MI[i][j]->getVar()) == 1) {
+//                         Lit v = Lit(MI[i][j]->getVar2());
+//                         assump.push(v);
+//                         cout << "i: " << i << " j: " << j
+//                              << " val: " <<
+//                              solver.getValue(MI[i][j]->getVar())
+//                              << endl;
+//                     } else if (solver.getValue(MI[i][j]->getVar()) == 0) {
+//                         Lit v = ~Lit(MI[i][j]->getVar2());
+//                         assump.push(v);
+//                     }
+//                 }
+//             }
+//             cout << "below is MO " << endl;
+//             for (int i = 0; i < MO.size(); i++) {
+//                 for (int j = 0; j < MO[0].size(); j++) {
+//                     if (i % 2 == 0) {
+//                         if ((solver.getValue(MO[i][j]->getVar()) +
+//                              solver.getValue(MO[i + 1][j]->getVar())) == 0) {
+//                             assump.push(Lit(big_or[j][i / 2]));
+//                         }
+//                     }
+//                     if (solver.getValue(MO[i][j]->getVar()) == 1) {
+//                         Lit v = Lit(MO[i][j]->getVar2());
+//                         assump.push(v);
+//                         cout << "i: " << i << " j: " << j
+//                              << " val: " <<
+//                              solver.getValue(MO[i][j]->getVar())
+//                              << endl;
+//                     } else if (solver.getValue(MO[i][j]->getVar()) == 0) {
+//                         Lit v = ~Lit(MO[i][j]->getVar2());
+//                         assump.push(v);
+//                     }
+//                 }
+//             }
+//             cout << endl;
 
-            string temp;
-            // cin >> temp;
+//             string temp;
+//             // cin >> temp;
 
-            SAT2_result = miterSolver.assumpSolve(assump);
-            if (!SAT2_result) {
-                cout << "Match found!!" << endl;
-                reportResult(solver, SAT1_result);
+//             SAT2_result = miterSolver.assumpSolve(assump);
+//             if (!SAT2_result) {
+//                 cout << "Match found!!" << endl;
+//                 reportResult(solver, SAT1_result);
 
-                break;
-            } else {
-                // cout << "ELSE" << endl;
-                AddLearnedClause(solver, miterSolver);
-                // AddLearnedClause_const(solver, miterSolver);
-            }
-            assump.clear();
-        }
-    }
-}
+//                 break;
+//             } else {
+//                 // cout << "ELSE" << endl;
+//                 AddLearnedClause(solver, miterSolver);
+//                 // AddLearnedClause_const(solver, miterSolver);
+//             }
+//             assump.clear();
+//         }
+//     }
+// }
 // how to check if this MIMO is feasible solution fast?
 //   void printMatrix(const SatSolver&                 s,
 //                    vector<vector<variable*>> const& M) {

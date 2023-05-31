@@ -23,7 +23,8 @@ SolverMgr::verification(bool isManualBinded) {
             satmgr.addBindClause(get<0>(i), get<1>(i), get<2>(i));
 
         for (auto i : outputMatch) {
-            satmgr.outputBind(get<1>(i), get<0>(i), get<2>(i));
+            if (!satmgr.outputBind(get<1>(i), get<0>(i), get<2>(i)))
+                cout << "outputBind fail : solverMgr.cpp:26\n";
             // xorVar.push_back(verifierSolver.newVar());
             // verifierSolver.addXorCNF(xorVar.back(), get<1>(i),
             //                          get<0>(i), get<2>(i), 0);
