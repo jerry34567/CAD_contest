@@ -21,9 +21,11 @@ $ NP3Solver> NP3Verification
 ```
 # Caution
 the bind command didn't implement error handling. Please carefully check the port mnemonic before binding
-## can also use $./satTest -f do/do2 & $./satTest -f do/do3 to check the written testcase(do2 : all ckt2 input port are connect to const 0; do3 : 2016 
-## TeamA's answer)
-```
+## can also use $./satTest -f do/do2 & $./satTest -f do/do3 to check the written testcase(do2 : all ckt2 input port are connect to const 0; do3 : 2016 TeamA's answer)
+
+
+# np3v strange
+
 1. What can a SAT solver do?
 
       Given a circuit and a satisfiability target (e.g. a PO assignment),

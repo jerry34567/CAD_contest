@@ -40,8 +40,8 @@ class SatMgr
         void initCircuit(SatSolver& s, SatSolver& s_miter,
                          SatSolver& s_verifier);
         void reset();
-        void verification(bool isManualBinded = 0);
-        void solveNP3();
+        // void verification(bool isManualBinded = 0);
+        // void solveNP3();
 
         void constraint2(SatSolver& s);
         void constraint3(SatSolver& s);
@@ -49,6 +49,7 @@ class SatMgr
         void constraint5_miter(SatSolver& s);
         void AddLearnedClause(SatSolver& s, SatSolver& s_miter);
         void AddLearnedClause_const(SatSolver& s, SatSolver& s_miter);
+        void addBusConstraint();
 
         // only bind input
         // use int _port1, int _port2 to check if _port1 < 0 and if _port2 < 0

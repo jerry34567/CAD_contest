@@ -22,7 +22,7 @@ SolverMgr::verification(bool isManualBinded) {
         for (auto i : inputMatch)
             satmgr.addBindClause(get<0>(i), get<1>(i), get<2>(i));
 
-        for (auto i : outputMatch) {
+        for (auto i : outputMatch) { // np3v a little bit strange!!!
             if (!satmgr.outputBind(get<1>(i), get<0>(i), get<2>(i)))
                 cout << "outputBind fail : solverMgr.cpp:26\n";
             // xorVar.push_back(verifierSolver.newVar());
@@ -73,6 +73,7 @@ SolverMgr::solveNP3() {
     satmgr.initCircuit(satmgr.solver, satmgr.miterSolver,
                        satmgr.verifierSolver);
     satmgr.cirmgr.readCNF(satmgr.miterSolver, satmgr.verifierSolver);
+    satmgr.cirmgr.readBus();
     // return;
     /*
     bool result;
@@ -107,7 +108,7 @@ SolverMgr::solveNP3() {
                     }
                 }
             }
-            cout << "below is MO " << endl;
+            // cout << "below is MO " << endl;
             for (int i = 0; i < MO.size(); i++) {
                 for (int j = 0; j < MO[0].size(); j++) {
                     if (i % 2 == 0) {

@@ -56,11 +56,15 @@ CirMgr::readAAG() {
             portnum_ckt1.push_back(tmp);
             faag1 >> tmp;
             portname_ckt1.push_back(tmp);
+            portNameNumpairs_ckt1.push_back(pair<string, string>(
+                portnum_ckt1.back(), portname_ckt1.back()));
             while (true) {
                 faag1 >> tmp >> tmp2;
                 if (tmp == "c") break;
                 portnum_ckt1.push_back(tmp);
                 portname_ckt1.push_back(tmp2);
+                portNameNumpairs_ckt1.push_back(pair<string, string>(
+                    portnum_ckt1.back(), portname_ckt1.back()));
             }
             break;
         }
@@ -72,11 +76,15 @@ CirMgr::readAAG() {
             portnum_ckt2.push_back(tmp);
             faag2 >> tmp;
             portname_ckt2.push_back(tmp);
+            portNameNumpairs_ckt2.push_back(pair<string, string>(
+                portnum_ckt2.back(), portname_ckt2.back()));
             while (true) {
                 faag2 >> tmp >> tmp2;
                 if (tmp == "c") break;
                 portnum_ckt2.push_back(tmp);
                 portname_ckt2.push_back(tmp2);
+                portNameNumpairs_ckt2.push_back(pair<string, string>(
+                    portnum_ckt2.back(), portname_ckt2.back()));
             }
             break;
         }
@@ -338,4 +346,60 @@ CirMgr::readCNF(SatSolver& s_miter,
         }
     }
     cout << "ct1 = " << ct1 << ", ct2 = " << ct2 << endl;
+}
+
+void
+CirMgr::_readbus(ifstream& fbus, vector<vector<string>>& bus_list_ckt,
+                 bool _isCkt1) {
+    vector<pair<string, string>>& portNameNumpairs_ckt =
+        (_isCkt1 ? portNameNumpairs_ckt1 : portNameNumpairs_ckt2);
+
+    string port;
+    int    num_bus = 0, num_port = 0; // number of bus & port
+    fbus >> port >>
+        num_bus; // this port is to buffer the "circuit1.v" & "circuit2.v"
+    bus_list_ckt.reserve(num_bus);
+    for (size_t i = 0; i < num_bus; ++i) {
+        vector<string> temp;
+        fbus >> num_port;
+        temp.reserve(num_port);
+        for (int j = 0; j < num_port; ++j) {
+            fbus >> port;
+            for (size_t k = 0, n = portNameNumpairs_ckt.size(); k < n; ++k) {
+                if (portNameNumpairs_ckt[k].second == port) {
+                    vector<variable*>& vecVar =
+                        ((portNameNumpairs_ckt[k].first[0] == 'i')
+                             ? (_isCkt1 ? x : y)
+                             : (_isCkt1 ? f : g));
+                    size_t _offset =
+                        (portNameNumpairs_ckt[k].first[0] == 'i')
+                            ? 0
+                            : (_isCkt1
+                                   ? inputNum_ckt1
+                                   : inputNum_ckt2); // have to substract the
+                                                     // input num if vecVar is
+                                                     // the output port vector
+                    vecVar[k - _offset]->setBusSize(num_port);
+                    vecVar[k - _offset]->setBusIndex(i);
+                    break;
+                }
+            }
+            // for (auto k : x) {
+            //     if (k->getName() == port) {
+            //         k->setBusSize(num_port);
+            //         k->setBusIndex(i);
+            //     }
+            // }
+            temp.push_back(port);
+        }
+        bus_list_ckt.push_back(temp);
+    }
+}
+
+void
+CirMgr::readBus() {
+    string   fbus_name = "../../release/case01/input";
+    ifstream fbus(fbus_name);
+    _readbus(fbus, bus_list_ckt1, 1);
+    _readbus(fbus, bus_list_ckt2, 0);
 }

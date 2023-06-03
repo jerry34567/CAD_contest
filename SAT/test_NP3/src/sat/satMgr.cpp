@@ -466,6 +466,28 @@ SatMgr::constraint5_miter(
     }
 }
 
+void
+SatMgr::addBusConstraint() {
+    vector<variable*>&x = cirmgr.x, &y = cirmgr.y;
+    for (size_t i = 0, ni = x.size(); i < ni; ++i) {
+        for (size_t j = 0, nj = y.size(); j < nj; ++j) {
+            if (x[i]->busSize() > y[j]->busSize()) {
+                vec<Lit> lits;
+                lits.push(~Lit(cirmgr.MI[i / 2 * 2][j]->getVar()));
+                solver.addClause(lits);
+                lits.clear();
+                lits.push(~Lit(cirmgr.MI[i / 2 * 2 + 1][j]->getVar()));
+                solver.addClause(lits);
+                lits.clear();
+
+                // solver.assumeProperty(cirmgr.MI[i / 2 * 2][j]->getVar(), 0);
+                // solver.assumeProperty(cirmgr.MI[i / 2 * 2 + 1][j]->getVar(),
+                // 0);
+            }
+        }
+    }
+}
+
 // cirmgr.inputNum_ckt1, outputNum_ckt1, cirmgr.inputNum_ckt2, outputNum_ckt2;
 // Construct PHI<0>  (Preprocess not implemented yet.)
 void
@@ -544,6 +566,7 @@ SatMgr::initCircuit(SatSolver& s, SatSolver& s_miter,
 
     constraint4_miter(s_miter);
     constraint5_miter(s_miter);
+    // addBusConstraint();
 }
 /*void
 SatMgr::readAAG() { // read aag file: top1.aag, top2.aag
