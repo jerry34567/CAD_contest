@@ -24,7 +24,8 @@ SolverMgr::verification(bool isManualBinded) {
 
         for (auto i : outputMatch) { // np3v a little bit strange!!!
             if (!satmgr.outputBind(get<1>(i), get<0>(i), get<2>(i)))
-                cout << "outputBind fail : solverMgr.cpp:26\n";
+                ;
+            // cout << "outputBind fail : solverMgr.cpp:26\n";
             // xorVar.push_back(verifierSolver.newVar());
             // verifierSolver.addXorCNF(xorVar.back(), get<1>(i),
             //                          get<0>(i), get<2>(i), 0);

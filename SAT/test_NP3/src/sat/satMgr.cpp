@@ -566,7 +566,7 @@ SatMgr::initCircuit(SatSolver& s, SatSolver& s_miter,
 
     constraint4_miter(s_miter);
     constraint5_miter(s_miter);
-    // addBusConstraint();
+    addBusConstraint();
 }
 /*void
 SatMgr::readAAG() { // read aag file: top1.aag, top2.aag
