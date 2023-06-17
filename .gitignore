@@ -51,7 +51,10 @@ lib/*
 !src/Makefile.lib
 
 input
-cir*
+cir1.v
+cir2.v
+circuit_1.v
+circuit_2.v
 yosys*
 top*
 map*
