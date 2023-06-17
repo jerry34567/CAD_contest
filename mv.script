@@ -1,5 +1,0 @@
-./aigtoaig top1.aig top1.aag
-./aigtoaig top2.aig top2.aag
-mv top*.a* SAT/test_NP3/files/aag
-mv top*.c* SAT/test_NP3/files/cnf
-mv map* SAT/test_NP3/files/map

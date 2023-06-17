@@ -1,4 +1,7 @@
-util.d: ../../include/gvMsg.h ../../include/gvUsage.h ../../include/gvIntType.h ../../include/myHashMap.h ../../include/myHashSet.h ../../include/util.h ../../include/rnGen.h ../../include/myUsage.h 
+util.d: ../../include/aiger.h ../../include/gvMsg.h ../../include/gvUsage.h ../../include/gvIntType.h ../../include/myHashMap.h ../../include/myHashSet.h ../../include/util.h ../../include/rnGen.h ../../include/myUsage.h 
+../../include/aiger.h: aiger.h
+	@rm -f ../../include/aiger.h
+	@ln -fs ../src/util/aiger.h ../../include/aiger.h
 ../../include/gvMsg.h: gvMsg.h
 	@rm -f ../../include/gvMsg.h
 	@ln -fs ../src/util/gvMsg.h ../../include/gvMsg.h

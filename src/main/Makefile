@@ -10,7 +10,7 @@ GVABSPATH  = $(patsubst %src/main/Makefile, %,$(TOPPATH))
 LIBABSPATH = $(patsubst %src/main/Makefile, %lib/,$(TOPPATH))
 MACLIB     = /opt/homebrew/lib
 OS         = $(shell uname -s)
-# CFLAGS     += -static
+
 
 target: $(TARGET)
 	

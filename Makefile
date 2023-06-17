@@ -1,5 +1,5 @@
-SRCPKGS  = util cmd mod abc bdd ntk sim vrf ext prove 
-LIBPKGS  = util cmd mod abc bdd ntk sim vrf prove
+SRCPKGS  =  cmd mod abc bdd itp ntk sim vrf ext prove util
+LIBPKGS  =  cmd mod abc bdd itp ntk sim vrf prove util
 
 MAIN     = main
 
@@ -55,7 +55,7 @@ main:
 	@cd src/$(MAIN); \
 		make --no-print-directory EXTLIB="$(SRCLIBS) $(EXTLIBS)" EXEC=$(EXEC);
 	@ln -fs bin/$(EXEC) .
-	@strip bin/$(EXEC)
+#	@strip bin/$(EXEC)
 
 clean:	
 	@for pkg in $(SRCPKGS); \

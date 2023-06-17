@@ -5,4 +5,4 @@ main.o: main.cpp ../../include/gvCmdMgr.h ../../include/gvMsg.h \
  ../../include/kernel/hashlib.h ../../include/kernel/log.h \
  ../../include/kernel/rtlil.h ../../include/kernel/constids.inc \
  ../../include/kernel/register.h ../../include/util.h \
- ../../include/rnGen.h ../../include/myUsage.h
+ ../../include/myUsage.h ../../include/rnGen.h

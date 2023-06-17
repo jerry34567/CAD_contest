@@ -229,11 +229,11 @@ GVCmdMgr::regCmd(const string& cmd, unsigned nCmp1, unsigned nCmp2,
 }
 
 GVCmdExecStatus
-GVCmdMgr::execOneCmd(const string& cmd){
+GVCmdMgr::execOneCmd(const string& cmd) {
     // Read User Command Input
-    string str     = "";
+    string str = "";
     str += cmd;
-    char*  execCmd = new char[1024];
+    char* execCmd = new char[1024];
     strcpy(execCmd, str.c_str());
     assert(execCmd);
 
@@ -275,7 +275,6 @@ GVCmdMgr::execOneCmd() {
         if (_dofile.eof()) closeDofile();
     } else execCmd = readline(getPrompt().c_str());
     assert(execCmd);
-
     if (addHistory(execCmd)) {
         add_history(_history.back().c_str());
         string     option = "";

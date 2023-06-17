@@ -18,7 +18,8 @@ extern GVCmdMgr* gvCmdMgr;
 
 // Command Categories to String
 const string GVCmdTypeString[] = {"Revealed", "Common", "Verify", "Simulate",
-                                  "Network",  "Abc",    "Mode",   "Bdd", "Prove"};
+                                  "Network",  "Abc",    "Mode",   "Bdd",
+                                  "Prove",    "Itp"};
 
 // Command Categories Enum
 enum GVCmdType
@@ -32,7 +33,8 @@ enum GVCmdType
     GV_CMD_TYPE_ABC      = 5,
     GV_CMD_TYPE_MOD      = 6,
     GV_CMD_TYPE_BDD      = 7,
-    GV_CMD_TYPE_PROVE    = 8
+    GV_CMD_TYPE_PROVE    = 8,
+    GV_CMD_TYPE_ITP      = 9,
 };
 
 enum GVCmdExecStatus
@@ -57,7 +59,7 @@ const unordered_set<GVCmdType> _setupMode{
 
 const unordered_set<GVCmdType> _vrfMode{
     GV_CMD_TYPE_VERIFY, GV_CMD_TYPE_SIMULATE, GV_CMD_TYPE_COMMON,
-    GV_CMD_TYPE_MOD, GV_CMD_TYPE_PROVE};
+    GV_CMD_TYPE_MOD,    GV_CMD_TYPE_PROVE,    GV_CMD_TYPE_ITP};
 
 #define GV_COMMAND(cmd, type)                                                  \
     class cmd : public GVCmdExec                                               \
@@ -131,7 +133,7 @@ class GVCmdMgr
         bool            regCmd(const string&, unsigned, unsigned, GVCmdExec*);
 
         GVCmdExecStatus execOneCmd();
-        GVCmdExecStatus execOneCmd(const string& file);//I add
+        GVCmdExecStatus execOneCmd(const string& file); // I add
 
         void printHelps(bool = false) const;
         void printHistory(int = -1) const;

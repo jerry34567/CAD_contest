@@ -1,4 +1,4 @@
-CSRCS	= $(wildcard *.cpp)
+CSRCS	= $(wildcard *.c*)
 CHDRS	= $(wildcard *.h)
 COBJS	= $(addsuffix .o, $(basename $(CSRCS)))
 CDEPS	= $(addsuffix .d, $(basename $(CSRCS)))
@@ -11,6 +11,7 @@ LIBDEP	= $(LIBDIR)/lib.d
 EXTLINK	= $(PKGNAME).d
 
 CC	= g++
+GCC = gcc
 YOSYSCONF = yosys-config --exec --cxx --cxxflags
 AR	= ar cr
 
@@ -19,7 +20,6 @@ ENGFLGS = -D__STDC_LIMIT_MACROS -D__STDC_FORMAT_MACROS
 YOSYSFLGS = -D_YOSYS_ -DYOSYS_ENABLE_PLUGINS -DYOSYS_ENABLE_GLOB -DYOSYS_ENABLE_ZLIB -I/usr/include/tcl8.6 -DYOSYS_ENABLE_TCL -DYOSYS_ENABLE_ABC -DYOSYS_ENABLE_COVER
 ABCFLGS = -DABC_USE_STDINT_H
 
-#when submitting, -O3 should below -g
 CFLAGS	= $(ENGFLGS) $(PKGFLAG) -O3 -DNDEBUG -Wall -Wno-parentheses -Wno-unused-function 
 CFLAGS	= $(ENGFLGS) $(PKGFLAG) -g -Wall -Wno-parentheses -Wno-unused-function
 
@@ -39,6 +39,9 @@ endif
 %.o:	%.cpp
 	@echo "> compiling: $<"
 	@$(CC) $(CFLAGS) $(YOSYSFLGS) $(ABCFLGS) $(OSMACRO) -I$(INCDIR) -c -o $@ $<
+%.o:	%.c
+	@echo "> compiling: $<"
+	@$(GCC) $(CFLAGS) $(YOSYSFLGS) $(ABCFLGS) $(OSMACRO) -I$(INCDIR) -c -o $@ $<
 
 top:	$(EXTLINK) target
 	@echo -n

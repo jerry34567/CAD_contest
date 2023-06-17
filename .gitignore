@@ -46,9 +46,12 @@ lib/*
 !include/myUsage.h
 !include/rnGen.h
 !include/util.h
+!include/gmp.h
+!include/gmpxx.h
+!src/Makefile.lib
 
-cir1.v
-cir2.v
+input
+cir*
 yosys*
 top*
 map*
