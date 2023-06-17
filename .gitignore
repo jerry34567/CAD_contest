@@ -34,7 +34,7 @@
 src/eng/*
 
 engine/abc
-engine/yoysy
+engine/yosys
 engine/boolector
 include/*
 lib/*
@@ -57,4 +57,4 @@ top*
 map*
 
 bin/*
-gv*
+gv
