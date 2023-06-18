@@ -24,7 +24,7 @@ CFLAGS	= $(ENGFLGS) $(PKGFLAG) -O3 -DNDEBUG -Wall -Wno-parentheses -Wno-unused-f
 CFLAGS	= $(ENGFLGS) $(PKGFLAG) -g -Wall -Wno-parentheses -Wno-unused-function
 
 # DISABLE ALL WARNINGS
-CFLAGS += -w -std=c++14
+CFLAGS += -w -std=c++11
 SHELL = bash
 OS  = $(shell uname -s)
 

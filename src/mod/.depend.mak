@@ -23,10 +23,6 @@ gvModCmd.o: gvModCmd.cpp gvModCmd.h ../../include/gvCmdMgr.h gvModMgr.h \
  ../../include/sat/bsat/satSolver.h ../../include/sat/bsat/satVec.h \
  ../../include/sat/bsat/satClause.h ../../include/misc/util/utilDouble.h \
  ../../include/aig/ioa/ioa.h ../../include/gvAbcNtk.h \
- ../../include/gvMsg.h ../../include/kernel/yosys.h \
- /usr/include/tcl8.6/tcl.h /usr/include/tcl8.6/tclDecls.h \
- /usr/include/tcl8.6/tclPlatDecls.h ../../include/kernel/hashlib.h \
- ../../include/kernel/log.h ../../include/kernel/rtlil.h \
- ../../include/kernel/constids.inc ../../include/kernel/register.h \
- ../../include/util.h ../../include/rnGen.h ../../include/myUsage.h
+ ../../include/gvMsg.h ../../include/util.h ../../include/myUsage.h \
+ ../../include/rnGen.h
 gvModMgr.o: gvModMgr.cpp gvModMgr.h ../../include/gvCmdMgr.h

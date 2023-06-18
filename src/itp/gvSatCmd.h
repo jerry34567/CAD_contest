@@ -17,10 +17,10 @@
 // ============================================================================
 // Classes for Prove package commands
 // ============================================================================
-GV_COMMAND(SATVerifyItpCmd, GV_CMD_TYPE_ITP);
-GV_COMMAND(SATVerifyBmcCmd, GV_CMD_TYPE_ITP);
-GV_COMMAND(NP3SolveCmd, GV_CMD_TYPE_ITP);
-GV_COMMAND(NP3VerifyCmd, GV_CMD_TYPE_ITP);
-GV_COMMAND(NP3BindCmd, GV_CMD_TYPE_ITP);
+// GV_COMMAND(SATVerifyItpCmd, GV_CMD_TYPE_ITP);
+// GV_COMMAND(SATVerifyBmcCmd, GV_CMD_TYPE_ITP);
+GV_COMMAND(NP3SolveCmd, GV_CMD_TYPE_COMMON);
+GV_COMMAND(NP3VerifyCmd, GV_CMD_TYPE_COMMON);
+GV_COMMAND(NP3BindCmd, GV_CMD_TYPE_COMMON);
 
 #endif

@@ -9,21 +9,23 @@
 #ifndef V3_NTK_C
 #define V3_NTK_C
 
-#include "bddMgrV.h"  // MODIFICATION FOR SoCV BDD
-#include "bddNodeV.h" // MODIFICATION FOR SoCV BDD
+// #include "bddMgrV.h"  // MODIFICATION FOR SoCV BDD
+// #include "bddNodeV.h" // MODIFICATION FOR SoCV BDD
 #include "gvMsg.h"
 #include "gvNtk.h"
 #include "stack"
 #include "util.h"
 
-extern BddMgrV* bddMgrV; // MODIFICATION FOR SoCV BDD
+// extern BddMgrV* bddMgrV; // MODIFICATION FOR SoCV BDD
 
 const bool
 GVNtkMgr::setBddOrder(const bool& file) {
     unsigned supportSize = getInputSize() + getInoutSize() + 2 * getFFSize();
     unsigned bddspsize   = bddMgrV->getNumSupports();
     if (supportSize >= bddMgrV->getNumSupports()) {
-        gvMsg(GV_MSG_ERR) << "BDD Support Size is Smaller Than Current Design Required !!" << endl;
+        gvMsg(GV_MSG_ERR)
+            << "BDD Support Size is Smaller Than Current Design Required !!"
+            << endl;
         return false;
     }
     // build support
@@ -71,7 +73,8 @@ GVNtkMgr::setBddOrder(const bool& file) {
     for (uint32_t i = 0; i < getFFConst0Size(); ++i) {
         assert(getGateType(getFFConst0(i)) == GV_NTK_OBJ_FF_NS);
         bddMgrV->addBddNodeV(getFFConst0(i).id, BddNodeV::_zero());
-        bddMgrV->addBddNodeV(getRoIdFromRiId(getFFConst0(i).id), BddNodeV::_zero());
+        bddMgrV->addBddNodeV(getRoIdFromRiId(getFFConst0(i).id),
+                             BddNodeV::_zero());
         ++supportId;
     }
 

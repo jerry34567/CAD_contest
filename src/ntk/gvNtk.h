@@ -12,7 +12,7 @@
 #include "gvAbcMgr.h"
 #include "kernel/sigtools.h" // Sigmap
 #include "kernel/utils.h"    // Toposort
-#include "kernel/yosys.h"
+// #include "kernel/yosys.h"
 #include <string>
 #include <vector>
 
@@ -48,10 +48,10 @@ typedef enum
 
 typedef enum
 {
-    GV_NTK_TYPE_V,       // 0: verilog
-    GV_NTK_TYPE_AIG,     // 1: aig
-    GV_NTK_TYPE_BLIF,    // 2: blif
-    GV_NTK_TYPE_BTOR     // 3: btor
+    GV_NTK_TYPE_V,    // 0: verilog
+    GV_NTK_TYPE_AIG,  // 1: aig
+    GV_NTK_TYPE_BLIF, // 2: blif
+    GV_NTK_TYPE_BTOR  // 3: btor
 } GV_Ntk_Format_t;
 
 /*
@@ -79,7 +79,8 @@ struct GVNetId {
         bool           fanin0Cp; // fanin 0 is complement
         bool           fanin1Cp; // fanin 1 is complement
         GV_Ntk_Type_t  type : GV_NTK_OBJ_AIG;
-        static GVNetId makeNetId(unsigned i = GVNtkUD, unsigned c = 0, GV_Ntk_Type_t t = GV_NTK_OBJ_AIG,
+        static GVNetId makeNetId(unsigned i = GVNtkUD, unsigned c = 0,
+                                 GV_Ntk_Type_t t = GV_NTK_OBJ_AIG,
                                  bool f0cp = false, bool f1cp = false) {
             GVNetId j;
             j.cp       = c;
@@ -90,14 +91,16 @@ struct GVNetId {
             return j;
         }
         GVNetId    operator~() const { return makeNetId(id, cp ^ 1); }
-        const bool operator==(const GVNetId& i) const { return cp == i.cp && id == i.id; }
+        const bool operator==(const GVNetId& i) const {
+            return cp == i.cp && id == i.id;
+        }
         const bool operator!=(const GVNetId& i) const { return !(*this == i); }
 };
 
 // fanout info
 struct GVFanout {
-    unsigned id;       // the id of the fanout obj
-    unsigned fanin;    // record which fanin is the obj
+        unsigned id;    // the id of the fanout obj
+        unsigned fanin; // record which fanin is the obj
 };
 
 class GVNtkMgr
@@ -112,11 +115,15 @@ class GVNtkMgr
         // get size
         inline const uint32_t getNetSize() const { return _id2GVNetId.size(); }
         inline const unsigned getInputSize() const { return _InputList.size(); }
-        inline const unsigned getOutputSize() const { return _OutputList.size(); }
+        inline const unsigned getOutputSize() const {
+            return _OutputList.size();
+        }
         inline const unsigned getInoutSize() const { return _InoutList.size(); }
         inline const uint32_t getFFSize() const { return _FFList.size(); }
         inline const uint32_t getConstSize() const { return _ConstList.size(); }
-        inline const uint32_t getFFConst0Size() const { return _FFConst0List.size(); }
+        inline const uint32_t getFFConst0Size() const {
+            return _FFConst0List.size();
+        }
         // access function
         inline const GVNetId& getInput(const unsigned& i) const {
             assert(i < getInputSize());
@@ -143,48 +150,67 @@ class GVNtkMgr
             return _FFConst0List[i];
         }
         // GV net id
-        inline const GVNetId&          getGVNetId(const unsigned& i) const { return _id2GVNetId.at(i); }
+        inline const GVNetId& getGVNetId(const unsigned& i) const {
+            return _id2GVNetId.at(i);
+        }
         // GV gate type
-        inline const GV_Ntk_Type_t     getGateType(const GVNetId& id) { return id.type; }
-        inline GV_Ntk_Type_t&          getTypeFromId(const unsigned& i) { return _id2Type[i]; }
+        inline const GV_Ntk_Type_t getGateType(const GVNetId& id) {
+            return id.type;
+        }
+        inline GV_Ntk_Type_t& getTypeFromId(const unsigned& i) {
+            return _id2Type[i];
+        }
         // fanin
-        inline const vector<unsigned>& getFaninId(const unsigned& i) const { return _id2FaninId.at(i); }
-        inline const bool              hasFanout(const unsigned& i)  const { return _id2Fanout.count(i); }
-        inline const vector<GVFanout>& getFanout(const unsigned& i)  const { return _id2Fanout.at(i); }
-        inline const GVNetId&          getInputNetId(const GVNetId&, const uint32_t&) const;
+        inline const vector<unsigned>& getFaninId(const unsigned& i) const {
+            return _id2FaninId.at(i);
+        }
+        inline const bool hasFanout(const unsigned& i) const {
+            return _id2Fanout.count(i);
+        }
+        inline const vector<GVFanout>& getFanout(const unsigned& i) const {
+            return _id2Fanout.at(i);
+        }
+        inline const GVNetId& getInputNetId(const GVNetId&,
+                                            const uint32_t&) const;
         // flag
-        inline void                    newMiscData() {
+        inline void           newMiscData() {
             if (getNetSize() > _miscList.size()) {
                 _miscList.resize(getNetSize());
             }
             ++_globalMisc;
         }
-        inline bool     isLatestMiscData(const GVNetId& id) const { return _globalMisc == _miscList[id.id]; }
-        inline void     setLatestMiscData(const GVNetId& id) { _miscList[id.id] = _globalMisc; }
+        inline bool isLatestMiscData(const GVNetId& id) const {
+            return _globalMisc == _miscList[id.id];
+        }
+        inline void setLatestMiscData(const GVNetId& id) {
+            _miscList[id.id] = _globalMisc;
+        }
         // mapping (get id)
-        inline unsigned getNetIdFromName(string name) { return _netName2Id[name]; }
+        inline unsigned getNetIdFromName(string name) {
+            return _netName2Id[name];
+        }
         inline unsigned getPpiIdFromRoId(unsigned id) { return _idRo2Ppi[id]; }
         inline unsigned getRiIdFromRoId(unsigned id) { return _idRo2Ri[id]; }
         inline unsigned getRoIdFromRiId(unsigned id) { return _idRi2Ro[id]; }
         // mapping (get name)
-        inline string   getNetNameFromId(unsigned id) { return _netId2Name[id]; }
+        inline string getNetNameFromId(unsigned id) { return _netId2Name[id]; }
 
         // -------------------------------------------------------------------------
         //                                Network
         // -------------------------------------------------------------------------
         // construct ntk
-        void       createNet(const GVNetId& id, const int net_type);
-        void       createNetFromAbc(char*);
-        void       parseAigMapping(Gia_Man_t* pGia);
-        void       setFileType(unsigned type) { _fileType = type; };
-        unsigned   getFileType()              { return _fileType; };
+        void     createNet(const GVNetId& id, const int net_type);
+        void     createNetFromAbc(char*);
+        void     parseAigMapping(Gia_Man_t* pGia);
+        void     setFileType(unsigned type) { _fileType = type; };
+        unsigned getFileType() { return _fileType; };
         // print ntk
-        void       print_rec(Gia_Man_t* pGia, Gia_Obj_t* pObj);
+        void     print_rec(Gia_Man_t* pGia, Gia_Obj_t* pObj);
         // print functions
-        void       printPi();      // print the information of all PI's
-        void       printPo();      // print the information of all PO's
-        void       printRi();      // print the information of all RI's
-        void       printSummary(); // print the information of all Obj in the aig ntk
+        void     printPi();  // print the information of all PI's
+        void     printPo();  // print the information of all PO's
+        void     printRi();  // print the information of all RI's
+        void printSummary(); // print the information of all Obj in the aig ntk
         // generate net
         GVNetId    createNet();
         bool       createGVAndGate(GVNetId&, GVNetId, GVNetId);
@@ -200,12 +226,12 @@ class GVNtkMgr
 
     protected:
         // info
-        vector<GVNetId>                 _InputList;    // GVNetId of PI's
-        vector<GVNetId>                 _OutputList;   // GVNetId of PO's
-        vector<GVNetId>                 _InoutList;    // GVNetId of Inout's
-        vector<GVNetId>                 _FFList;       // GVNetId of Flip Flops (current state)
-        vector<GVNetId>                 _ConstList;    // GVNetId of Constants (const0)
-        vector<GVNetId>                 _FFConst0List; // GVNetId of FF that stores const0
+        vector<GVNetId> _InputList;    // GVNetId of PI's
+        vector<GVNetId> _OutputList;   // GVNetId of PO's
+        vector<GVNetId> _InoutList;    // GVNetId of Inout's
+        vector<GVNetId> _FFList;       // GVNetId of Flip Flops (current state)
+        vector<GVNetId> _ConstList;    // GVNetId of Constants (const0)
+        vector<GVNetId> _FFConst0List; // GVNetId of FF that stores const0
         // map
         map<unsigned, vector<unsigned>> _id2FaninId;
         map<unsigned, GVNetId>          _id2GVNetId;
@@ -217,10 +243,11 @@ class GVNtkMgr
         map<unsigned, GV_Ntk_Type_t>    _id2Type;
         map<unsigned, vector<GVFanout>> _id2Fanout;
         // flag
-        vector<unsigned>                _miscList;   // global misc date list
-        unsigned                        _globalMisc; // global misc data for GVNetId in network
+        vector<unsigned>                _miscList; // global misc date list
+        unsigned _globalMisc; // global misc data for GVNetId in network
         // file type
-        unsigned                        _fileType;
+        unsigned _fileType;
+
     private:
         void reset();
 };

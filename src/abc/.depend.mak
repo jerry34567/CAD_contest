@@ -48,9 +48,8 @@ gvAbcMgr.o: gvAbcMgr.cpp gvAbcMgr.h ../../include/base/abc/abc.h \
  ../../include/opt/dar/dar.h ../../include/sat/bsat/satSolver.h \
  ../../include/sat/bsat/satVec.h ../../include/sat/bsat/satClause.h \
  ../../include/misc/util/utilDouble.h ../../include/aig/ioa/ioa.h \
- gvAbcNtk.h ../../include/bdd/cudd/cudd.h ../../include/bdd/mtr/mtr.h \
- ../../include/bdd/epd/epd.h ../../include/sat/cnf/cnf.h \
- ../../include/opt/dar/darInt.h ../../include/opt/dar/dar.h
+ gvAbcNtk.h ../../include/sat/cnf/cnf.h ../../include/opt/dar/darInt.h \
+ ../../include/opt/dar/dar.h
 gvAbcNtk.o: gvAbcNtk.cpp gvAbcNtk.h ../../include/base/abc/abc.h \
  ../../include/misc/vec/vec.h ../../include/misc/util/abc_global.h \
  ../../include/misc/util/abc_namespaces.h ../../include/misc/vec/vecInt.h \

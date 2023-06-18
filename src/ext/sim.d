@@ -216,10 +216,9 @@ sim.so: sim.cc /usr/include/stdc-predef.h \
  /usr/include/x86_64-linux-gnu/bits/uio_lim.h /usr/include/tcl8.6/tcl.h \
  /usr/include/tcl8.6/tclDecls.h /usr/include/tcl8.6/tclPlatDecls.h \
  /usr/local/share/yosys/include/kernel/hashlib.h \
- /usr/local/share/yosys/include/kernel/log.h /usr/include/c++/11/limits \
- /usr/include/c++/11/regex /usr/include/c++/11/bitset \
- /usr/include/c++/11/iterator /usr/include/c++/11/bits/stream_iterator.h \
- /usr/include/c++/11/locale \
+ /usr/local/share/yosys/include/kernel/log.h /usr/include/c++/11/regex \
+ /usr/include/c++/11/bitset /usr/include/c++/11/iterator \
+ /usr/include/c++/11/bits/stream_iterator.h /usr/include/c++/11/locale \
  /usr/include/c++/11/bits/locale_facets_nonio.h /usr/include/c++/11/ctime \
  /usr/include/x86_64-linux-gnu/c++/11/bits/time_members.h \
  /usr/include/x86_64-linux-gnu/c++/11/bits/messages_members.h \
@@ -547,7 +546,6 @@ sim.so: sim.cc /usr/include/stdc-predef.h \
 /usr/include/tcl8.6/tclPlatDecls.h:
 /usr/local/share/yosys/include/kernel/hashlib.h:
 /usr/local/share/yosys/include/kernel/log.h:
-/usr/include/c++/11/limits:
 /usr/include/c++/11/regex:
 /usr/include/c++/11/bitset:
 /usr/include/c++/11/iterator:

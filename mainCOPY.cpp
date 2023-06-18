@@ -76,7 +76,9 @@ main(int argc, char** argv) {
     // if (!(GVinitCommonCmd() && GVinitNtkCmd() && GVinitSimCmd() &&
     //       GVinitVrfCmd() && GVinitAbcCmd() && GVinitModCmd() &&
     //       GVinitBddCmd() && GVinitProveCmd() && GVinitItpCmd()))
-    if (!(GVinitCommonCmd() && GVinitModCmd() && GVinitItpCmd())) return 1;
+    if (!(GVinitCommonCmd() && GVinitAbcCmd() && GVinitModCmd() &&
+          GVinitItpCmd()))
+        return 1;
 
     string cmd;
     // cmd = "read design -v circuit_1.v";

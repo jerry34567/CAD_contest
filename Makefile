@@ -1,5 +1,9 @@
 SRCPKGS  =  cmd mod abc bdd itp ntk sim vrf ext prove util
 LIBPKGS  =  cmd mod abc bdd itp ntk sim vrf prove util
+SRCPKGS  =  cmd mod abc itp ntk util
+SRCPKGS  =  cmd mod abc itp util
+LIBPKGS  =  cmd mod abc itp ntk util
+LIBPKGS  =  cmd mod abc itp util
 
 MAIN     = main
 
@@ -13,7 +17,7 @@ ENGPKGS	 += lgl
 ENGPKGS	 += btor2parser
 #ENGPKGS	 += minisat
 ENGPKGS	 += abcc
-ENGPKGS	 += yosys
+# ENGPKGS	 += yosys
 
 ENGSSRC	 = eng
 
@@ -46,7 +50,8 @@ engLib:
 	@for pkg in $(ENGPKGS);	\
 	do \
 		cd include ; ln -fs ../src/$(ENGSSRC)/$$pkg/* .; cd .. ; \
-		cd lib ; ln -fs ../src/$(ENGSSRC)/$$pkg/*.a .; ln -fs ../src/$(ENGSSRC)/$$pkg/*.so .; cd .. ; \
+		cd lib ; ln -fs ../src/$(ENGSSRC)/$$pkg/*.a .;\
+		cd .. ; \
 	done
 	@rm -f include/*.a
 

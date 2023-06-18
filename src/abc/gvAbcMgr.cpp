@@ -1,6 +1,6 @@
 #include "gvAbcMgr.h"
 #include "base/abc/abc.h"
-#include "bdd/cudd/cudd.h"
+// #include "bdd/cudd/cudd.h"
 #include "gvAbcNtk.h"
 #include "sat/cnf/cnf.h"
 #include <cstring>
