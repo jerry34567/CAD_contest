@@ -1,6 +1,5 @@
-gvNtkBdd.o: gvNtkBdd.cpp ../../include/bddMgrV.h ../../include/myHash.h \
- ../../include/bddNodeV.h ../../include/bddNodeV.h ../../include/gvMsg.h \
- gvNtk.h ../../include/gvAbcMgr.h ../../include/base/abc/abc.h \
+gvNtkBdd.o: gvNtkBdd.cpp ../../include/gvMsg.h gvNtk.h \
+ ../../include/gvAbcMgr.h ../../include/base/abc/abc.h \
  ../../include/misc/vec/vec.h ../../include/misc/util/abc_global.h \
  ../../include/misc/util/abc_namespaces.h ../../include/misc/vec/vecInt.h \
  ../../include/misc/vec/vecFlt.h ../../include/misc/vec/vecStr.h \

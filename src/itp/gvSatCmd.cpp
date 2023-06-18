@@ -22,78 +22,78 @@ SolverMgr solvermgr;
 
 bool
 GVinitItpCmd() {
-    return (gvCmdMgr->regCmd("SATVerify ITP", 4, 3, new SATVerifyItpCmd) &&
-            gvCmdMgr->regCmd("NP3 S", 3, 1, new NP3SolveCmd) &&
+    return (gvCmdMgr->regCmd("NP3 S", 3, 1, new NP3SolveCmd) &&
             gvCmdMgr->regCmd("NP3 V", 3, 1, new NP3VerifyCmd) &&
-            gvCmdMgr->regCmd("NP3 B", 3, 1, new NP3BindCmd) &&
-            gvCmdMgr->regCmd("SATVerify BMC", 4, 3, new SATVerifyBmcCmd));
+            gvCmdMgr->regCmd("NP3 B", 3, 1, new NP3BindCmd));
 }
 
 //----------------------------------------------------------------------
 //    SATVerify ITP < -Netid <netId> | -Output <outputIndex> > >
 //----------------------------------------------------------------------
-GVCmdExecStatus
-SATVerifyItpCmd::exec(const string& option) {
-    /*    vector<string> options;
-        GVCmdExec::lexOptions(option, options);
+// GVCmdExecStatus
+// SATVerifyItpCmd::exec(const string& option) {
+/*    vector<string> options;
+    GVCmdExec::lexOptions(option, options);
 
-        if (options.size() < 2)
-            return GVCmdExec::errorOption(GV_CMD_OPT_MISSING, "");
-        if (options.size() > 2)
-            return GVCmdExec::errorOption(GV_CMD_OPT_EXTRA, options[2]);
+    if (options.size() < 2)
+        return GVCmdExec::errorOption(GV_CMD_OPT_MISSING, "");
+    if (options.size() > 2)
+        return GVCmdExec::errorOption(GV_CMD_OPT_EXTRA, options[2]);
 
-        bool isNet = false;
+    bool isNet = false;
 
-        if (myStrNCmp("-Netid", options[0], 2) == 0) isNet = true;
-        else if (myStrNCmp("-Output", options[0], 2) == 0) isNet = false;
-        else return GVCmdExec::errorOption(GV_CMD_OPT_ILLEGAL, options[0]);
+    if (myStrNCmp("-Netid", options[0], 2) == 0) isNet = true;
+    else if (myStrNCmp("-Output", options[0], 2) == 0) isNet = false;
+    else return GVCmdExec::errorOption(GV_CMD_OPT_ILLEGAL, options[0]);
 
-        int     num = 0;
-        GVNetId netId;
-        if (!myStr2Int(options[1], num) || (num < 0))
-            return GVCmdExec::errorOption(GV_CMD_OPT_ILLEGAL, options[1]);
-        if (isNet) {
-            if ((unsigned)num >= gvNtkMgr->getNetSize()) {
-                gvMsg(GV_MSG_ERR) << "Net with Id " << num
-                                  << " does NOT Exist in Current Ntk !!" <<
-       endl; return GVCmdExec::errorOption(GV_CMD_OPT_ILLEGAL, options[1]);
-            }
-            netId = GVNetId::makeNetId(num);
-        } else {
-            if ((unsigned)num >= gvNtkMgr->getOutputSize()) {
-                gvMsg(GV_MSG_ERR) << "Output with Index " << num
-                                  << " does NOT Exist in Current Ntk !!" <<
-       endl; return GVCmdExec::errorOption(GV_CMD_OPT_ILLEGAL, options[1]);
-            }
-            netId = gvNtkMgr->getOutput(num);
+    int     num = 0;
+    GVNetId netId;
+    if (!myStr2Int(options[1], num) || (num < 0))
+        return GVCmdExec::errorOption(GV_CMD_OPT_ILLEGAL, options[1]);
+    if (isNet) {
+        if ((unsigned)num >= gvNtkMgr->getNetSize()) {
+            gvMsg(GV_MSG_ERR) << "Net with Id " << num
+                              << " does NOT Exist in Current Ntk !!" <<
+   endl; return GVCmdExec::errorOption(GV_CMD_OPT_ILLEGAL, options[1]);
         }
-        // get PO's input, since the PO is actually a redundant node and should
-       be
-        // removed
-        GVNetId redundantNode = gvNtkMgr->getGVNetId(netId.id);
-        GVNetId monitor       = gvNtkMgr->getInputNetId(redundantNode, 0);
-        satMgr->verifyPropertyItp(gvNtkMgr->getNetNameFromId(redundantNode.id),
-                                  monitor);
-    */
-    return GV_CMD_EXEC_DONE;
-}
+        netId = GVNetId::makeNetId(num);
+    } else {
+        if ((unsigned)num >= gvNtkMgr->getOutputSize()) {
+            gvMsg(GV_MSG_ERR) << "Output with Index " << num
+                              << " does NOT Exist in Current Ntk !!" <<
+   endl; return GVCmdExec::errorOption(GV_CMD_OPT_ILLEGAL, options[1]);
+        }
+        netId = gvNtkMgr->getOutput(num);
+    }
+    // get PO's input, since the PO is actually a redundant node and should
+   be
+    // removed
+    GVNetId redundantNode = gvNtkMgr->getGVNetId(netId.id);
+    GVNetId monitor       = gvNtkMgr->getInputNetId(redundantNode, 0);
+    satMgr->verifyPropertyItp(gvNtkMgr->getNetNameFromId(redundantNode.id),
+                              monitor);
+*/
+//     return GV_CMD_EXEC_DONE;
+// }
 
-void
-SATVerifyItpCmd::usage(const bool& verbose) const {
-    // gvMsg(GV_MSG_IFO)
-    //     << "Usage: SATVerify ITP < -Netid <netId> | -Output <outputIndex> >"
-    //     << endl;
-}
+// void
+// SATVerifyItpCmd::usage(const bool& verbose) const {
+//     // gvMsg(GV_MSG_IFO)
+//     //     << "Usage: SATVerify ITP < -Netid <netId> | -Output <outputIndex>
+//     >"
+//     //     << endl;
+// }
 
-void
-SATVerifyItpCmd::help() const {
-    cout << setw(20) << left << "SATVerify ITP:"
-         << "check the monitor by interpolation-based technique" << endl;
-}
+// void
+// SATVerifyItpCmd::help() const {
+//     cout << setw(20) << left << "SATVerify ITP:"
+//          << "check the monitor by interpolation-based technique" << endl;
+// }
 
 // //----------------------------------------------------------------------
 // //    SATVerify BMC < -Netid <netId> | -Output <outputIndex> > >
 // //----------------------------------------------------------------------
+/*
 GVCmdExecStatus
 SATVerifyBmcCmd::exec(const string& option) {
     /*vector<string> options;
@@ -134,9 +134,9 @@ SATVerifyBmcCmd::exec(const string& option) {
     GVNetId redundantNode = gvNtkMgr->getGVNetId(netId.id);
     GVNetId monitor       = gvNtkMgr->getInputNetId(redundantNode, 0);
     satMgr->verifyPropertyBmc(gvNtkMgr->getNetNameFromId(redundantNode.id),
-                              monitor);*/
+                              monitor);
 
-    return GV_CMD_EXEC_DONE;
+return GV_CMD_EXEC_DONE;
 }
 
 void
@@ -152,7 +152,7 @@ SATVerifyBmcCmd::help() const {
     cout << setw(20) << left << "SATVerify BMC:"
          << "check the monitor by bounded model checking" << endl;
 }
-
+*/
 //----------------------------------------------------------------------
 //    NP3 Solve
 //----------------------------------------------------------------------
