@@ -100,7 +100,7 @@ SolverMgr::solveNP3() {
                     if (satmgr.solver.getValue(MI[i][j]->getVar()) == 1) {
                         Lit v = Lit(MI[i][j]->getVar2());
                         assump.push(v);
-                        cout << "i: " << i << " j: " << j << " val: "
+                        cout << "MI i: " << i << " j: " << j << " val: "
                              << satmgr.solver.getValue(MI[i][j]->getVar())
                              << endl;
                     } else if (satmgr.solver.getValue(MI[i][j]->getVar()) ==
@@ -123,7 +123,7 @@ SolverMgr::solveNP3() {
                     if (satmgr.solver.getValue(MO[i][j]->getVar()) == 1) {
                         Lit v = Lit(MO[i][j]->getVar2());
                         assump.push(v);
-                        cout << "i: " << i << " j: " << j << " val: "
+                        cout << "MO i: " << i << " j: " << j << " val: "
                              << satmgr.solver.getValue(MO[i][j]->getVar())
                              << endl;
                     } else if (satmgr.solver.getValue(MO[i][j]->getVar()) ==

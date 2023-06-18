@@ -46,6 +46,22 @@ class variable
         // Var _aigVar; do we need this??
 };
 
+class Cmdr // commander variable encoding for constraint 2 and 3
+{
+    public:
+        Cmdr (Var v, bool is_var):_var(v), isVar(is_var) {}
+        Cmdr () {}
+        ~Cmdr() {}
+        Var     getVar() const { return _var; }
+        void    setVar(const Var& v) { _var = v; }
+        bool    getIsVar() const { return isVar;}
+        vector<Cmdr*> Subords;
+        
+    private:
+        Var     _var;
+        bool    isVar; // 1: variable, 0: Subords
+};
+
 class CirMgr
 {
 
@@ -85,6 +101,7 @@ class CirMgr
             umapName_ckt2;
         unordered_map<int, Var> umapInterVar_ckt1, umapInterVar_ckt1_veri,
             umapInterVar_ckt2, umapInterVar_ckt2_veri;
+        vector<Cmdr* > Cmdr_level;
 
         // helper function
 

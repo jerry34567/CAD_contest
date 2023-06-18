@@ -43,7 +43,10 @@ class SatMgr
         // void verification(bool isManualBinded = 0);
         // void solveNP3();
 
+        void constructCmdr(SatSolver& s); // recursive construct Cmdr variable from bottom
+        void cmdrExactlyOne(SatSolver& s, Cmdr* parent); // recursive addClause
         void constraint2(SatSolver& s);
+        void constraint_Cmdr(SatSolver& s, vector<vector<variable*>>& M);
         void constraint3(SatSolver& s);
         void constraint4_miter(SatSolver& s);
         void constraint5_miter(SatSolver& s);

@@ -333,6 +333,110 @@ SatMgr::constraint2(
     // cout << "GN" << MI[0][0]->getName() << endl;
 }
 void
+SatMgr::constraint_Cmdr(SatSolver& s, vector<vector<variable*>>& M){
+    cout << "MO0size: " << M[0].size() << endl;
+    cout << "MO size: " << M.size() << endl;
+    for(size_t i = 0; i < M[0].size(); i++){
+
+        // construct Cmdr Subcord
+        cirmgr.Cmdr_level.clear();
+        for(size_t j = 0; j < M.size(); j++){
+            Cmdr* newCmdr = new Cmdr(M[j][i]->getVar(), true);
+            cout << j << " " << i << " " << M[j][i]->getVar() << endl;
+            cirmgr.Cmdr_level.push_back(newCmdr);
+        }
+        cout << "CMDRLEVEL size: " <<  cirmgr.Cmdr_level.size() << endl;
+        constructCmdr(s);
+        Cmdr* root = cirmgr.Cmdr_level[0];
+        vec<Lit> lits; Lit a = Lit(root->getVar()); lits.push(a); s.addClause(lits); lits.clear();        
+        cmdrExactlyOne(s, root);
+
+    }
+}
+
+void
+SatMgr::constructCmdr(SatSolver& s){
+    vector<Cmdr*> Cmdr_level_temp;
+    size_t group_index = 0;
+    if(cirmgr.Cmdr_level.size() == 1) return;
+    
+    Cmdr* newCmdr;
+    for(size_t i = 0; i < cirmgr.Cmdr_level.size(); i++){
+        if(i % 3 == 0){
+            newCmdr = new Cmdr(s.newVar(), false);
+            Cmdr_level_temp.push_back(newCmdr);
+        }
+        newCmdr->Subords.push_back(cirmgr.Cmdr_level[i]);
+    }
+    cirmgr.Cmdr_level.clear();
+    for(size_t i = 0; i < Cmdr_level_temp.size(); i++){
+        cirmgr.Cmdr_level.push_back(Cmdr_level_temp[i]);
+    }
+    constructCmdr(s);
+    return;
+}
+
+void
+SatMgr::cmdrExactlyOne(SatSolver& s, Cmdr* parent){
+    cout << "p: " << parent->getVar() << " ";
+    for(int i = 0; i<parent->Subords.size(); i++){
+        cout << "s" << i << ": " << parent->Subords[i]->getVar() << " ";
+    }
+    cout << endl;
+    if(parent->getIsVar()) return;
+    if(parent->Subords.size() == 1){
+        cout << "E1" << endl;
+        vec<Lit> lits;
+        Lit np = ~Lit(parent->getVar());
+        Lit n0 = ~Lit(parent->Subords[0]->getVar());
+        Lit pp =  Lit(parent->getVar());
+        Lit p0 =  Lit(parent->Subords[0]->getVar());
+        lits.push(pp); lits.push(n0); s.addClause(lits); lits.clear();
+        lits.push(np); lits.push(p0); s.addClause(lits); lits.clear();
+        cmdrExactlyOne(s, parent->Subords[0]);
+    }
+    else if(parent->Subords.size() == 2){
+        cout << "E2" << endl;
+        vec<Lit> lits;
+        Lit np = ~Lit(parent->getVar());
+        Lit n0 = ~Lit(parent->Subords[0]->getVar());
+        Lit n1 = ~Lit(parent->Subords[1]->getVar());
+        Lit pp =  Lit(parent->getVar());
+        Lit p0 =  Lit(parent->Subords[0]->getVar());
+        Lit p1 =  Lit(parent->Subords[1]->getVar());
+        lits.push(n0); lits.push(n1); s.addClause(lits); lits.clear();
+        lits.push(np); lits.push(p0); lits.push(p1); s.addClause(lits); lits.clear();
+        lits.push(pp); lits.push(n0); s.addClause(lits); lits.clear();
+        lits.push(pp); lits.push(n1); s.addClause(lits); lits.clear();
+        cmdrExactlyOne(s, parent->Subords[0]);
+        cmdrExactlyOne(s, parent->Subords[1]);
+    }
+    else if(parent->Subords.size() == 3){
+        cout << "E3" << endl;
+        vec<Lit> lits;
+        Lit np = ~Lit(parent->getVar());
+        Lit n0 = ~Lit(parent->Subords[0]->getVar());
+        Lit n1 = ~Lit(parent->Subords[1]->getVar());
+        Lit n2 = ~Lit(parent->Subords[2]->getVar());
+        Lit pp =  Lit(parent->getVar());
+        Lit p0 =  Lit(parent->Subords[0]->getVar());
+        Lit p1 =  Lit(parent->Subords[1]->getVar());
+        Lit p2 =  Lit(parent->Subords[2]->getVar());
+        lits.push(n0); lits.push(n1); s.addClause(lits); lits.clear();
+        lits.push(n1); lits.push(n2); s.addClause(lits); lits.clear();
+        lits.push(n0); lits.push(n2); s.addClause(lits); lits.clear();
+        lits.push(np); lits.push(p0); lits.push(p1); lits.push(p2); s.addClause(lits); lits.clear();
+        lits.push(pp); lits.push(n0); s.addClause(lits); lits.clear();
+        lits.push(pp); lits.push(n1); s.addClause(lits); lits.clear();
+        lits.push(pp); lits.push(n2); s.addClause(lits); lits.clear();
+        cmdrExactlyOne(s, parent->Subords[0]);
+        cmdrExactlyOne(s, parent->Subords[1]);
+        cmdrExactlyOne(s, parent->Subords[2]);
+    }
+
+}
+
+void
 SatMgr::constraint3(
     SatSolver& s) { // for solver1, j = 1 ~ mI+1 :sum(aij+bij)  = 1, for
                     // all i = 1 ~ nI
@@ -559,8 +663,13 @@ SatMgr::initCircuit(SatSolver& s, SatSolver& s_miter,
 
     s.addClause(lits);
     lits.clear(); // constraint 1.  sum(sum(c_ij + d_ij)) >0
-    constraint2(s);
-    constraint3(s);
+    
+    //test cmdr
+    // constraint2(s);
+    constraint_Cmdr(s, cirmgr.MO); // commander version of constraint 2
+    constraint_Cmdr(s, cirmgr.MI); // commander version of constraint 3
+
+    // constraint3(s);
     // solver(solver1 is used for determining feasible a, b, c, d
     // (permutations), has nothing to do with x, y, f, g)
 
