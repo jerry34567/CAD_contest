@@ -238,7 +238,7 @@ GVCmdMgr::execOneCmd(const string& cmd) {
     assert(execCmd);
 
     if (addHistory(execCmd)) {
-        add_history(_history.back().c_str());
+        // add_history(_history.back().c_str());
         string     option = "";
         GVCmdExec* e      = parseCmd(option);
         // Check command types
@@ -268,15 +268,15 @@ GVCmdMgr::execOneCmd() {
     // Read User Command Input
     string str     = "";
     char*  execCmd = new char[1024];
-    if (_dofile.is_open()) {
-        getline(_dofile, str);
-        strcpy(execCmd, str.c_str());
-        cout << getPrompt() << execCmd << endl;
-        if (_dofile.eof()) closeDofile();
-    } else execCmd = readline(getPrompt().c_str());
+    // if (_dofile.is_open()) {
+    //     getline(_dofile, str);
+    //     strcpy(execCmd, str.c_str());
+    //     cout << getPrompt() << execCmd << endl;
+    //     if (_dofile.eof()) closeDofile();
+    // } else execCmd = readline(getPrompt().c_str());
     assert(execCmd);
     if (addHistory(execCmd)) {
-        add_history(_history.back().c_str());
+        // add_history(_history.back().c_str());
         string     option = "";
         GVCmdExec* e      = parseCmd(option);
         // Check command types

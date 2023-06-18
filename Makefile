@@ -7,7 +7,7 @@ LIBPKGS  =  cmd mod abc itp util
 
 MAIN     = main
 
-EXTLIBS	 = -lm -lz -lreadline -ltermcap -ldl -lstdc++ -ltcl -lffi -lgmp
+EXTLIBS	 = -lm -lz -ltermcap -ldl -lstdc++ -ltcl -lffi -lgmp
 SRCLIBS  = $(addprefix -l, $(LIBPKGS)) $(addprefix -l, $(ENGPKGS))
 
 
