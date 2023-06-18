@@ -71,11 +71,13 @@ main(int argc, char** argv) {
     //     myexit();
     // }
 
-    Yosys::yosys_setup();                     // initial yosys command
-    Yosys::log_streams.push_back(&std::cout); // log yosys message
-    if (!(GVinitCommonCmd() && GVinitNtkCmd() && GVinitSimCmd() &&
-          GVinitVrfCmd() && GVinitAbcCmd() && GVinitModCmd() &&
-          GVinitBddCmd() && GVinitProveCmd() && GVinitItpCmd()))
+    // Yosys::yosys_setup();                     // initial yosys command
+    // Yosys::log_streams.push_back(&std::cout); // log yosys message
+    if (!(GVinitCommonCmd() && GVinitAbcCmd() && GVinitModCmd() &&
+          GVinitItpCmd()))
+        // if (!(GVinitCommonCmd() && GVinitNtkCmd() && GVinitSimCmd() &&
+        //       GVinitVrfCmd() && GVinitAbcCmd() && GVinitModCmd() &&
+        //       GVinitBddCmd() && GVinitProveCmd() && GVinitItpCmd()))
         return 1;
 
     string cmd;
@@ -162,8 +164,8 @@ main(int argc, char** argv) {
     // cmd = "q -f";
     // gvCmdMgr->execOneCmd(cmd);
     // 1125
-    cmd = "set engine abc";
-    gvCmdMgr->execOneCmd(cmd);
+    // cmd = "set engine abc";
+    // gvCmdMgr->execOneCmd(cmd);
     cmd = "abccmd read_verilog cir1.v";
     // cmd = "abccmd read_verilog cad16_np3_case/case1/cir1.v";
     gvCmdMgr->execOneCmd(cmd);
@@ -184,11 +186,11 @@ main(int argc, char** argv) {
     aig2aag("top2.aig", "top2.aag");
     cmd = "abccmd write_cnf top2.cnf";
     gvCmdMgr->execOneCmd(cmd);
-    cmd = "read design -v cir1.v";
-    gvCmdMgr->execOneCmd(cmd);
-    cmd = "set sys vrf";
-    gvCmdMgr->execOneCmd(cmd);
-    gvCmdMgr->setPrompt();
+    // cmd = "read design -v cir1.v";
+    // gvCmdMgr->execOneCmd(cmd);
+    // cmd = "set sys vrf";
+    // gvCmdMgr->execOneCmd(cmd);
+    // gvCmdMgr->setPrompt();
     cmd = "np3 s";
     gvCmdMgr->execOneCmd(cmd);
 
