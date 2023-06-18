@@ -23,8 +23,8 @@ gvAbcCmd.o: gvAbcCmd.cpp gvAbcCmd.h ../../include/gvCmdMgr.h gvAbcMgr.h \
  ../../include/sat/bsat/satVec.h ../../include/sat/bsat/satClause.h \
  ../../include/misc/util/utilDouble.h ../../include/aig/ioa/ioa.h \
  gvAbcNtk.h ../../include/gvModMgr.h ../../include/gvCmdMgr.h \
- ../../include/gvMsg.h ../../include/util.h ../../include/rnGen.h \
- ../../include/myUsage.h
+ ../../include/gvMsg.h ../../include/util.h ../../include/myUsage.h \
+ ../../include/rnGen.h
 gvAbcMgr.o: gvAbcMgr.cpp gvAbcMgr.h ../../include/base/abc/abc.h \
  ../../include/misc/vec/vec.h ../../include/misc/util/abc_global.h \
  ../../include/misc/util/abc_namespaces.h ../../include/misc/vec/vecInt.h \

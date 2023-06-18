@@ -165,6 +165,7 @@ main(int argc, char** argv) {
     cmd = "set engine abc";
     gvCmdMgr->execOneCmd(cmd);
     cmd = "abccmd read_verilog cir1.v";
+    // cmd = "abccmd read_verilog cad16_np3_case/case1/cir1.v";
     gvCmdMgr->execOneCmd(cmd);
     cmd = "abccmd fraig";
     gvCmdMgr->execOneCmd(cmd);
@@ -174,6 +175,7 @@ main(int argc, char** argv) {
     cmd = "abccmd write_cnf top1.cnf";
     gvCmdMgr->execOneCmd(cmd);
     cmd = "abccmd read_verilog cir2.v";
+    // cmd = "abccmd read_verilog cad16_np3_case/case1/cir2.v";
     gvCmdMgr->execOneCmd(cmd);
     cmd = "abccmd fraig";
     gvCmdMgr->execOneCmd(cmd);

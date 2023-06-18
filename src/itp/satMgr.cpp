@@ -213,6 +213,156 @@ SatMgr::verification(bool isManualBinded) {
 //       }
 //       cout << endl;
 //   }
+
+void
+SatMgr::recordResult(const SatSolver& s, vector<vector<variable*>> const& M,
+                     int IO) { // IO: 1 -> MI, 2 -> MO
+    vector<variable*>&x = cirmgr.x, &y = cirmgr.y, &f = cirmgr.f, &g = cirmgr.g;
+    for (int j = 0; j < M.size(); j++) {
+        for (int i = 0; i < M[0].size(); i++) {
+            // cout << M[j][i]->getName() << " " << M[j][i]->getSub1()
+            // << " " << M[j][i]->getSub2() << " "; cout <<
+            // M[j][i]->getVar() << " " << M[j][i]->getVar2() <<
+            // "\tAssign: "; cout << s.getValue(M[j][i]->getVar()); cout
+            // << endl;
+            if (s.getValue(M[j][i]->getVar()) == 1 && IO == 1) {
+                // input match
+                if (j == 2 * cirmgr.inputNum_ckt1) {
+                    // port2 == CONST 0
+                    if (constGroup
+                            .insert(
+                                pair<string, bool>(cirmgr.portname_ckt2[i], 0))
+                            .second == false) {
+                        cout << "failed to bind " << cirmgr.portname_ckt2[i]
+                             << "with const 0 !!!" << endl;
+                    }
+                    // inputMatch.push_back(
+                    //     tuple<bool, Var, Var>(0, -1, y[i]->getVar3()));
+                } else if (j == 2 * cirmgr.inputNum_ckt1 + 1) {
+                    // port2 == CONST 1
+                    // cout << cirmgr.portname_ckt2[i] << " ==  " << 1 << endl;
+                    if (constGroup
+                            .insert(
+                                pair<string, bool>(cirmgr.portname_ckt2[i], 1))
+                            .second == false) {
+                        cout << "failed to bind " << cirmgr.portname_ckt2[i]
+                             << "with const 1 !!!" << endl;
+                    }
+                    // inputMatch.push_back(
+                    //     tuple<bool, Var, Var>(0, -2, y[i]->getVar3()));
+                } else if (j % 2 == 0) {
+                    // port1 == port2
+                    // cout << cirmgr.portname_ckt2[i]
+                    //      << " ==  " << cirmgr.portname_ckt1[j / 2] << endl;
+                    if (inputGroup.find(cirmgr.portname_ckt1[j / 2]) ==
+                        inputGroup
+                            .end()) // if inputGroup[cirmgr.portname_ckt1[j /
+                                    // 2]] has not yet insert
+                        inputGroup[cirmgr.portname_ckt1[j / 2]] = Group();
+                    inputGroup[cirmgr.portname_ckt1[j / 2]].group().push_back(
+                        pair<string, bool>(cirmgr.portname_ckt2[i], 1));
+                    // inputMatch.push_back(tuple<bool, Var, Var>(
+                    //     0, x[j / 2]->getVar3(), y[i]->getVar3()));
+                } else {
+                    // port1 == ! port2
+                    // cout << cirmgr.portname_ckt2[i] << " == !"
+                    //      << cirmgr.portname_ckt1[j / 2] << endl;
+                    if (inputGroup.find(cirmgr.portname_ckt1[j / 2]) ==
+                        inputGroup
+                            .end()) // if inputGroup[cirmgr.portname_ckt1[j /
+                                    // 2]] has not yet insert
+                        inputGroup[cirmgr.portname_ckt1[j / 2]] = Group();
+                    inputGroup[cirmgr.portname_ckt1[j / 2]].group().push_back(
+                        pair<string, bool>(cirmgr.portname_ckt2[i], 0));
+                    // inputMatch.push_back(tuple<bool, Var, Var>(
+                    //     1, x[j / 2]->getVar3(), y[i]->getVar3()));
+                }
+            } else if (s.getValue(M[j][i]->getVar()) == 1 && IO == 2) {
+                // output match
+                if (j % 2 == 0) {
+                    // port1 == port2
+                    // cout << cirmgr.portname_ckt2[i + cirmgr.inputNum_ckt2]
+                    //      << " ==  "
+                    //      << cirmgr.portname_ckt1[j / 2 +
+                    //      cirmgr.inputNum_ckt1]
+                    //      << endl;
+                    if (outputGroup.find(
+                            cirmgr
+                                .portname_ckt1[j / 2 + cirmgr.inputNum_ckt1]) ==
+                        outputGroup
+                            .end()) // if inputGroup[cirmgr.portname_ckt1[j /
+                                    // 2]] has not yet insert
+                        outputGroup[cirmgr.portname_ckt1
+                                        [j / 2 + cirmgr.inputNum_ckt1]] =
+                            Group();
+                    outputGroup[cirmgr.portname_ckt1[j / 2 +
+                                                     cirmgr.inputNum_ckt1]]
+                        .group()
+                        .push_back(pair<string, bool>(
+                            cirmgr.portname_ckt2[i + cirmgr.inputNum_ckt2], 1));
+                    // outputMatch.push_back(tuple<bool, Var, Var>(
+                    //     0, f[j / 2]->getVar3(), g[i]->getVar3()));
+
+                } else {
+                    // port1 == ! port2
+                    // cout << cirmgr.portname_ckt2[i + cirmgr.inputNum_ckt2]
+                    //      << " == !"
+                    //      << cirmgr.portname_ckt1[j / 2 +
+                    //      cirmgr.inputNum_ckt1]
+                    //      << endl;
+                    if (outputGroup.find(
+                            cirmgr
+                                .portname_ckt1[j / 2 + cirmgr.inputNum_ckt1]) ==
+                        outputGroup
+                            .end()) // if inputGroup[cirmgr.portname_ckt1[j /
+                                    // 2]] has not yet insert
+                        outputGroup[cirmgr.portname_ckt1
+                                        [j / 2 + cirmgr.inputNum_ckt1]] =
+                            Group();
+                    outputGroup[cirmgr.portname_ckt1[j / 2 +
+                                                     cirmgr.inputNum_ckt1]]
+                        .group()
+                        .push_back(pair<string, bool>(
+                            cirmgr.portname_ckt2[i + cirmgr.inputNum_ckt2], 0));
+                    // outputMatch.push_back(tuple<bool, Var, Var>(
+                    //     1, f[j / 2]->getVar3(), g[i]->getVar3()));
+                }
+            }
+        }
+    }
+    cout << endl;
+}
+
+void
+SatMgr::generateResult() {
+    ofstream fout;
+    fout.open("output.txt");
+    if (!inputGroup.empty()) {
+        for (auto i : inputGroup) {
+            fout << "INGROUP" << endl;
+            fout << "1 + " << i.first << endl;
+            for (auto j : i.second.group())
+                fout << "2" << (j.second ? " + " : " - ") << j.first << endl;
+            fout << "END" << endl;
+        }
+    }
+    if (!outputGroup.empty()) {
+        for (auto i : outputGroup) {
+            fout << "OUTGROUP" << endl;
+            fout << "1 + " << i.first << endl;
+            for (auto j : i.second.group())
+                fout << "2" << (j.second ? " + " : " - ") << j.first << endl;
+            fout << "END" << endl;
+        }
+    }
+    if (!constGroup.empty()) {
+        fout << "CONSTGROUP" << endl;
+        for (auto i : constGroup)
+            fout << (i.second ? "+ " : "- ") << i.first << endl;
+        fout << "END" << endl;
+    }
+    fout.close();
+}
 void
 SatMgr::printMatrix(const SatSolver& s, vector<vector<variable*>> const& M,
                     int IO) { // IO: 1 -> MI, 2 -> MO
@@ -333,43 +483,46 @@ SatMgr::constraint2(
     // cout << "GN" << MI[0][0]->getName() << endl;
 }
 void
-SatMgr::constraint_Cmdr(SatSolver& s, vector<vector<variable*>>& M){
+SatMgr::constraint_Cmdr(SatSolver& s, vector<vector<variable*>>& M) {
     cout << "MO0size: " << M[0].size() << endl;
     cout << "MO size: " << M.size() << endl;
-    for(size_t i = 0; i < M[0].size(); i++){
+    for (size_t i = 0; i < M[0].size(); i++) {
 
         // construct Cmdr Subcord
         cirmgr.Cmdr_level.clear();
-        for(size_t j = 0; j < M.size(); j++){
+        for (size_t j = 0; j < M.size(); j++) {
             Cmdr* newCmdr = new Cmdr(M[j][i]->getVar(), true);
             cout << j << " " << i << " " << M[j][i]->getVar() << endl;
             cirmgr.Cmdr_level.push_back(newCmdr);
         }
-        cout << "CMDRLEVEL size: " <<  cirmgr.Cmdr_level.size() << endl;
+        cout << "CMDRLEVEL size: " << cirmgr.Cmdr_level.size() << endl;
         constructCmdr(s);
-        Cmdr* root = cirmgr.Cmdr_level[0];
-        vec<Lit> lits; Lit a = Lit(root->getVar()); lits.push(a); s.addClause(lits); lits.clear();        
+        Cmdr*    root = cirmgr.Cmdr_level[0];
+        vec<Lit> lits;
+        Lit      a = Lit(root->getVar());
+        lits.push(a);
+        s.addClause(lits);
+        lits.clear();
         cmdrExactlyOne(s, root);
-
     }
 }
 
 void
-SatMgr::constructCmdr(SatSolver& s){
+SatMgr::constructCmdr(SatSolver& s) {
     vector<Cmdr*> Cmdr_level_temp;
-    size_t group_index = 0;
-    if(cirmgr.Cmdr_level.size() == 1) return;
-    
+    size_t        group_index = 0;
+    if (cirmgr.Cmdr_level.size() == 1) return;
+
     Cmdr* newCmdr;
-    for(size_t i = 0; i < cirmgr.Cmdr_level.size(); i++){
-        if(i % 3 == 0){
+    for (size_t i = 0; i < cirmgr.Cmdr_level.size(); i++) {
+        if (i % 3 == 0) {
             newCmdr = new Cmdr(s.newVar(), false);
             Cmdr_level_temp.push_back(newCmdr);
         }
         newCmdr->Subords.push_back(cirmgr.Cmdr_level[i]);
     }
     cirmgr.Cmdr_level.clear();
-    for(size_t i = 0; i < Cmdr_level_temp.size(); i++){
+    for (size_t i = 0; i < Cmdr_level_temp.size(); i++) {
         cirmgr.Cmdr_level.push_back(Cmdr_level_temp[i]);
     }
     constructCmdr(s);
@@ -377,63 +530,102 @@ SatMgr::constructCmdr(SatSolver& s){
 }
 
 void
-SatMgr::cmdrExactlyOne(SatSolver& s, Cmdr* parent){
+SatMgr::cmdrExactlyOne(SatSolver& s, Cmdr* parent) {
     cout << "p: " << parent->getVar() << " ";
-    for(int i = 0; i<parent->Subords.size(); i++){
+    for (int i = 0; i < parent->Subords.size(); i++) {
         cout << "s" << i << ": " << parent->Subords[i]->getVar() << " ";
     }
     cout << endl;
-    if(parent->getIsVar()) return;
-    if(parent->Subords.size() == 1){
+    if (parent->getIsVar()) return;
+    if (parent->Subords.size() == 1) {
         cout << "E1" << endl;
         vec<Lit> lits;
-        Lit np = ~Lit(parent->getVar());
-        Lit n0 = ~Lit(parent->Subords[0]->getVar());
-        Lit pp =  Lit(parent->getVar());
-        Lit p0 =  Lit(parent->Subords[0]->getVar());
-        lits.push(pp); lits.push(n0); s.addClause(lits); lits.clear();
-        lits.push(np); lits.push(p0); s.addClause(lits); lits.clear();
+        Lit      np = ~Lit(parent->getVar());
+        Lit      n0 = ~Lit(parent->Subords[0]->getVar());
+        Lit      pp = Lit(parent->getVar());
+        Lit      p0 = Lit(parent->Subords[0]->getVar());
+        lits.push(pp);
+        lits.push(n0);
+        s.addClause(lits);
+        lits.clear();
+        lits.push(np);
+        lits.push(p0);
+        s.addClause(lits);
+        lits.clear();
         cmdrExactlyOne(s, parent->Subords[0]);
-    }
-    else if(parent->Subords.size() == 2){
+    } else if (parent->Subords.size() == 2) {
         cout << "E2" << endl;
         vec<Lit> lits;
-        Lit np = ~Lit(parent->getVar());
-        Lit n0 = ~Lit(parent->Subords[0]->getVar());
-        Lit n1 = ~Lit(parent->Subords[1]->getVar());
-        Lit pp =  Lit(parent->getVar());
-        Lit p0 =  Lit(parent->Subords[0]->getVar());
-        Lit p1 =  Lit(parent->Subords[1]->getVar());
-        lits.push(n0); lits.push(n1); s.addClause(lits); lits.clear();
-        lits.push(np); lits.push(p0); lits.push(p1); s.addClause(lits); lits.clear();
-        lits.push(pp); lits.push(n0); s.addClause(lits); lits.clear();
-        lits.push(pp); lits.push(n1); s.addClause(lits); lits.clear();
+        Lit      np = ~Lit(parent->getVar());
+        Lit      n0 = ~Lit(parent->Subords[0]->getVar());
+        Lit      n1 = ~Lit(parent->Subords[1]->getVar());
+        Lit      pp = Lit(parent->getVar());
+        Lit      p0 = Lit(parent->Subords[0]->getVar());
+        Lit      p1 = Lit(parent->Subords[1]->getVar());
+        lits.push(n0);
+        lits.push(n1);
+        s.addClause(lits);
+        lits.clear();
+        lits.push(np);
+        lits.push(p0);
+        lits.push(p1);
+        s.addClause(lits);
+        lits.clear();
+        lits.push(pp);
+        lits.push(n0);
+        s.addClause(lits);
+        lits.clear();
+        lits.push(pp);
+        lits.push(n1);
+        s.addClause(lits);
+        lits.clear();
         cmdrExactlyOne(s, parent->Subords[0]);
         cmdrExactlyOne(s, parent->Subords[1]);
-    }
-    else if(parent->Subords.size() == 3){
+    } else if (parent->Subords.size() == 3) {
         cout << "E3" << endl;
         vec<Lit> lits;
-        Lit np = ~Lit(parent->getVar());
-        Lit n0 = ~Lit(parent->Subords[0]->getVar());
-        Lit n1 = ~Lit(parent->Subords[1]->getVar());
-        Lit n2 = ~Lit(parent->Subords[2]->getVar());
-        Lit pp =  Lit(parent->getVar());
-        Lit p0 =  Lit(parent->Subords[0]->getVar());
-        Lit p1 =  Lit(parent->Subords[1]->getVar());
-        Lit p2 =  Lit(parent->Subords[2]->getVar());
-        lits.push(n0); lits.push(n1); s.addClause(lits); lits.clear();
-        lits.push(n1); lits.push(n2); s.addClause(lits); lits.clear();
-        lits.push(n0); lits.push(n2); s.addClause(lits); lits.clear();
-        lits.push(np); lits.push(p0); lits.push(p1); lits.push(p2); s.addClause(lits); lits.clear();
-        lits.push(pp); lits.push(n0); s.addClause(lits); lits.clear();
-        lits.push(pp); lits.push(n1); s.addClause(lits); lits.clear();
-        lits.push(pp); lits.push(n2); s.addClause(lits); lits.clear();
+        Lit      np = ~Lit(parent->getVar());
+        Lit      n0 = ~Lit(parent->Subords[0]->getVar());
+        Lit      n1 = ~Lit(parent->Subords[1]->getVar());
+        Lit      n2 = ~Lit(parent->Subords[2]->getVar());
+        Lit      pp = Lit(parent->getVar());
+        Lit      p0 = Lit(parent->Subords[0]->getVar());
+        Lit      p1 = Lit(parent->Subords[1]->getVar());
+        Lit      p2 = Lit(parent->Subords[2]->getVar());
+        lits.push(n0);
+        lits.push(n1);
+        s.addClause(lits);
+        lits.clear();
+        lits.push(n1);
+        lits.push(n2);
+        s.addClause(lits);
+        lits.clear();
+        lits.push(n0);
+        lits.push(n2);
+        s.addClause(lits);
+        lits.clear();
+        lits.push(np);
+        lits.push(p0);
+        lits.push(p1);
+        lits.push(p2);
+        s.addClause(lits);
+        lits.clear();
+        lits.push(pp);
+        lits.push(n0);
+        s.addClause(lits);
+        lits.clear();
+        lits.push(pp);
+        lits.push(n1);
+        s.addClause(lits);
+        lits.clear();
+        lits.push(pp);
+        lits.push(n2);
+        s.addClause(lits);
+        lits.clear();
         cmdrExactlyOne(s, parent->Subords[0]);
         cmdrExactlyOne(s, parent->Subords[1]);
         cmdrExactlyOne(s, parent->Subords[2]);
     }
-
 }
 
 void
@@ -663,9 +855,9 @@ SatMgr::initCircuit(SatSolver& s, SatSolver& s_miter,
 
     s.addClause(lits);
     lits.clear(); // constraint 1.  sum(sum(c_ij + d_ij)) >0
-    
-    //test cmdr
-    // constraint2(s);
+
+    // test cmdr
+    //  constraint2(s);
     constraint_Cmdr(s, cirmgr.MO); // commander version of constraint 2
     constraint_Cmdr(s, cirmgr.MI); // commander version of constraint 3
 

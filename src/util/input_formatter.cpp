@@ -10,7 +10,7 @@ input_formatter(string src_name, string dst_name) {
         cout << "can't open file" << endl;
         return false;
     }
-
+    // 0351
     string temp, garbage;
     while (rf >> temp) {
         wf << temp << " ";
@@ -18,7 +18,7 @@ input_formatter(string src_name, string dst_name) {
             wf << "\n";
         }
         if (temp == "and" || temp == "nor" || temp == "xnor" || temp == "or" ||
-            temp == "not" || temp == "nand" || temp == "xor") {
+            temp == "not" || temp == "nand" || temp == "xor" || temp == "buf") {
             rf >> garbage;
         }
     }

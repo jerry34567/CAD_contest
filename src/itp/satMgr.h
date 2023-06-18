@@ -24,6 +24,15 @@ using namespace std;
 class variable;
 class CirMgr;
 
+class Group
+{
+        vector<pair<string, bool>> _group;
+
+    public:
+        Group() {}
+        ~Group() {}
+        vector<pair<string, bool>>& group() { return _group; }
+};
 class SatMgr
 {
 
@@ -43,7 +52,8 @@ class SatMgr
         // void verification(bool isManualBinded = 0);
         // void solveNP3();
 
-        void constructCmdr(SatSolver& s); // recursive construct Cmdr variable from bottom
+        void constructCmdr(
+            SatSolver& s); // recursive construct Cmdr variable from bottom
         void cmdrExactlyOne(SatSolver& s, Cmdr* parent); // recursive addClause
         void constraint2(SatSolver& s);
         void constraint_Cmdr(SatSolver& s, vector<vector<variable*>>& M);
@@ -63,13 +73,30 @@ class SatMgr
                         string _p1 = "", string _p2 = "");
         void printMatrix(const SatSolver& s, vector<vector<variable*>> const& M,
                          int IO);
-
+        void recordResult(const SatSolver&                 s,
+                          vector<vector<variable*>> const& M, int IO);
+        void generateResult();
         void reportResult(const SatSolver& solver, bool result) {
             solver.printStats();
             cout << (result ? "SAT" : "UNSAT") << endl;
             if (result) {
                 printMatrix(solver, cirmgr.MI, 1);
                 printMatrix(solver, cirmgr.MO, 2);
+                recordResult(solver, cirmgr.MI, 1);
+                recordResult(solver, cirmgr.MO, 2);
+                generateResult();
+                // for (auto i : inputGroup)
+                //     for (auto j : i.second.group())
+                //         cout << i.first << ' ' << j.second << ' ' << j.first
+                //              << endl;
+                // cout << endl;
+                // for (auto i : outputGroup)
+                //     for (auto j : i.second.group())
+                //         cout << i.first << ' ' << j.second << ' ' << j.first
+                //              << endl;
+                // cout << endl;
+                // for (auto i : constGroup)
+                //     cout << i.first << ' ' << i.second << endl;
                 // printArr(solver, x);
                 // printArr(solver, y);
                 // printArr(solver, f);
@@ -115,6 +142,13 @@ class SatMgr
         vector<tuple<bool, Var, Var>> outputMatch;
 
         vector<Var> xorVar; // record the xorvar of two binded outputs' miter
+
+        // for inputGroup(outputGroup), inputGroup[<string var_name>] denotes
+        // ckt1 variable, inputGroup[i][j] = (ckt2 variable, isPositive)
+        unordered_map<string, Group> inputGroup, outputGroup;
+        // for constGroup, constGroup denotes ckt2 variable bind to 0(1) if
+        // constGroup[<string var_name>] = false(True)
+        unordered_map<string, bool>  constGroup;
 };
 
 #endif // SATMGR_H
