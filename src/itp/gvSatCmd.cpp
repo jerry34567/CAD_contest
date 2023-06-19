@@ -223,9 +223,9 @@ NP3BindCmd::exec(const string& option) {
             return GV_CMD_EXEC_DONE;
 
     } else if (options[0] == "0" &&
-               solvermgr.getSatmgr().outputBind(-100, (options[1] == "1"), -100,
-                                                options[2],
-                                                options[3])) // output binding
+               !solvermgr.getSatmgr().outputBind(-100, (options[1] == "1"),
+                                                 -100, options[2],
+                                                 options[3])) // output binding
     {
         cout << "outputBind fail : NP3BindCmd\n";
         return GV_CMD_EXEC_DONE;

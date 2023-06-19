@@ -191,8 +191,24 @@ main(int argc, char** argv) {
     // cmd = "set sys vrf";
     // gvCmdMgr->execOneCmd(cmd);
     // gvCmdMgr->setPrompt();
-    // cmd = "np3 s";
+    cmd = "np3 s";
+    gvCmdMgr->execOneCmd(cmd);
+    cout << '\a';
+
+    cmd = "np3 b 0 0 h1 u0";
+    gvCmdMgr->execOneCmd(cmd);
+    cmd = "np3 b 0 0 h0 u1";
+    gvCmdMgr->execOneCmd(cmd);
+    cmd = "np3 b 1 0 a0 z";
+    gvCmdMgr->execOneCmd(cmd);
+    cmd = "np3 b 1 0 -2 x0";
+    gvCmdMgr->execOneCmd(cmd);
+    // cmd = "np3 b 1 0 b1 y1";
     // gvCmdMgr->execOneCmd(cmd);
+    cmd = "np3 b 1 0 b0 x1";
+    gvCmdMgr->execOneCmd(cmd);
+    cmd = "np3 v 1";
+    gvCmdMgr->execOneCmd(cmd);
 
     /*******************************************/
     return 0;

@@ -48,12 +48,17 @@ SatMgr::outputBind(int _port1, bool _isPositive1, int _port2, string _p1,
                    string _p2) {
     if (!_p1.empty()) _port1 = string2Var(_p1, 1, 0);
     if (!_p2.empty()) _port2 = string2Var(_p2, 0, 0);
-    if (_port1 == -100 || _port2 == -100) return 0;
+    if (_port1 == -100 || _port2 == -100) {
+        cout << "in outputBind : _port1 and _port2 = " << _port1 << " "
+             << _port2 << endl;
+        return 0;
+    }
     xorVar.push_back(verifierSolver.newVar());
     verifierSolver.addXorCNF(xorVar.back(), _port1, _isPositive1, _port2, 0);
     if (!_p1.empty() || !_p2.empty())
         outputMatch.push_back(
             tuple<bool, Var, Var>(!_isPositive1, _port1, _port2));
+    return 1;
 }
 /*void
 SatMgr::verification(bool isManualBinded) {

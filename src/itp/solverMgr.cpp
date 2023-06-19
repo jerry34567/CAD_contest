@@ -18,18 +18,24 @@ SolverMgr::verification(bool isManualBinded) {
     Var f =
         verifierSolver.newVar(); // f should be 0 for two equilivance circuit
     lits.push(~Lit(f));
+    int cnt = 0;
     if (!isManualBinded) {
-        for (auto i : inputMatch)
+        for (auto i : inputMatch) {
+            ++cnt;
             satmgr.addBindClause(get<0>(i), get<1>(i), get<2>(i));
-
+        }
+        cout << "input bind " << cnt << "times\n";
+        cnt = 0;
         for (auto i : outputMatch) { // np3v a little bit strange!!!
+            cnt++;
             if (!satmgr.outputBind(get<1>(i), get<0>(i), get<2>(i)))
-                ;
-            // cout << "outputBind fail : solverMgr.cpp:26\n";
+
+                cout << "outputBind fail : solverMgr.cpp:26\n";
             // xorVar.push_back(verifierSolver.newVar());
             // verifierSolver.addXorCNF(xorVar.back(), get<1>(i),
             //                          get<0>(i), get<2>(i), 0);
         }
+        cout << "output bind " << cnt << "times\n";
     }
     for (size_t i = 0, n = xorVar.size(); i < n; ++i) {
         // cout << xorVar[i] << endl;
