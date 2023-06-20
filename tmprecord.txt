@@ -1,0 +1,17 @@
+Period time used : 25.99 seconds
+Total time used  : 25.99 seconds
+Peak memory used   : 16.43 M Bytes
+Total memory used  : 7.941 M Bytes
+Current memory used: 31.86 M Bytes
+
+Period time used : 27.12 seconds
+Total time used  : 27.12 seconds
+Peak memory used   : 16.67 M Bytes
+Total memory used  : 7.941 M Bytes
+Current memory used: 31.86 M Bytes
+
+Period time used : 25.97 seconds
+Total time used  : 25.97 seconds
+Peak memory used   : 16.74 M Bytes
+Total memory used  : 7.941 M Bytes
+Current memory used: 31.86 M Bytes

@@ -398,7 +398,7 @@ CirMgr::_readbus(ifstream& fbus, vector<vector<string>>& bus_list_ckt,
 
 void
 CirMgr::readBus() {
-    string   fbus_name = "../../release/case01/input";
+    string   fbus_name = "./input";
     ifstream fbus(fbus_name);
     _readbus(fbus, bus_list_ckt1, 1);
     _readbus(fbus, bus_list_ckt2, 0);

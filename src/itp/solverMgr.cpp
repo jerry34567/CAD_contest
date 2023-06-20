@@ -82,6 +82,8 @@ SolverMgr::solveNP3() {
                        satmgr.verifierSolver);
     satmgr.cirmgr.readCNF(satmgr.miterSolver, satmgr.verifierSolver);
     satmgr.cirmgr.readBus();
+    satmgr.addBusConstraint();
+
     // return;
     /*
     bool result;
