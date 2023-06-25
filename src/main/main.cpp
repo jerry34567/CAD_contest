@@ -103,8 +103,8 @@ main(int argc, char** argv) {
     string                 verilog_2;
     int                    num_bus;
     int                    num_port;
-    vector<vector<string>> bus_list_1;
-    vector<vector<string>> bus_list_2;
+    // vector<vector<string>> bus_list_1;
+    // vector<vector<string>> bus_list_2;
     string                 port;
 
     inputfile >> verilog_1 >> num_bus;
@@ -112,29 +112,29 @@ main(int argc, char** argv) {
     // bus_list_1.reserve(num_bus + 1);
 
     for (int i = 0; i < num_bus; ++i) {
-        vector<string> temp;
-        // temp.reserve(num_port + 1);
+    //     vector<string> temp;
+    //     // temp.reserve(num_port + 1);
         inputfile >> num_port;
         for (int j = 0; j < num_port; ++j) {
             inputfile >> port;
-            temp.push_back(port);
+    //         temp.push_back(port);
         }
-        bus_list_1.push_back(temp);
+    //     bus_list_1.push_back(temp);
     }
 
     inputfile >> verilog_2 >> num_bus;
     input_formatter(verilog_2, "cir2.v");
     // bus_list_2.reserve(num_bus + 1);
-    for (int i = 0; i < num_bus; ++i) {
-        vector<string> temp;
-        // temp.reserve(num_port + 1);
-        inputfile >> num_port;
-        for (int j = 0; j < num_port; ++j) {
-            inputfile >> port;
-            temp.push_back(port);
-        }
-        bus_list_2.push_back(temp);
-    }
+    // for (int i = 0; i < num_bus; ++i) {
+    //     vector<string> temp;
+    //     // temp.reserve(num_port + 1);
+    //     inputfile >> num_port;
+    //     for (int j = 0; j < num_port; ++j) {
+    //         inputfile >> port;
+    //         temp.push_back(port);
+    //     }
+    //     bus_list_2.push_back(temp);
+    // }
 
     // cmd = "read design -v " + verilog_1;
     // gvCmdMgr->execOneCmd(cmd);

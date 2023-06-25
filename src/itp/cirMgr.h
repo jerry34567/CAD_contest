@@ -81,7 +81,7 @@ class CirMgr
         // portnum: i0, i1.., o0, o1..
         // portname: a,  b... , g, f..
         vector<string> portnum_ckt1, portname_ckt1, portnum_ckt2, portname_ckt2;
-        vector<pair<string, string>>
+        vector<pair<string, string>>     // first = i0, i1 ...; second = name
             portNameNumpairs_ckt1, // for input, the index = the corresponding
                                    // element's index in x(y)
             portNameNumpairs_ckt2; // for output, the index in

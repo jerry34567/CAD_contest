@@ -355,9 +355,8 @@ CirMgr::_readbus(ifstream& fbus, vector<vector<string>>& bus_list_ckt,
         (_isCkt1 ? portNameNumpairs_ckt1 : portNameNumpairs_ckt2);
 
     string port;
-    int    num_bus = 0, num_port = 0; // number of bus & port
-    fbus >> port >>
-        num_bus; // this port is to buffer the "circuit1.v" & "circuit2.v"
+    int num_bus = 0, num_port = 0; // number of bus & port
+    fbus >> port >> num_bus; // this port is to buffer the "circuit1.v" & "circuit2.v"
     bus_list_ckt.reserve(num_bus);
     for (size_t i = 0; i < num_bus; ++i) {
         vector<string> temp;
@@ -367,16 +366,8 @@ CirMgr::_readbus(ifstream& fbus, vector<vector<string>>& bus_list_ckt,
             fbus >> port;
             for (size_t k = 0, n = portNameNumpairs_ckt.size(); k < n; ++k) {
                 if (portNameNumpairs_ckt[k].second == port) {
-                    vector<variable*>& vecVar =
-                        ((portNameNumpairs_ckt[k].first[0] == 'i')
-                             ? (_isCkt1 ? x : y)
-                             : (_isCkt1 ? f : g));
-                    size_t _offset =
-                        (portNameNumpairs_ckt[k].first[0] == 'i')
-                            ? 0
-                            : (_isCkt1
-                                   ? inputNum_ckt1
-                                   : inputNum_ckt2); // have to substract the
+                    vector<variable*>& vecVar = ((portNameNumpairs_ckt[k].first[0] == 'i') ? (_isCkt1 ? x : y) : (_isCkt1 ? f : g));
+                    size_t _offset = (portNameNumpairs_ckt[k].first[0] == 'i') ? 0 : (_isCkt1 ? inputNum_ckt1 : inputNum_ckt2); // have to substract the
                                                      // input num if vecVar is
                                                      // the output port vector
                     vecVar[k - _offset]->setBusSize(num_port);

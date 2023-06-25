@@ -769,12 +769,10 @@ SatMgr::constraint5_miter(
 
 void
 SatMgr::addBusConstraint() {
-    int               cnt = 0;
     vector<variable*>&x = cirmgr.x, &y = cirmgr.y;
     for (size_t i = 0, ni = x.size(); i < ni; ++i) {
         for (size_t j = 0, nj = y.size(); j < nj; ++j) {
             if (x[i]->busSize() > y[j]->busSize()) {
-                ++cnt;
                 vec<Lit> lits;
                 lits.push(~Lit(cirmgr.MI[i / 2 * 2][j]->getVar()));
                 solver.addClause(lits);
