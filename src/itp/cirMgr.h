@@ -61,6 +61,26 @@ class Cmdr // commander variable encoding for constraint 2 and 3
         Var     _var;
         bool    isVar; // 1: variable, 0: Subords
 };
+class Bus{
+    public:
+        bool            getIsInput() const {return isInput;}
+        bool            getIsCkt1 () const {return isCkt1 ;}
+        size_t          getPortNum() const {return portNum;}
+        vector<size_t>  getIndexes() const {return indexes;}
+        vector<string>  getNames  () const {return names  ;}
+        void            setIsInput (const bool v)  {isInput = v};
+        void            setIsCkt1  (const bool v)  {isCkt1  = v};
+        void            setPortNum (const size_t v){portNum = v};
+        void            insertIndex(const size_t v){indexes.push_back(v)};
+        void            insertName (const string v){names.push_back(v)};
+    private:
+        bool isInput;
+        bool isCkt1;
+        size_t portNum;
+        vector<size_t> indexes;
+        vector<string> names;
+};
+
 
 class CirMgr
 {

@@ -1,9 +1,0 @@
-np3s
-np3b 1 1 -1 s
-np3b 1 1 -1 t
-np3b 1 1 -1 u
-np3b 1 1 -1 v
-np3b 0 1 f x
-np3b 0 1 g y
-np3b 0 1 h z
-np3v 1

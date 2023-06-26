@@ -774,10 +774,30 @@ SatMgr::addBusConstraint() {
         for (size_t j = 0, nj = y.size(); j < nj; ++j) {
             if (x[i]->busSize() > y[j]->busSize()) {
                 vec<Lit> lits;
-                lits.push(~Lit(cirmgr.MI[i / 2 * 2][j]->getVar()));
+                lits.push(~Lit(cirmgr.MI[i * 2][j]->getVar()));
                 solver.addClause(lits);
                 lits.clear();
-                lits.push(~Lit(cirmgr.MI[i / 2 * 2 + 1][j]->getVar()));
+                lits.push(~Lit(cirmgr.MI[i * 2 + 1][j]->getVar()));
+                solver.addClause(lits);
+                lits.clear();
+
+                // solver.assumeProperty(cirmgr.MI[i / 2 * 2][j]->getVar(), 0);
+                // solver.assumeProperty(cirmgr.MI[i / 2 * 2 + 1][j]->getVar(),
+                // 0);
+            }
+        }
+    }
+
+    vector<variable*>&f = cirmgr.f, &g = cirmgr.g;
+    for (size_t i = 0, ni = f.size(); i < ni; ++i) {
+        for (size_t j = 0, nj = g.size(); j < nj; ++j) {
+            if (f[i]->busSize() > g[j]->busSize()) {
+                ++cnt;
+                vec<Lit> lits;
+                lits.push(~Lit(cirmgr.MO[i * 2][j]->getVar()));
+                solver.addClause(lits);
+                lits.clear();
+                lits.push(~Lit(cirmgr.MO[i * 2 + 1][j]->getVar()));
                 solver.addClause(lits);
                 lits.clear();
 
