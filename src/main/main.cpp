@@ -186,13 +186,15 @@ main(int argc, char** argv) {
     aig2aag("top2.aig", "top2.aag");
     cmd = "abccmd write_cnf top2.cnf";
     gvCmdMgr->execOneCmd(cmd);
+    cmd = "abccmd print_supp";
+    gvCmdMgr->execOneCmd(cmd);
     // cmd = "read design -v cir1.v";
     // gvCmdMgr->execOneCmd(cmd);
     // cmd = "set sys vrf";
     // gvCmdMgr->execOneCmd(cmd);
     // gvCmdMgr->setPrompt();
-    cmd = "np3 s";
-    gvCmdMgr->execOneCmd(cmd);
+    // cmd = "np3 s";
+    // gvCmdMgr->execOneCmd(cmd);
     cout << '\a';
     cmd = "usage";
     gvCmdMgr->execOneCmd(cmd);
