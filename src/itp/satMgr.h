@@ -54,9 +54,9 @@ class SatMgr
 
         void constructCmdr(
             SatSolver& s); // recursive construct Cmdr variable from bottom
-        void cmdrExactlyOne(SatSolver& s, Cmdr* parent); // recursive addClause
+        void cmdrExactlyOne(SatSolver& s, Cmdr* parent, bool is_MO); // recursive addClause
         void constraint2(SatSolver& s);
-        void constraint_Cmdr(SatSolver& s, vector<vector<variable*>>& M);
+        void constraint_Cmdr(SatSolver& s, vector<vector<variable*>>& M, bool is_MO);
         void constraint3(SatSolver& s);
         void constraint4_miter(SatSolver& s);
         void constraint5_miter(SatSolver& s);
@@ -76,15 +76,13 @@ class SatMgr
         void recordResult(const SatSolver&                 s,
                           vector<vector<variable*>> const& M, int IO);
         void generateResult();
-        void reportResult(const SatSolver& solver, bool result) {
+        void reportResult(const SatSolver& solver) {
             solver.printStats();
-            cout << (result ? "SAT" : "UNSAT") << endl;
-            if (result) {
-                printMatrix(solver, cirmgr.MI, 1);
-                printMatrix(solver, cirmgr.MO, 2);
-                recordResult(solver, cirmgr.MI, 1);
-                recordResult(solver, cirmgr.MO, 2);
-                generateResult();
+            printMatrix(solver, record_input, 1);
+            printMatrix(solver, record_output, 2);
+            recordResult(solver, record_input, 1);
+            recordResult(solver, record_output, 2);
+            generateResult();
                 // for (auto i : inputGroup)
                 //     for (auto j : i.second.group())
                 //         cout << i.first << ' ' << j.second << ' ' << j.first
@@ -101,7 +99,6 @@ class SatMgr
                 // printArr(solver, y);
                 // printArr(solver, f);
                 // printArr(solver, g);
-            }
         }
         void printArr(const SatSolver& s, vector<variable*> const& Arr) {
             for (int i = 0; i < Arr.size(); i++) {
@@ -149,6 +146,10 @@ class SatMgr
         // for constGroup, constGroup denotes ckt2 variable bind to 0(1) if
         // constGroup[<string var_name>] = false(True)
         unordered_map<string, bool>  constGroup;
+
+        // record the best match so far
+        vector<vector<variable*>> record_input, record_output;
+        unsigned point = 0;
 };
 
 #endif // SATMGR_H

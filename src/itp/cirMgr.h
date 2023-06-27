@@ -68,11 +68,11 @@ class Bus{
         size_t          getPortNum() const {return portNum;}
         vector<size_t>  getIndexes() const {return indexes;}
         vector<string>  getNames  () const {return names  ;}
-        void            setIsInput (const bool v)  {isInput = v};
-        void            setIsCkt1  (const bool v)  {isCkt1  = v};
-        void            setPortNum (const size_t v){portNum = v};
-        void            insertIndex(const size_t v){indexes.push_back(v)};
-        void            insertName (const string v){names.push_back(v)};
+        void            setIsInput (const bool v)  {isInput = v;}
+        void            setIsCkt1  (const bool v)  {isCkt1  = v;}
+        void            setPortNum (const size_t v){portNum = v;}
+        void            insertIndex(const size_t v){indexes.push_back(v);}
+        void            insertName (const string v){names.push_back(v);}
     private:
         bool isInput;
         bool isCkt1;

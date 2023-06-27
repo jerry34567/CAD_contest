@@ -91,7 +91,7 @@ SolverMgr::solveNP3() {
     reportResult(solver, result);
     */
 
-    while (true) {
+    while (satmgr.point != (satmgr.cirmgr.outputNum_ckt1 + satmgr.cirmgr.outputNum_ckt2)) {
         // for(int i = 0; i < 10; i++){
         vector<vector<variable*>>&MI = satmgr.cirmgr.MI, &MO = satmgr.cirmgr.MO;
         bool                      SAT1_result, SAT2_result;
@@ -99,20 +99,25 @@ SolverMgr::solveNP3() {
         if (!SAT1_result) {
             cout << "No match!!" << endl;
             break;
-        } else {
-            vec<Lit>                  assump;
+        }
+        else {
+            vec<Lit> assump;
+            vec<Lit> be_searched;
             vector<vector<variable*>>&MI = satmgr.cirmgr.MI,
-            &MO                          = satmgr.cirmgr.MO;
+                                     &MO = satmgr.cirmgr.MO;
             for (int i = 0; i < MI.size(); i++) {
                 for (int j = 0; j < MI[0].size(); j++) {
                     if (satmgr.solver.getValue(MI[i][j]->getVar()) == 1) {
+                        Lit v1 = ~Lit(MI[i][j]->getVar());
+                        be_searched.push(v1);
+
                         Lit v = Lit(MI[i][j]->getVar2());
                         assump.push(v);
                         cout << "MI i: " << i << " j: " << j << " val: "
                              << satmgr.solver.getValue(MI[i][j]->getVar())
                              << endl;
-                    } else if (satmgr.solver.getValue(MI[i][j]->getVar()) ==
-                               0) {
+                    }
+                    else if (satmgr.solver.getValue(MI[i][j]->getVar()) ==0) {
                         Lit v = ~Lit(MI[i][j]->getVar2());
                         assump.push(v);
                     }
@@ -123,35 +128,55 @@ SolverMgr::solveNP3() {
                 for (int j = 0; j < MO[0].size(); j++) {
                     if (i % 2 == 0) {
                         if ((satmgr.solver.getValue(MO[i][j]->getVar()) +
-                             satmgr.solver.getValue(MO[i + 1][j]->getVar())) ==
-                            0) {
+                             satmgr.solver.getValue(MO[i + 1][j]->getVar())) == 0) {
                             assump.push(Lit(satmgr.big_or[j][i / 2]));
                         }
                     }
                     if (satmgr.solver.getValue(MO[i][j]->getVar()) == 1) {
+                        Lit v1 = ~Lit(MO[i][j]->getVar());
+                        be_searched.push(v1);
+
                         Lit v = Lit(MO[i][j]->getVar2());
                         assump.push(v);
                         cout << "MO i: " << i << " j: " << j << " val: "
                              << satmgr.solver.getValue(MO[i][j]->getVar())
                              << endl;
-                    } else if (satmgr.solver.getValue(MO[i][j]->getVar()) ==
-                               0) {
+                    } else if (satmgr.solver.getValue(MO[i][j]->getVar()) == 0) {
+                        Lit v1 = Lit(MO[i][j]->getVar());
+                        be_searched.push(v1);
+
                         Lit v = ~Lit(MO[i][j]->getVar2());
                         assump.push(v);
                     }
                 }
             }
+            satmgr.solver.addClause(be_searched);
+            be_searched.clear();
             cout << endl;
-
-            string temp;
-            // cin >> temp;
 
             SAT2_result = satmgr.miterSolver.assumpSolve(assump);
             if (!SAT2_result) {
                 cout << "Match found!!" << endl;
-                satmgr.reportResult(satmgr.solver, SAT1_result);
+                int temp_point = 0;
+                for (int i = 0, n = MO.size(); i < n; i = i + 2){
+                    bool temp_bool = false;
+                    for (int j = 0, u = MO[i].size(); j < u; j++){
+                        if ((satmgr.solver.getValue(MO[i][j]->getVar()) +
+                             satmgr.solver.getValue(MO[i + 1][j]->getVar())) == 1) {
+                            temp_bool = true;
+                            temp_point++;
+                        }
+                    }
+                    if (temp_bool){
+                        temp_point++;
+                    }
+                }
 
-                break;
+                if (temp_point > satmgr.point){
+                    satmgr.point = temp_point;
+                    satmgr.record_input = MI;
+                    satmgr.record_output = MO;
+                }
             } else {
                 // cout << "ELSE" << endl;
                 satmgr.AddLearnedClause(satmgr.solver, satmgr.miterSolver);
@@ -160,4 +185,5 @@ SolverMgr::solveNP3() {
             assump.clear();
         }
     }
+    satmgr.reportResult(satmgr.solver);
 }

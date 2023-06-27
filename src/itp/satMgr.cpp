@@ -488,7 +488,7 @@ SatMgr::constraint2(
     // cout << "GN" << MI[0][0]->getName() << endl;
 }
 void
-SatMgr::constraint_Cmdr(SatSolver& s, vector<vector<variable*>>& M) {
+SatMgr::constraint_Cmdr(SatSolver& s, vector<vector<variable*>>& M, bool is_MO) {
     cout << "MO0size: " << M[0].size() << endl;
     cout << "MO size: " << M.size() << endl;
     for (size_t i = 0; i < M[0].size(); i++) {
@@ -508,7 +508,7 @@ SatMgr::constraint_Cmdr(SatSolver& s, vector<vector<variable*>>& M) {
         lits.push(a);
         s.addClause(lits);
         lits.clear();
-        cmdrExactlyOne(s, root);
+        cmdrExactlyOne(s, root, is_MO);
     }
 }
 
@@ -535,7 +535,7 @@ SatMgr::constructCmdr(SatSolver& s) {
 }
 
 void
-SatMgr::cmdrExactlyOne(SatSolver& s, Cmdr* parent) {
+SatMgr::cmdrExactlyOne(SatSolver& s, Cmdr* parent, bool is_MO) {
     cout << "p: " << parent->getVar() << " ";
     for (int i = 0; i < parent->Subords.size(); i++) {
         cout << "s" << i << ": " << parent->Subords[i]->getVar() << " ";
@@ -553,11 +553,13 @@ SatMgr::cmdrExactlyOne(SatSolver& s, Cmdr* parent) {
         lits.push(n0);
         s.addClause(lits);
         lits.clear();
-        lits.push(np);
-        lits.push(p0);
-        s.addClause(lits);
-        lits.clear();
-        cmdrExactlyOne(s, parent->Subords[0]);
+        if (!is_MO){
+            lits.push(np);
+            lits.push(p0);
+            s.addClause(lits);
+            lits.clear();
+        }
+        cmdrExactlyOne(s, parent->Subords[0], is_MO);
     } else if (parent->Subords.size() == 2) {
         cout << "E2" << endl;
         vec<Lit> lits;
@@ -571,11 +573,13 @@ SatMgr::cmdrExactlyOne(SatSolver& s, Cmdr* parent) {
         lits.push(n1);
         s.addClause(lits);
         lits.clear();
-        lits.push(np);
-        lits.push(p0);
-        lits.push(p1);
-        s.addClause(lits);
-        lits.clear();
+        if (!is_MO){
+            lits.push(np);
+            lits.push(p0);
+            lits.push(p1);
+            s.addClause(lits);
+            lits.clear();
+        }
         lits.push(pp);
         lits.push(n0);
         s.addClause(lits);
@@ -584,8 +588,8 @@ SatMgr::cmdrExactlyOne(SatSolver& s, Cmdr* parent) {
         lits.push(n1);
         s.addClause(lits);
         lits.clear();
-        cmdrExactlyOne(s, parent->Subords[0]);
-        cmdrExactlyOne(s, parent->Subords[1]);
+        cmdrExactlyOne(s, parent->Subords[0], is_MO);
+        cmdrExactlyOne(s, parent->Subords[1], is_MO);
     } else if (parent->Subords.size() == 3) {
         cout << "E3" << endl;
         vec<Lit> lits;
@@ -609,12 +613,14 @@ SatMgr::cmdrExactlyOne(SatSolver& s, Cmdr* parent) {
         lits.push(n2);
         s.addClause(lits);
         lits.clear();
-        lits.push(np);
-        lits.push(p0);
-        lits.push(p1);
-        lits.push(p2);
-        s.addClause(lits);
-        lits.clear();
+        if (!is_MO){
+            lits.push(np);
+            lits.push(p0);
+            lits.push(p1);
+            lits.push(p2);
+            s.addClause(lits);
+            lits.clear();
+        }
         lits.push(pp);
         lits.push(n0);
         s.addClause(lits);
@@ -627,9 +633,9 @@ SatMgr::cmdrExactlyOne(SatSolver& s, Cmdr* parent) {
         lits.push(n2);
         s.addClause(lits);
         lits.clear();
-        cmdrExactlyOne(s, parent->Subords[0]);
-        cmdrExactlyOne(s, parent->Subords[1]);
-        cmdrExactlyOne(s, parent->Subords[2]);
+        cmdrExactlyOne(s, parent->Subords[0], is_MO);
+        cmdrExactlyOne(s, parent->Subords[1], is_MO);
+        cmdrExactlyOne(s, parent->Subords[2], is_MO);
     }
 }
 
@@ -792,7 +798,6 @@ SatMgr::addBusConstraint() {
     for (size_t i = 0, ni = f.size(); i < ni; ++i) {
         for (size_t j = 0, nj = g.size(); j < nj; ++j) {
             if (f[i]->busSize() > g[j]->busSize()) {
-                ++cnt;
                 vec<Lit> lits;
                 lits.push(~Lit(cirmgr.MO[i * 2][j]->getVar()));
                 solver.addClause(lits);
@@ -883,8 +888,8 @@ SatMgr::initCircuit(SatSolver& s, SatSolver& s_miter,
 
     // test cmdr
     //  constraint2(s);
-    constraint_Cmdr(s, cirmgr.MO); // commander version of constraint 2
-    constraint_Cmdr(s, cirmgr.MI); // commander version of constraint 3
+    constraint_Cmdr(s, cirmgr.MO, true); // commander version of constraint 2
+    constraint_Cmdr(s, cirmgr.MI, false); // commander version of constraint 3
 
     // constraint3(s);
     // solver(solver1 is used for determining feasible a, b, c, d
