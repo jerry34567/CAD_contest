@@ -12,8 +12,22 @@
 #include <cassert>
 #include <iostream>
 #include "Solver.h"
+#include <vector>
+#include <unordered_map>
 
 using namespace std;
+
+struct pair_hash {
+    template <class T1, class T2>
+    std::size_t operator () (const std::pair<T1,T2> &p) const {
+        auto h1 = std::hash<T1>{}(p.first);
+        auto h2 = std::hash<T2>{}(p.second);
+
+        // Mainly for demonstration purposes, i.e. works but is overly simple
+        // In the real world, use sth. like boost.hash_combine
+        return h1 ^ h2;  
+    }
+};
 
 /********** MiniSAT_Solver **********/
 class SatSolver
@@ -36,9 +50,7 @@ class SatSolver
       // Constructing proof model
       // Return the Var ID of the new Var
       inline Var newVar() { _solver->newVar(); return _curVar++; }
-      
 
-      
       // fa/fb = true if it is inverted
       void addAigCNF(Var vf, Var va, bool fa, Var vb, bool fb) {
          vec<Lit> lits;
@@ -65,6 +77,26 @@ class SatSolver
          lits.push( la); lits.push( lb); lits.push(~lf);
          _solver->addClause(lits); lits.clear();
          lits.push(~la); lits.push(~lb); lits.push(~lf);
+         _solver->addClause(lits); lits.clear();
+      }
+
+      void addMuxCNF(Var x, Var s, Var t, Var f){
+         vec<Lit> lits;
+         Lit lx = Lit(x);
+         Lit ls = Lit(s);
+         Lit lt = Lit(t);
+         Lit lf = Lit(f);
+         lits.push(~ls); lits.push(~lt); lits.push( lx);
+         _solver->addClause(lits); lits.clear();
+         lits.push(~ls); lits.push( lt); lits.push(~lx);
+         _solver->addClause(lits); lits.clear();
+         lits.push( ls); lits.push(~lf); lits.push( lx);
+         _solver->addClause(lits); lits.clear();
+         lits.push( ls); lits.push( lf); lits.push(~lx);
+         _solver->addClause(lits); lits.clear();
+         lits.push(~lt); lits.push(~lf); lits.push( lx);
+         _solver->addClause(lits); lits.clear();
+         lits.push( lt); lits.push( lf); lits.push(~lx);
          _solver->addClause(lits); lits.clear();
       }
 
@@ -106,10 +138,91 @@ class SatSolver
          _solver->addBinary(la, lb);
       }
 
+      void addAtLeast(vector<Var>& vec_var, int at_least_num, int sum, int index){
+         Var V = newVar();
+         map[make_pair(0,0)] = V;
+         _solver->addUnit(Lit(V));
+         recursiveAtLeast(vec_var,at_least_num,sum,index);
+         // vector<Var> temp_var;
+         // cout << "temp size: " << vec_var.size() << endl;
+         // tempCondition5(temp_var, vec_var, 0, vec_var.size()-1, at_least_num+1);
+      }
+
+      void recursiveAtLeast(vector<Var>& vec_var, int at_least_num, int sum, int index){
+         cout << "sum: " << sum << " index: " << index << endl;
+         if(index == vec_var.size()-1){
+            cout << "temp1 " << endl;
+            if (!map.count({sum,index})){
+               vec<Lit> lits;
+               Lit lx = Lit(map[{sum,index}]);
+               Lit ls = Lit(vec_var[index]);
+               lits.push( lx); lits.push(~ls);
+               _solver->addClause(lits); lits.clear();
+               lits.push(~lx); lits.push( ls);
+               _solver->addClause(lits); lits.clear();
+            }
+         }
+         else if(sum == at_least_num){
+            cout << "temp2 " << endl;
+            if(!map.count({sum,index+1})){
+               Var V = newVar();
+               map[make_pair(sum,index+1)] = V;               
+               recursiveAtLeast(vec_var,at_least_num,sum,index+1);
+            }
+            vec<Lit> lits;
+            Lit lx = Lit(map[{sum,index}]);
+            Lit ls = Lit(vec_var[index]);
+            Lit lf = Lit(map[{sum,index+1}]);
+            lits.push(~lx); lits.push( ls); lits.push( lf);
+            _solver->addClause(lits); lits.clear();
+            lits.push( lx); lits.push(~ls);
+            _solver->addClause(lits); lits.clear();
+            lits.push( lx); lits.push(~lf);
+            _solver->addClause(lits); lits.clear();
+         }
+         else if(vec_var.size() - (index - sum + 1) == at_least_num){
+            cout << "temp3 " << endl;
+            if(!map.count({sum+1,index+1})){
+               Var V = newVar();
+               map[make_pair(sum+1,index+1)] = V;               
+               recursiveAtLeast(vec_var,at_least_num,sum+1,index+1);
+            }
+            vec<Lit> lits;
+            Lit lx = Lit(map[{sum,index}]);
+            Lit ls = Lit(vec_var[index]);
+            Lit lt = Lit(map[{sum+1,index+1}]);
+            lits.push( lx); lits.push(~ls); lits.push(~lt);
+            _solver->addClause(lits); lits.clear();
+            lits.push(~lx); lits.push( ls);
+            _solver->addClause(lits); lits.clear();
+            lits.push(~lx); lits.push( lt);
+            _solver->addClause(lits); lits.clear();
+         }
+         else{
+            cout << "temp4 " << endl;
+            if(!map.count({sum,index+1})){
+               Var V = newVar();
+               map[make_pair(sum,index+1)] = V;               
+               recursiveAtLeast(vec_var,at_least_num,sum,index+1);
+            }
+            if(!map.count({sum+1,index+1})){
+               Var V = newVar();
+               map[make_pair(sum+1,index+1)] = V;               
+               recursiveAtLeast(vec_var,at_least_num,sum+1,index+1);
+            }
+            addMuxCNF(map[{sum,index}], vec_var[index], map[{sum+1,index+1}], map[{sum,index+1}]);
+         }
+      }
+
+      void MapClear(){
+         map.clear();
+      }
+
    private : 
       Solver           *_solver;    // Pointer to a Minisat solver
       Var               _curVar;    // Variable currently
       vec<Lit>          _assump;    // Assumption List for assumption solve
+      unordered_map<pair<int,int>, Var, pair_hash> map;
 };
 
 #endif  // SAT_H

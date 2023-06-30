@@ -69,7 +69,10 @@ SolverMgr::verification(bool isManualBinded) {
 
 void
 SolverMgr::solveNP3() {
-    cout << "tem" << endl;
+    double time;
+    clock_t start, stop;
+    start = clock();
+
     satmgr.reset();
     // SatSolver solver, miterSolver;
     satmgr.solver.initialize();
@@ -83,17 +86,39 @@ SolverMgr::solveNP3() {
     satmgr.cirmgr.readCNF(satmgr.miterSolver, satmgr.verifierSolver);
     satmgr.cirmgr.readBus();
     satmgr.addBusConstraint();
+    vector<vector<variable*>>&MI = satmgr.cirmgr.MI, &MO = satmgr.cirmgr.MO;
 
-    // return;
-    /*
-    bool result;
-    result = solver.solve();
-    reportResult(solver, result);
-    */
+    // for level sovle (output sould at least some number)
+    int level = 0;
+    bool next_level = true;
+    vector<Var> vec_var;
+    for (int i = 0, n = MO.size(); i < n; i++){
+        for (int j = 0, u = MO[0].size(); j < u; j++){
+            vec_var.push_back(MO[i][j]->getVar());
+        }
+    }
 
-    while (satmgr.point != (satmgr.cirmgr.outputNum_ckt1 + satmgr.cirmgr.outputNum_ckt2)) {
-        // for(int i = 0; i < 10; i++){
-        vector<vector<variable*>>&MI = satmgr.cirmgr.MI, &MO = satmgr.cirmgr.MO;
+    while (satmgr.point != (satmgr.cirmgr.outputNum_ckt1 + satmgr.cirmgr.outputNum_ckt2) && time < 3570) {
+        if (level == 0 && next_level){
+            cout << "a" << endl;
+            satmgr.solver.addAtLeast(vec_var, satmgr.cirmgr.outputNum_ckt2 / 2, 0, 0);
+            satmgr.solver.MapClear();
+            level++;
+            next_level = false;
+        }
+        else if (level == 1 && next_level){
+            cout << "b" << endl;
+            satmgr.solver.addAtLeast(vec_var, (satmgr.cirmgr.outputNum_ckt2 * 3) / 4, 0, 0);
+            satmgr.solver.MapClear();
+            level++;
+            next_level = false;
+        }
+        else if (level == 2 && next_level){
+            cout << "c" << endl;
+            satmgr.solver.addAtLeast(vec_var, satmgr.cirmgr.outputNum_ckt2, 0, 0);
+            // next_level = false;
+        }
+
         bool                      SAT1_result, SAT2_result;
         SAT1_result = satmgr.solver.solve();
         if (!SAT1_result) {
@@ -103,8 +128,6 @@ SolverMgr::solveNP3() {
         else {
             vec<Lit> assump;
             vec<Lit> be_searched;
-            vector<vector<variable*>>&MI = satmgr.cirmgr.MI,
-                                     &MO = satmgr.cirmgr.MO;
             for (int i = 0; i < MI.size(); i++) {
                 for (int j = 0; j < MI[0].size(); j++) {
                     if (satmgr.solver.getValue(MI[i][j]->getVar()) == 1) {
@@ -150,13 +173,18 @@ SolverMgr::solveNP3() {
                     }
                 }
             }
+
             satmgr.solver.addClause(be_searched);
             be_searched.clear();
             cout << endl;
 
             SAT2_result = satmgr.miterSolver.assumpSolve(assump);
+            stop = clock();
+            time = double(stop - start) / CLOCKS_PER_SEC;
             if (!SAT2_result) {
                 cout << "Match found!!" << endl;
+                next_level = true;
+
                 int temp_point = 0;
                 for (int i = 0, n = MO.size(); i < n; i = i + 2){
                     bool temp_bool = false;

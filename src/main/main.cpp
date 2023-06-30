@@ -193,8 +193,8 @@ main(int argc, char** argv) {
     // cmd = "set sys vrf";
     // gvCmdMgr->execOneCmd(cmd);
     // gvCmdMgr->setPrompt();
-    // cmd = "np3 s";
-    // gvCmdMgr->execOneCmd(cmd);
+    cmd = "np3 s";
+    gvCmdMgr->execOneCmd(cmd);
     cout << '\a';
     cmd = "usage";
     gvCmdMgr->execOneCmd(cmd);
