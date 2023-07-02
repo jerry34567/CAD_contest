@@ -85,7 +85,13 @@ SolverMgr::solveNP3() {
                        satmgr.verifierSolver);
     satmgr.cirmgr.readCNF(satmgr.miterSolver, satmgr.verifierSolver);
     satmgr.cirmgr.readBus();
+    satmgr.cirmgr.readPreporcess(unateness);
+    satmgr.cirmgr.readPreporcess(support);
+    // satmgr.cirmgr.readSupp();
+    // satmgr.cirmgr.readUnate();
     satmgr.addBusConstraint();
+    satmgr.addSuppConstraint();
+    satmgr.addUnateOutputConstraint();
     vector<vector<variable*>>&MI = satmgr.cirmgr.MI, &MO = satmgr.cirmgr.MO;
 
     // for level sovle (output sould at least some number)

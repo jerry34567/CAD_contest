@@ -14,6 +14,7 @@
 #include "gvUsage.h"
 #include "kernel/yosys.h"
 #include "util.h"
+#include <stdio.h>
 using namespace std;
 
 string   GVMsg::_allName = "";
@@ -97,29 +98,29 @@ main(int argc, char** argv) {
     // }
 
     /******************************************/
-    ifstream               inputfile(argv[1]);
+    ifstream inputfile(argv[1]);
     // string                 cmd;
-    string                 verilog_1;
-    string                 verilog_2;
-    int                    num_bus;
-    int                    num_port;
+    string   verilog_1;
+    string   verilog_2;
+    int      num_bus;
+    int      num_port;
     // vector<vector<string>> bus_list_1;
     // vector<vector<string>> bus_list_2;
-    string                 port;
+    string   port;
 
     inputfile >> verilog_1 >> num_bus;
     input_formatter(verilog_1, "cir1.v");
     // bus_list_1.reserve(num_bus + 1);
 
     for (int i = 0; i < num_bus; ++i) {
-    //     vector<string> temp;
-    //     // temp.reserve(num_port + 1);
+        //     vector<string> temp;
+        //     // temp.reserve(num_port + 1);
         inputfile >> num_port;
         for (int j = 0; j < num_port; ++j) {
             inputfile >> port;
-    //         temp.push_back(port);
+            //         temp.push_back(port);
         }
-    //     bus_list_1.push_back(temp);
+        //     bus_list_1.push_back(temp);
     }
 
     inputfile >> verilog_2 >> num_bus;
@@ -166,26 +167,46 @@ main(int argc, char** argv) {
     // 1125
     // cmd = "set engine abc";
     // gvCmdMgr->execOneCmd(cmd);
+    remove("funcsupp.txt");
+    remove("unateness.txt");
+
     cmd = "abccmd read_verilog cir1.v";
-    // cmd = "abccmd read_verilog cad16_np3_case/case1/cir1.v";
     gvCmdMgr->execOneCmd(cmd);
+
     cmd = "abccmd fraig";
     gvCmdMgr->execOneCmd(cmd);
+
+    cmd = "abccmd print_unate";
+    gvCmdMgr->execOneCmd(cmd);
+
     cmd = "abccmd write_aiger -s top1.aig";
     gvCmdMgr->execOneCmd(cmd);
+
     aig2aag("top1.aig", "top1.aag");
+
+    cmd = "abccmd print_supp";
+    gvCmdMgr->execOneCmd(cmd);
+
     cmd = "abccmd write_cnf top1.cnf";
     gvCmdMgr->execOneCmd(cmd);
+
     cmd = "abccmd read_verilog cir2.v";
-    // cmd = "abccmd read_verilog cad16_np3_case/case1/cir2.v";
     gvCmdMgr->execOneCmd(cmd);
+
     cmd = "abccmd fraig";
     gvCmdMgr->execOneCmd(cmd);
+
+    cmd = "abccmd print_unate";
+    gvCmdMgr->execOneCmd(cmd);
+
     cmd = "abccmd write_aiger -s top2.aig";
     gvCmdMgr->execOneCmd(cmd);
+
     aig2aag("top2.aig", "top2.aag");
+
     cmd = "abccmd write_cnf top2.cnf";
     gvCmdMgr->execOneCmd(cmd);
+
     cmd = "abccmd print_supp";
     gvCmdMgr->execOneCmd(cmd);
     // cmd = "read design -v cir1.v";

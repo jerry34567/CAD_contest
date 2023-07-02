@@ -355,8 +355,9 @@ CirMgr::_readbus(ifstream& fbus, vector<vector<string>>& bus_list_ckt,
         (_isCkt1 ? portNameNumpairs_ckt1 : portNameNumpairs_ckt2);
 
     string port;
-    int num_bus = 0, num_port = 0; // number of bus & port
-    fbus >> port >> num_bus; // this port is to buffer the "circuit1.v" & "circuit2.v"
+    int    num_bus = 0, num_port = 0; // number of bus & port
+    fbus >> port >>
+        num_bus; // this port is to buffer the "circuit1.v" & "circuit2.v"
     bus_list_ckt.reserve(num_bus);
     for (size_t i = 0; i < num_bus; ++i) {
         vector<string> temp;
@@ -366,8 +367,16 @@ CirMgr::_readbus(ifstream& fbus, vector<vector<string>>& bus_list_ckt,
             fbus >> port;
             for (size_t k = 0, n = portNameNumpairs_ckt.size(); k < n; ++k) {
                 if (portNameNumpairs_ckt[k].second == port) {
-                    vector<variable*>& vecVar = ((portNameNumpairs_ckt[k].first[0] == 'i') ? (_isCkt1 ? x : y) : (_isCkt1 ? f : g));
-                    size_t _offset = (portNameNumpairs_ckt[k].first[0] == 'i') ? 0 : (_isCkt1 ? inputNum_ckt1 : inputNum_ckt2); // have to substract the
+                    vector<variable*>& vecVar =
+                        ((portNameNumpairs_ckt[k].first[0] == 'i')
+                             ? (_isCkt1 ? x : y)
+                             : (_isCkt1 ? f : g));
+                    size_t _offset =
+                        (portNameNumpairs_ckt[k].first[0] == 'i')
+                            ? 0
+                            : (_isCkt1
+                                   ? inputNum_ckt1
+                                   : inputNum_ckt2); // have to substract the
                                                      // input num if vecVar is
                                                      // the output port vector
                     vecVar[k - _offset]->setBusSize(num_port);
@@ -386,6 +395,77 @@ CirMgr::_readbus(ifstream& fbus, vector<vector<string>>& bus_list_ckt,
         bus_list_ckt.push_back(temp);
     }
 }
+// void
+// CirMgr::_readSupp(ifstream& fsupp, bool _isCkt1) {
+//     vector<pair<string, string>>& portNameNumpairs_ckt =
+//         (_isCkt1 ? portNameNumpairs_ckt1 : portNameNumpairs_ckt2);
+//     size_t outputNum = _isCkt1 ? outputNum_ckt1 : outputNum_ckt2;
+//     size_t inputNum  = _isCkt1 ? inputNum_ckt1 : inputNum_ckt2;
+//     string port;
+//     int  num_supp = 0; // number of bus & port
+//     for (size_t i = 0; i < outputNum; ++i) {
+//         fsupp >> port >> num_supp;
+//         for (size_t k = inputNum, n = portNameNumpairs_ckt.size(); k < n; ++k) {
+//             if (portNameNumpairs_ckt[k].second == port) {
+//                 vector<variable*>& vecVar  = _isCkt1 ? f : g;
+//                 size_t _offset = _isCkt1 ? inputNum_ckt1 : inputNum_ckt2; // have to substract the input num if vecVar is the output port vector
+//                 vecVar[k - _offset]->setSuppSize(num_supp);
+//                 break;
+//             }
+//         }
+//     }
+// }
+// void
+// CirMgr::_readUnate(ifstream& funate, bool _isCkt1) {
+//     vector<pair<string, string>>& portNameNumpairs_ckt =
+//         (_isCkt1 ? portNameNumpairs_ckt1 : portNameNumpairs_ckt2);
+//     size_t outputNum = _isCkt1 ? outputNum_ckt1 : outputNum_ckt2;
+//     size_t inputNum  = _isCkt1 ? inputNum_ckt1 : inputNum_ckt2;
+//     string port;
+//     int num_unate = 0; // number of bus & port
+//     for (size_t i = 0; i < outputNum; ++i) {
+//         funate >> port >> num_unate;
+//         for (size_t k = inputNum, n = portNameNumpairs_ckt.size(); k < n; ++k) {
+//             if (portNameNumpairs_ckt[k].second == port) {
+//                 vector<variable*>& vecVar  = _isCkt1 ? f : g;
+//                 size_t _offset = _isCkt1 ? inputNum_ckt1 : inputNum_ckt2; // have to substract the input num if vecVar is the output port vector
+//                 vecVar[k - _offset]->setUnateSum(num_unate);
+//                 break;
+//             }
+//         }
+//     }
+//     return;
+// }
+void
+CirMgr::_readPreprocess(ifstream& fPreprocess, bool _isCkt1, preprocess _p) {
+    vector<pair<string, string>>& portNameNumpairs_ckt =
+        (_isCkt1 ? portNameNumpairs_ckt1 : portNameNumpairs_ckt2);
+    size_t outputNum = _isCkt1 ? outputNum_ckt1 : outputNum_ckt2;
+    size_t inputNum  = _isCkt1 ? inputNum_ckt1 : inputNum_ckt2;
+    string port;
+    int num = 0;
+    int cnt = 0;
+    for (size_t i = 0; i < outputNum; ++i) {
+        fPreprocess >> port >> num;
+        for (size_t k = inputNum, n = portNameNumpairs_ckt.size(); k < n; ++k) {
+            if (portNameNumpairs_ckt[k].second == port) {
+                cnt++;
+                vector<variable*>& vecVar  = _isCkt1 ? f : g;
+                size_t _offset = _isCkt1 ? inputNum_ckt1 : inputNum_ckt2; // have to substract the input num if vecVar is the output port vector
+                switch (_p){
+                    case unateness:
+                        vecVar[k - _offset]->setUnateSum(num);
+                        break;
+                    case support:
+                        vecVar[k - _offset]->setSuppSize(num);
+                        break;
+                }
+                break;
+            }
+        }
+    }
+    return;
+}
 
 void
 CirMgr::readBus() {
@@ -393,4 +473,25 @@ CirMgr::readBus() {
     ifstream fbus(fbus_name);
     _readbus(fbus, bus_list_ckt1, 1);
     _readbus(fbus, bus_list_ckt2, 0);
+}
+// void
+// CirMgr::readSupp() {
+//     string   fsupp_name = "./funcsupp.txt";
+//     ifstream fsupp(fsupp_name);
+//     _readSupp(fsupp, 1);
+//     _readSupp(fsupp, 0);
+// }
+// void
+// CirMgr::readUnate() {
+//     string   funate_name = "./unateness.txt";
+//     ifstream funate(funate_name);
+//     _readUnate(funate, 1);
+//     _readUnate(funate, 0);
+// }
+void
+CirMgr::readPreporcess(preprocess _p) {
+    string f_name = _p == unateness ? "./unateness.txt" : "./funcsupp.txt";
+    ifstream fPreprocess(f_name);
+    _readPreprocess(fPreprocess, 1, _p);
+    _readPreprocess(fPreprocess, 0, _p);
 }

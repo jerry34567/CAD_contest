@@ -63,6 +63,8 @@ class SatMgr
         void AddLearnedClause(SatSolver& s, SatSolver& s_miter);
         void AddLearnedClause_const(SatSolver& s, SatSolver& s_miter);
         void addBusConstraint();
+        void addSuppConstraint(); // currently : structral support, |SSo1| <= |SSo2|
+        void addUnateOutputConstraint(); // |Uo1| <= |Uo2|
 
         // only bind input
         // use int _port1, int _port2 to check if _port1 < 0 and if _port2 < 0

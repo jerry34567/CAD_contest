@@ -787,9 +787,6 @@ SatMgr::addBusConstraint() {
                 solver.addClause(lits);
                 lits.clear();
 
-                // solver.assumeProperty(cirmgr.MI[i / 2 * 2][j]->getVar(), 0);
-                // solver.assumeProperty(cirmgr.MI[i / 2 * 2 + 1][j]->getVar(),
-                // 0);
             }
         }
     }
@@ -798,6 +795,7 @@ SatMgr::addBusConstraint() {
     for (size_t i = 0, ni = f.size(); i < ni; ++i) {
         for (size_t j = 0, nj = g.size(); j < nj; ++j) {
             if (f[i]->busSize() > g[j]->busSize()) {
+                // ++cnt;
                 vec<Lit> lits;
                 lits.push(~Lit(cirmgr.MO[i * 2][j]->getVar()));
                 solver.addClause(lits);
@@ -806,14 +804,54 @@ SatMgr::addBusConstraint() {
                 solver.addClause(lits);
                 lits.clear();
 
-                // solver.assumeProperty(cirmgr.MI[i / 2 * 2][j]->getVar(), 0);
-                // solver.assumeProperty(cirmgr.MI[i / 2 * 2 + 1][j]->getVar(),
-                // 0);
             }
         }
     }
 }
 
+void SatMgr::addSuppConstraint()
+{
+    vector<variable*>&f = cirmgr.f, &g = cirmgr.g;
+    int cnt = 0;
+    for (size_t i = 0, ni = f.size(); i < ni; ++i) {
+        for (size_t j = 0, nj = g.size(); j < nj; ++j) {
+            if (f[i]->suppSize() > g[j]->suppSize()) {
+                vec<Lit> lits;
+                lits.push(~Lit(cirmgr.MO[i * 2][j]->getVar()));
+                solver.addClause(lits);
+                lits.clear();
+                lits.push(~Lit(cirmgr.MO[i * 2 + 1][j]->getVar()));
+                solver.addClause(lits);
+                lits.clear();
+
+            }
+        }
+    }
+    return;
+
+}
+void SatMgr::addUnateOutputConstraint()
+{
+    vector<variable*>&f = cirmgr.f, &g = cirmgr.g;
+    int cnt = 0;
+    for (size_t i = 0, ni = f.size(); i < ni; ++i) {
+        for (size_t j = 0, nj = g.size(); j < nj; ++j) {
+            if (f[i]->unateNum() > g[j]->unateNum()) {
+                ++cnt;
+                vec<Lit> lits;
+                lits.push(~Lit(cirmgr.MO[i * 2][j]->getVar()));
+                solver.addClause(lits);
+                lits.clear();
+                lits.push(~Lit(cirmgr.MO[i * 2 + 1][j]->getVar()));
+                solver.addClause(lits);
+                lits.clear();
+
+            }
+        }
+    }
+    return;
+
+}
 // cirmgr.inputNum_ckt1, outputNum_ckt1, cirmgr.inputNum_ckt2, outputNum_ckt2;
 // Construct PHI<0>  (Preprocess not implemented yet.)
 void
