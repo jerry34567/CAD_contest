@@ -84,17 +84,23 @@ SolverMgr::solveNP3(string& inputFilename) {
     satmgr.initCircuit(satmgr.solver, satmgr.miterSolver,
                        satmgr.verifierSolver);
     satmgr.cirmgr.readCNF(satmgr.miterSolver, satmgr.verifierSolver);
-    satmgr.cirmgr.readBus(inputFilename);
+    satmgr.cirmgr.readBus_class(inputFilename);
+    // satmgr.cirmgr.readBus(inputFilename);
     satmgr.cirmgr.readPreporcess(outputUnateness);
     satmgr.cirmgr.readPreporcess(support);
     satmgr.cirmgr.readInputUnateness();
     satmgr.cirmgr.outputGrouping();
-    satmgr.addBusConstraint();
+    // satmgr.addBusConstraint();
     satmgr.addSuppConstraint();  
-    // satmgr.addUnateConstraint(1); // add input unate constraint
-    // satmgr.addUnateConstraint(0); // add output unate constraint
+    satmgr.addUnateConstraint(1); // add input unate constraint
+    satmgr.addUnateConstraint(0); // add output unate constraint
     satmgr.addOutputGroupingConstraint();
     
+    size_t BusMatchIdx_I = 0, BusMatchIdx_O = 0;
+    int totalBusMatch_I = satmgr.cirmgr.valid_busMatch_ckt2_input.size();
+    int totalBusMatch_O = satmgr.cirmgr.valid_busMatch_ckt2_output.size();
+    vec<Lit> BusMatchAssump;
+    satmgr.addBusConstraint_match(0, 0, BusMatchAssump);
     vector<vector<variable*>>&MI = satmgr.cirmgr.MI, &MO = satmgr.cirmgr.MO;
 
     // for level sovle (output sould at least some number)
@@ -129,14 +135,28 @@ SolverMgr::solveNP3(string& inputFilename) {
         }
 
         bool                      SAT1_result, SAT2_result;
-        SAT1_result = satmgr.solver.solve();
+        // SAT1_result = satmgr.solver.solve();
+        SAT1_result = satmgr.solver.assumpSolve(BusMatchAssump);
+        // cout << "BS: " << BusMatchAssump.size() << endl;
         if (!SAT1_result) {
-            cout << "No match!!" << endl;
-            break;
-        }
-        else {
-            vec<Lit> assump;
-            vec<Lit> be_searched;
+            cout << "!sat1 result: BI: " << BusMatchIdx_I << " BO: " << BusMatchIdx_O << endl;
+            if(BusMatchIdx_I == totalBusMatch_I-1 && BusMatchIdx_O == totalBusMatch_O-1){
+                cout << "No match!!" << endl;
+                break;
+            }
+            else if(BusMatchIdx_O == totalBusMatch_O-1){
+                BusMatchIdx_I++;
+                BusMatchIdx_O = 0;
+            }
+            else{
+                BusMatchIdx_O++;
+            }
+            satmgr.addBusConstraint_match(BusMatchIdx_I, BusMatchIdx_O, BusMatchAssump);
+        } else {
+            vec<Lit>                  assump;
+            vec<Lit>                  be_searched;
+            vector<vector<variable*>>&MI = satmgr.cirmgr.MI,
+            &MO                          = satmgr.cirmgr.MO;
             for (int i = 0; i < MI.size(); i++) {
                 for (int j = 0; j < MI[0].size(); j++) {
                     if (satmgr.solver.getValue(MI[i][j]->getVar()) == 1) {

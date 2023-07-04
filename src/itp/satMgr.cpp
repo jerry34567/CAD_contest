@@ -497,10 +497,10 @@ SatMgr::constraint_Cmdr(SatSolver& s, vector<vector<variable*>>& M, bool is_MO) 
         cirmgr.Cmdr_level.clear();
         for (size_t j = 0; j < M.size(); j++) {
             Cmdr* newCmdr = new Cmdr(M[j][i]->getVar(), true);
-            cout << j << " " << i << " " << M[j][i]->getVar() << endl;
+            // cout << j << " " << i << " " << M[j][i]->getVar() << endl;
             cirmgr.Cmdr_level.push_back(newCmdr);
         }
-        cout << "CMDRLEVEL size: " << cirmgr.Cmdr_level.size() << endl;
+        // cout << "CMDRLEVEL size: " << cirmgr.Cmdr_level.size() << endl;
         constructCmdr(s);
         Cmdr*    root = cirmgr.Cmdr_level[0];
         vec<Lit> lits;
@@ -543,7 +543,7 @@ SatMgr::cmdrExactlyOne(SatSolver& s, Cmdr* parent, bool is_MO) {
     cout << endl;
     if (parent->getIsVar()) return;
     if (parent->Subords.size() == 1) {
-        cout << "E1" << endl;
+        // cout << "E1" << endl;
         vec<Lit> lits;
         Lit      np = ~Lit(parent->getVar());
         Lit      n0 = ~Lit(parent->Subords[0]->getVar());
@@ -561,7 +561,7 @@ SatMgr::cmdrExactlyOne(SatSolver& s, Cmdr* parent, bool is_MO) {
         }
         cmdrExactlyOne(s, parent->Subords[0], is_MO);
     } else if (parent->Subords.size() == 2) {
-        cout << "E2" << endl;
+        // cout << "E2" << endl;
         vec<Lit> lits;
         Lit      np = ~Lit(parent->getVar());
         Lit      n0 = ~Lit(parent->Subords[0]->getVar());
@@ -591,7 +591,7 @@ SatMgr::cmdrExactlyOne(SatSolver& s, Cmdr* parent, bool is_MO) {
         cmdrExactlyOne(s, parent->Subords[0], is_MO);
         cmdrExactlyOne(s, parent->Subords[1], is_MO);
     } else if (parent->Subords.size() == 3) {
-        cout << "E3" << endl;
+        // cout << "E3" << endl;
         vec<Lit> lits;
         Lit      np = ~Lit(parent->getVar());
         Lit      n0 = ~Lit(parent->Subords[0]->getVar());
@@ -775,9 +775,11 @@ SatMgr::constraint5_miter(
 
 void
 SatMgr::addBusConstraint() {
+    // cout << "ADDBUSCONST" << endl;
     vector<variable*>&x = cirmgr.x, &y = cirmgr.y;
     for (size_t i = 0, ni = x.size(); i < ni; ++i) {
         for (size_t j = 0, nj = y.size(); j < nj; ++j) {
+                // cout << "x[i] bussize: " << x[i]->busSize() << " y[j]->busSize(): " << y[j]->busSize() << endl;
             if (x[i]->busSize() > y[j]->busSize()) {
                 vec<Lit> lits;
                 lits.push(~Lit(cirmgr.MI[i * 2][j]->getVar()));
@@ -794,6 +796,7 @@ SatMgr::addBusConstraint() {
     vector<variable*>&f = cirmgr.f, &g = cirmgr.g;
     for (size_t i = 0, ni = f.size(); i < ni; ++i) {
         for (size_t j = 0, nj = g.size(); j < nj; ++j) {
+                // cout << "f[i] bussize: " << f[i]->busSize() << " g[j]->busSize(): " << g[j]->busSize() << endl;
             if (f[i]->busSize() > g[j]->busSize()) {
                 // ++cnt;
                 vec<Lit> lits;
@@ -911,6 +914,11 @@ SatMgr::initCircuit(SatSolver& s, SatSolver& s_miter,
         tmpG->setVar3(s_verifier.newVar());
         g.push_back(tmpG);
     }
+
+    cirmgr.exist_x = new bool[x.size()]{0};
+    cirmgr.exist_y = new bool[y.size()]{0};
+    cirmgr.exist_f = new bool[f.size()]{0};
+    cirmgr.exist_g = new bool[g.size()]{0};
 
     // construct MI matrix
     for (int j = 1; j <= 2 * (cirmgr.inputNum_ckt1 + 1); j++) { // mI
@@ -1449,4 +1457,109 @@ SatMgr::addBindClause(bool isnegate, int _port1, int _port2, string _p1,
         inputMatch.push_back(tuple<bool, Var, Var>(0, _port1, _port2));
     }
     return 1;
+}
+
+void
+SatMgr::addBusConstraint_match(size_t idxI, size_t idxO, vec<Lit>& ans){
+    ans.clear();
+    vector<variable*>&x = cirmgr.x, &y = cirmgr.y, &f = cirmgr.f, &g = cirmgr.g;
+    vector<Bus*>& i1 = cirmgr.bus_ckt1_input;
+    vector<Bus*>& o1 = cirmgr.bus_ckt1_output;
+    vector<Bus*>& i2 = cirmgr.valid_busMatch_ckt2_input[idxI];
+    vector<Bus*>& o2 = cirmgr.valid_busMatch_ckt2_output[idxO];
+    // cout << "v: " << cirmgr.valid_busMatch_ckt2_input.size() << endl;
+    for (size_t i = 0, ni = i1.size(); i < ni; ++i) { 
+        for(auto j: i1[i]->indexes){
+            vector<size_t>& i2_indexes = i2[i]->indexes;
+            bool* exist = new bool[y.size()]{0};
+            for(auto i2idx: i2_indexes) exist[i2idx] = true;
+            for (size_t k = 0, nk = y.size(); k < nk; ++k) {
+                if(!exist[k]){
+                    ans.push(~Lit(cirmgr.MI[j*2][k]->getVar()));
+                    ans.push(~Lit(cirmgr.MI[j*2+1][k]->getVar()));
+                }
+            }
+            delete[] exist;
+        }
+        for(auto j: i2[i]->indexes){
+            vector<size_t>& i1_indexes = i1[i]->indexes;
+            bool* exist = new bool[x.size()]{0};
+            for(auto i1idx: i1_indexes) exist[i1idx] = true;
+            for (size_t k = 0, nk = x.size(); k < nk; ++k) {
+                if(!exist[k]){
+                    ans.push(~Lit(cirmgr.MI[k*2][j]->getVar()));
+                    ans.push(~Lit(cirmgr.MI[k*2+1][j]->getVar()));
+                }
+            }
+            delete[] exist;
+        }
+    }
+    for (size_t i = 0, ni = o1.size(); i < ni; ++i) { 
+        for(auto j: o1[i]->indexes){
+            vector<size_t>& o2_indexes = o2[i]->indexes;
+            bool* exist = new bool[g.size()]{0};
+            for(auto o2idx: o2_indexes) exist[o2idx] = true;
+            for (size_t k = 0, nk = g.size(); k < nk; ++k) {
+                if(!exist[k]){
+                    ans.push(~Lit(cirmgr.MO[j*2][k]->getVar()));
+                    ans.push(~Lit(cirmgr.MO[j*2+1][k]->getVar()));
+                }
+            }
+            delete[] exist;
+        }
+        for(auto j: o2[i]->indexes){
+            vector<size_t>& o1_indexes = o1[i]->indexes;
+            bool* exist = new bool[f.size()]{0};
+            for(auto o1idx: o1_indexes) exist[o1idx] = true;
+            for (size_t k = 0, nk = f.size(); k < nk; ++k) {
+                if(!exist[k]){
+                    ans.push(~Lit(cirmgr.MO[k*2][j]->getVar()));
+                    ans.push(~Lit(cirmgr.MO[k*2+1][j]->getVar()));
+                }
+            }
+            delete[] exist;
+        }
+
+        // when single wire vs any buses -> assign 0
+        // to do
+        
+    }
+
+    // those don't include in any bus, will never connect to those in any bus
+    for(size_t i = 0, ni = x.size(); i<ni; ++i){
+        for(size_t j = 0, nj = y.size(); j<nj; ++j){
+            if((cirmgr.exist_x[i] && !cirmgr.exist_y[j]) || (!cirmgr.exist_x[i] && cirmgr.exist_y[j])){
+                ans.push(~Lit(cirmgr.MI[i*2][j]->getVar()));
+                ans.push(~Lit(cirmgr.MI[i*2+1][j]->getVar()));
+            }
+        }
+    }
+    for(size_t i = 0, ni = f.size(); i<ni; ++i){
+        for(size_t j = 0, nj = g.size(); j<nj; ++j){
+            if((cirmgr.exist_f[i] && !cirmgr.exist_g[j]) || (!cirmgr.exist_f[i] && cirmgr.exist_g[j])){
+                ans.push(~Lit(cirmgr.MO[i*2][j]->getVar()));
+                ans.push(~Lit(cirmgr.MO[i*2+1][j]->getVar()));
+            }
+        }
+    }
+
+    if(idxI == 0 && idxO == 0){
+        cout << "X ex" << endl;
+        for(int i = 0; i < x.size(); i++){
+            cout << cirmgr.exist_x[i] << endl;
+        }
+        cout << endl;
+        for(int i = 0; i < y.size(); i++){
+            cout << cirmgr.exist_y[i] << endl;
+        }
+        cout << endl;
+        for(int i = 0; i < f.size(); i++){
+            cout << cirmgr.exist_f[i] << endl;
+        }
+        cout << endl;
+        for(int i = 0; i < g.size(); i++){
+            cout << cirmgr.exist_g[i] << endl;
+        }
+
+    }
 }

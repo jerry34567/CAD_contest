@@ -54,16 +54,26 @@ CirMgr::readAAG() {
 
         faag1 >> tmp;
         if (tmp == "i0") { // first line. ex: i0 a
+            int cnt = 0;
             portnum_ckt1.push_back(tmp);
-            faag1 >> tmp;
-            portname_ckt1.push_back(tmp);
+            faag1 >> tmp2;
+            portname_ckt1.push_back(tmp2);
+            u_name_index_ckt1[tmp2] = cnt;
+            if(tmp[0] == 'i') u_name_isInput_ckt1[tmp2] = true;
+            else u_name_isInput_ckt1[tmp2] = false;
             portNameNumpairs_ckt1.push_back(pair<string, string>(
                 portnum_ckt1.back(), portname_ckt1.back()));
+            
+            cnt ++;
             while (true) {
                 faag1 >> tmp >> tmp2;
                 if (tmp == "c") break;
                 portnum_ckt1.push_back(tmp);
                 portname_ckt1.push_back(tmp2);
+                if(tmp == "o0") cnt = 0;
+                u_name_index_ckt1[tmp2] = cnt++;
+                if(tmp[0] == 'i') u_name_isInput_ckt1[tmp2] = true;
+                else u_name_isInput_ckt1[tmp2] = false;
                 portNameNumpairs_ckt1.push_back(pair<string, string>(
                     portnum_ckt1.back(), portname_ckt1.back()));
             }
@@ -74,16 +84,25 @@ CirMgr::readAAG() {
         string tmp, tmp2;
         faag2 >> tmp;
         if (tmp == "i0") { // first line. ex: i0 a
+            int cnt = 0;
             portnum_ckt2.push_back(tmp);
-            faag2 >> tmp;
-            portname_ckt2.push_back(tmp);
+            faag2 >> tmp2;
+            portname_ckt2.push_back(tmp2);
+            u_name_index_ckt2[tmp2] = cnt;
+            if(tmp[0] == 'i') u_name_isInput_ckt2[tmp2] = true;
+            else u_name_isInput_ckt2[tmp2] = false;
             portNameNumpairs_ckt2.push_back(pair<string, string>(
                 portnum_ckt2.back(), portname_ckt2.back()));
+            cnt ++;
             while (true) {
                 faag2 >> tmp >> tmp2;
                 if (tmp == "c") break;
                 portnum_ckt2.push_back(tmp);
                 portname_ckt2.push_back(tmp2);
+                if(tmp == "o0") cnt = 0;
+                u_name_index_ckt2[tmp2] = cnt++;
+                if(tmp[0] == 'i') u_name_isInput_ckt2[tmp2] = true;
+                else u_name_isInput_ckt2[tmp2] = false;
                 portNameNumpairs_ckt2.push_back(pair<string, string>(
                     portnum_ckt2.back(), portname_ckt2.back()));
             }
@@ -230,7 +249,7 @@ CirMgr::readCNF(SatSolver& s_miter,
                     }
                 } else {
                     ++ct1;
-                    cout << lits_veri.size() << endl;
+                    // cout << lits_veri.size() << endl;
                     s_miter.addClause(lits);
                     s_verifier.addClause(lits_veri);
                     lits.clear();
@@ -342,13 +361,12 @@ CirMgr::readCNF(SatSolver& s_miter,
                     lits_veri.clear();
                 }
             }
-
             break;
         }
     }
-    cout << "ct1 = " << ct1 << ", ct2 = " << ct2 << endl;
+    // cout << "ct1 = " << ct1 << ", ct2 = " << ct2 << endl;
 }
-
+/*
 void
 CirMgr::_readbus(ifstream& fbus, vector<vector<string>>& bus_list_ckt,
                  bool _isCkt1) {
@@ -396,6 +414,7 @@ CirMgr::_readbus(ifstream& fbus, vector<vector<string>>& bus_list_ckt,
         bus_list_ckt.push_back(temp);
     }
 }
+*/
 // void
 // CirMgr::_readSupp(ifstream& fsupp, bool _isCkt1) {
 //     vector<pair<string, string>>& portNameNumpairs_ckt =
@@ -492,12 +511,12 @@ CirMgr::_readInputUnateness(ifstream& fInputUnateness, bool _isCkt1) {
     //     cout << i->inputUnateNum() << ' ';
     // cout << endl;
 }
-void
-CirMgr::readBus(string& inputFileName) {
-    ifstream fbus(inputFileName);
-    _readbus(fbus, bus_list_ckt1, 1);
-    _readbus(fbus, bus_list_ckt2, 0);
-}
+// void
+// CirMgr::readBus(string& inputFileName) {
+//     ifstream fbus(inputFileName);
+//     _readbus(fbus, bus_list_ckt1, 1);
+//     _readbus(fbus, bus_list_ckt2, 0);
+// }
 void
 CirMgr::readPreporcess(preprocess _p) {
     string f_name = "";
@@ -552,3 +571,124 @@ bool CirMgr::_outputsorting(variable* a, variable* b)
     return a->suppSize() < b->suppSize();
 }
 
+
+
+void
+CirMgr::readBus_class(string& inputfilename){
+    ifstream fbus(inputfilename);
+    string port;
+    int num_bus = 0, num_port = 0;
+    
+    fbus >> port >> num_bus;
+    for(size_t i = 0; i < num_bus; i++){
+        fbus >> num_port;
+        Bus* newBus = new Bus();
+        for(size_t j = 0; j < num_port; j++){
+            fbus >> port;
+            // cout << u_name_index_ckt1[port] << endl;
+            if(u_name_isInput_ckt1[port]){
+                exist_x[u_name_index_ckt1[port]] = true;
+                cout << "ex x name: " << port << " idx: " << u_name_index_ckt1[port] << endl;
+            }
+            else{
+                exist_f[u_name_index_ckt1[port]] = true;
+                cout << "ex f name: " << port << " idx: " << u_name_index_ckt1[port] << endl;
+            }
+            newBus->setIsInput(u_name_isInput_ckt1[port]);
+            newBus->setIsCkt1(true);
+            newBus->setPortNum(num_port);
+            newBus->insertIndex(u_name_index_ckt1[port]);
+            newBus->insertName(port);
+        }
+        if(newBus->getIsInput()) bus_ckt1_input.push_back(newBus);
+        else                     bus_ckt1_output.push_back(newBus);
+    }
+    fbus >> port >> num_bus;
+    for(size_t i = 0; i < num_bus; i++){
+        fbus >> num_port;
+        Bus* newBus = new Bus();
+        for(size_t j = 0; j < num_port; j++){
+            fbus >> port;
+            if(u_name_isInput_ckt2[port]){
+                exist_y[u_name_index_ckt2[port]] = true;
+                cout << "ex y name: " << port << " idx: " << u_name_index_ckt2[port] << endl;
+            }
+            else{
+                exist_g[u_name_index_ckt2[port]] = true;
+                cout << "ex g name: " << port << " idx: " << u_name_index_ckt2[port] << endl;
+            }
+            newBus->setIsInput(u_name_isInput_ckt2[port]);
+            newBus->setIsCkt1(false);
+            newBus->setPortNum(num_port);
+            newBus->insertIndex(u_name_index_ckt2[port]);
+            newBus->insertName(port);
+        }
+        if(newBus->getIsInput()) bus_ckt2_input.push_back(newBus);
+        else                     bus_ckt2_output.push_back(newBus);
+    }
+
+    sort(bus_ckt1_input.begin(), bus_ckt1_input.end(), [](Bus* a, Bus* b){return a->getPortNum() > b->getPortNum();});
+    sort(bus_ckt1_output.begin(), bus_ckt1_output.end(), [](Bus* a, Bus* b){return a->getPortNum() > b->getPortNum();});
+    sort(bus_ckt2_input.begin(), bus_ckt2_input.end(), [](Bus* a, Bus* b){return a->getPortNum() > b->getPortNum();});
+    sort(bus_ckt2_output.begin(), bus_ckt2_output.end(), [](Bus* a, Bus* b){return a->getPortNum() > b->getPortNum();});
+
+    valid_busMatch_ckt2_input = permute(bus_ckt2_input);
+    valid_busMatch_ckt2_output = permute(bus_ckt2_output);
+
+    cout << "Vi size: " << valid_busMatch_ckt2_input.size() << endl;
+    cout << "Vo size: " << valid_busMatch_ckt2_output.size() << endl;
+
+    /*
+    //test
+    cout << "b 1 i " << bus_ckt1_input.size() << endl;
+    for(int i=0; i<bus_ckt1_input.size(); i++){
+        cout << bus_ckt1_input[i]->getIsInput() << " " << bus_ckt1_input[i]->getIsCkt1() << " " << bus_ckt1_input[i]->getPortNum() <<  endl;
+        for(int j=0; j<bus_ckt1_input[i]->names.size(); j++){
+            cout << bus_ckt1_input[i]->names[j] << endl;
+        }
+    }
+    cout << "\nb 1 o " << bus_ckt1_output.size()  << endl;
+    for(int i=0; i<bus_ckt1_output.size(); i++){
+        cout << bus_ckt1_output[i]->getIsInput() << " " << bus_ckt1_output[i]->getIsCkt1() << " " << bus_ckt1_output[i]->getPortNum() <<  endl;
+        for(int j=0; j<bus_ckt1_output[i]->names.size(); j++){
+            cout << bus_ckt1_output[i]->names[j] << endl;
+        }
+    }
+    cout << "\nb 2 i " << bus_ckt2_input.size() << endl;
+    for(int i=0; i<bus_ckt2_input.size(); i++){
+        cout << bus_ckt2_input[i]->getIsInput() << " " << bus_ckt2_input[i]->getIsCkt1() << " " << bus_ckt2_input[i]->getPortNum() <<  endl;
+        for(int j=0; j<bus_ckt2_input[i]->names.size(); j++){
+            cout << bus_ckt2_input[i]->names[j] << endl;
+        }
+    }
+    cout << "\nb 2 o " << bus_ckt2_output.size()  << endl;
+    for(int i=0; i<bus_ckt2_output.size(); i++){
+        cout << bus_ckt2_output[i]->getIsInput() << " " << bus_ckt2_output[i]->getIsCkt1() << " " << bus_ckt2_output[i]->getPortNum() <<  endl;
+        for(int j=0; j<bus_ckt2_output[i]->names.size(); j++){
+            cout << bus_ckt2_output[i]->names[j] << endl;
+        }
+    }
+    cout << "b4 permute" << endl;
+    cout << "valid bus match" << endl;
+    
+    for(int i=0; i < valid_busMatch_ckt2_input.size(); i++){
+        cout << "Group" << endl;
+        for(int j=0; j < valid_busMatch_ckt2_input[0].size(); j++){
+            for(auto k: valid_busMatch_ckt2_input[i][j]->names){
+                cout << k << " ";
+            }
+            cout << endl;
+        }
+    }
+    for(int i=0; i < valid_busMatch_ckt2_output.size(); i++){
+        cout << "Group" << endl;
+        for(int j=0; j < valid_busMatch_ckt2_output[0].size(); j++){
+            for(auto k: valid_busMatch_ckt2_output[i][j]->names){
+                cout << k << " ";
+            }
+            cout << endl;
+        }
+    }
+    cout << "RB end" << endl;
+    */
+}

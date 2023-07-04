@@ -66,6 +66,7 @@ class SatMgr
         void addSuppConstraint(); // currently : structral support, |SSo1| <= |SSo2|
         void addUnateConstraint(bool _isInput); // _isInput == 1 -> inputUnateConstraint
         void addOutputGroupingConstraint();
+        void addBusConstraint_match(size_t idxI, size_t idxO, vec<Lit>& ans);
 
         // only bind input
         // use int _port1, int _port2 to check if _port1 < 0 and if _port2 < 0

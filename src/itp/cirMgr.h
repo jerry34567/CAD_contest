@@ -5,6 +5,7 @@
 #include <string>
 #include <unordered_map>
 #include <vector>
+#include <algorithm>
 // #include "satMgr.h"
 
 enum preprocess
@@ -82,22 +83,25 @@ class Cmdr // commander variable encoding for constraint 2 and 3
 class Bus
 {
     public:
+        // Bus (bool I, bool C, size_t N): isInput(I), isCkt1(C), portNum(N) {}
+        Bus (){}
+        ~Bus(){}
         bool            getIsInput() const {return isInput;}
         bool            getIsCkt1 () const {return isCkt1 ;}
         size_t          getPortNum() const {return portNum;}
-        vector<size_t>  getIndexes() const {return indexes;}
-        vector<string>  getNames  () const {return names  ;}
+        // vector<size_t>  getIndexes() const {return indexes;}
+        // vector<string>  getNames  () const {return names  ;}
         void            setIsInput (const bool v)  {isInput = v;}
         void            setIsCkt1  (const bool v)  {isCkt1  = v;}
         void            setPortNum (const size_t v){portNum = v;}
         void            insertIndex(const size_t v){indexes.push_back(v);}
         void            insertName (const string v){names.push_back(v);}
-    private:
-        bool           isInput;
-        bool           isCkt1;
-        size_t         portNum;
         vector<size_t> indexes;
         vector<string> names;
+    private:
+        bool isInput;
+        bool isCkt1;
+        size_t portNum;
 };
 
 class CirMgr
@@ -112,12 +116,13 @@ class CirMgr
         void readAAG();
         void readMAP();
         void readCNF(SatSolver& s_miter, SatSolver& s_verifier);
-        void readBus(string &);
+        // void readBus(string &);
         void readPreporcess(preprocess _p);
         void readInputUnateness();  // mix positive / negative unate together
         void outputGrouping();
         // void readSupp();
         // void readUnate();
+        void readBus_class(string&); // also calculate valid bus match permutation
 
     private:
         int inputNum_ckt1, outputNum_ckt1, inputNum_ckt2, outputNum_ckt2;
@@ -133,6 +138,12 @@ class CirMgr
                                    // index in f(g)
         vector<vector<variable*>> MI, MO;
         vector<variable*>         x, y, f, g; // sub2 = -1
+        bool* exist_x;
+        bool* exist_y;
+        bool* exist_f;
+        bool* exist_g; 
+        vector<Bus*>              bus_ckt1_input, bus_ckt1_output, bus_ckt2_input, bus_ckt2_output;
+        vector<vector<Bus*>>      valid_busMatch_ckt2_input, valid_busMatch_ckt2_output; // permute ckt2's bus to match ckt1's bus
         vector<vector<string>>    bus_list_ckt1,
             bus_list_ckt2; // record the bus (including input and output )info
                            // of circuit1 & circuit2
@@ -144,6 +155,9 @@ class CirMgr
         unordered_map<int, Var> umapInterVar_ckt1, umapInterVar_ckt1_veri,
             umapInterVar_ckt2, umapInterVar_ckt2_veri;
         vector<Cmdr*> Cmdr_level;
+
+        unordered_map<string, int> u_name_index_ckt1, u_name_index_ckt2; // index can be used for x, y, f, g immediately
+        unordered_map<string, bool> u_name_isInput_ckt1, u_name_isInput_ckt2;
 
         // helper function
 
@@ -159,6 +173,28 @@ class CirMgr
         // void _readUnate(
         //     ifstream& funate,
         //     bool _isCkt1); // _ckti = 1 denotes is reading ckt1; = 0 -> ckt2
+             
+        vector<vector<Bus*>> permute(vector<Bus*>& num){
+            vector<vector<Bus*>> ans;
+            permutation(num, 0, ans);
+            return ans;
+        }
+        int cnt = 0;
+        void permutation(vector<Bus*>& num, int begin, vector<vector<Bus*>>& ans){
+            vector<Bus*>& b = num[0]->getIsInput() ? bus_ckt1_input : bus_ckt1_output;
+            // cout << begin << endl;
+            if(begin >= num.size()){
+                ans.push_back(num);
+                cout << "valid permu" << cnt++ << endl;
+                return;
+            }
+            for(int i=begin; i< num.size(); i++){
+                swap(num[begin], num[i]);
+                if(num[begin]->getPortNum() >= b[begin]->getPortNum() && num[i]->getPortNum() >= b[i]->getPortNum())
+                    permutation(num, begin+1, ans);
+                swap(num[begin], num[i]);
+            }
+        }
 };
 
 #endif // CIRMGR_H
