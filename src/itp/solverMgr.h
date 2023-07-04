@@ -10,7 +10,7 @@ class SolverMgr
         SolverMgr(){};
         ~SolverMgr(){};
         void    verification(bool isManualBinded = 0);
-        void    solveNP3();
+        void    solveNP3(string&);
         SatMgr& getSatmgr() { return satmgr; }
 
     private:

@@ -154,11 +154,13 @@ SATVerifyBmcCmd::help() const {
 }
 */
 //----------------------------------------------------------------------
-//    NP3 Solve
+//    NP3 Solve <string input_file_name>
 //----------------------------------------------------------------------
 GVCmdExecStatus
 NP3SolveCmd::exec(const string& option) {
-    solvermgr.solveNP3();
+    vector<string> options;
+    GVCmdExec::lexOptions(option, options);
+    solvermgr.solveNP3(options[0]);
     return GV_CMD_EXEC_DONE;
 }
 

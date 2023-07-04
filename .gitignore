@@ -60,3 +60,5 @@ bin/*
 gv
 funcsupp.txt
 unateness.txt
+preprocess/*
+abc.tar.gz

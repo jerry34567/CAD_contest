@@ -2,6 +2,7 @@
 #include "sat.h"
 #include <fstream>
 #include <string>
+#include <algorithm>
 
 void
 CirMgr::reset() {
@@ -453,8 +454,8 @@ CirMgr::_readPreprocess(ifstream& fPreprocess, bool _isCkt1, preprocess _p) {
                 vector<variable*>& vecVar  = _isCkt1 ? f : g;
                 size_t _offset = _isCkt1 ? inputNum_ckt1 : inputNum_ckt2; // have to substract the input num if vecVar is the output port vector
                 switch (_p){
-                    case unateness:
-                        vecVar[k - _offset]->setUnateSum(num);
+                    case outputUnateness:
+                        vecVar[k - _offset]->setOutputUnateNum(num);
                         break;
                     case support:
                         vecVar[k - _offset]->setSuppSize(num);
@@ -466,32 +467,88 @@ CirMgr::_readPreprocess(ifstream& fPreprocess, bool _isCkt1, preprocess _p) {
     }
     return;
 }
-
 void
-CirMgr::readBus() {
-    string   fbus_name = "./input";
-    ifstream fbus(fbus_name);
+CirMgr::_readInputUnateness(ifstream& fInputUnateness, bool _isCkt1) {
+    vector<pair<string, string>>& portNameNumpairs_ckt =
+        (_isCkt1 ? portNameNumpairs_ckt1 : portNameNumpairs_ckt2);
+    size_t outputNum = _isCkt1 ? outputNum_ckt1 : outputNum_ckt2;
+    size_t inputNum  = _isCkt1 ? inputNum_ckt1 : inputNum_ckt2;
+    string resultingOutputs = "";
+    int num = 0;
+    int cnt = 0;
+    for(size_t i = 0; i < outputNum; ++i)
+    {
+        fInputUnateness >> resultingOutputs;
+        for(size_t j = 0, nj = resultingOutputs.length(); j < nj; ++j)
+            if(resultingOutputs[j] != '.')
+            {
+                vector<variable*>& vecVar  = _isCkt1 ? x : y;
+                vecVar[j]->addInputUnateNum();
+            }
+
+    }
+    // vector<variable*>& vecVar  = _isCkt1 ? x : y;
+    // for(auto i : vecVar)
+    //     cout << i->inputUnateNum() << ' ';
+    // cout << endl;
+}
+void
+CirMgr::readBus(string& inputFileName) {
+    ifstream fbus(inputFileName);
     _readbus(fbus, bus_list_ckt1, 1);
     _readbus(fbus, bus_list_ckt2, 0);
 }
-// void
-// CirMgr::readSupp() {
-//     string   fsupp_name = "./funcsupp.txt";
-//     ifstream fsupp(fsupp_name);
-//     _readSupp(fsupp, 1);
-//     _readSupp(fsupp, 0);
-// }
-// void
-// CirMgr::readUnate() {
-//     string   funate_name = "./unateness.txt";
-//     ifstream funate(funate_name);
-//     _readUnate(funate, 1);
-//     _readUnate(funate, 0);
-// }
 void
 CirMgr::readPreporcess(preprocess _p) {
-    string f_name = _p == unateness ? "./unateness.txt" : "./funcsupp.txt";
+    string f_name = "";
+    switch(_p)
+    {
+        case outputUnateness:
+            f_name = "./preprocess/outputUnateness.txt" ;
+            break;
+        case support:
+            f_name = "./preprocess/funcsupp.txt" ;
+            break;
+    }
     ifstream fPreprocess(f_name);
     _readPreprocess(fPreprocess, 1, _p);
     _readPreprocess(fPreprocess, 0, _p);
 }
+
+
+void
+CirMgr::readInputUnateness() {
+    string   fInputUnateness_name = "./preprocess/inputUnateness.txt";
+    ifstream fInputUnateness(fInputUnateness_name);
+    _readInputUnateness(fInputUnateness, 1);    // read ckt1
+    _readInputUnateness(fInputUnateness, 0);    // read ckt2
+}
+
+void CirMgr::outputGrouping(){  // |f| = |g|
+    vector<variable*> f_sorted = f, g_sorted = g; // sorted by (functional supp), structral support, fanin size
+    vector<vector<variable*>> f_groups({{}}), g_groups({{}}); // set of groups of f & g
+    std::sort(f_sorted.begin(), f_sorted.end(), _outputsorting);
+    std::sort(g_sorted.begin(), g_sorted.end(), _outputsorting);
+    for(size_t i = 0, n = f.size(); i < n; ++i)
+    {
+        if(i != 0 && f_sorted[i]->suppSize() > g_sorted[i - 1]->suppSize())
+        {
+            f_groups.push_back({});
+            g_groups.push_back({});
+        }
+        f_groups.back().push_back(f_sorted[i]);
+        g_groups.back().push_back(g_sorted[i]);
+    }
+    for(size_t i = 0, n = f_groups.size(); i < n; ++i)
+        for(auto j : f_groups[i])
+            j->setOutputGroupingNum(i);
+    for(size_t i = 0, n = g_groups.size(); i < n; ++i)
+        for(auto j : g_groups[i])
+            j->setOutputGroupingNum(i);
+    // exit(0);
+}
+bool CirMgr::_outputsorting(variable* a, variable* b)
+{
+    return a->suppSize() < b->suppSize();
+}
+

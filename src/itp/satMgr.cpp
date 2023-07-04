@@ -830,13 +830,15 @@ void SatMgr::addSuppConstraint()
     return;
 
 }
-void SatMgr::addUnateOutputConstraint()
+void SatMgr::addUnateConstraint(bool _isInput)// |Uo1| <= |Uo2| ; |Ui1| <= |Ui2|
 {
     vector<variable*>&f = cirmgr.f, &g = cirmgr.g;
     int cnt = 0;
     for (size_t i = 0, ni = f.size(); i < ni; ++i) {
         for (size_t j = 0, nj = g.size(); j < nj; ++j) {
-            if (f[i]->unateNum() > g[j]->unateNum()) {
+            size_t f_unateNum = _isInput ? f[i]->inputUnateNum() : f[i]->outputUnateNum(),
+                   g_unateNum = _isInput ? g[j]->inputUnateNum() : g[j]->outputUnateNum();
+            if (f_unateNum > g_unateNum) {
                 ++cnt;
                 vec<Lit> lits;
                 lits.push(~Lit(cirmgr.MO[i * 2][j]->getVar()));
@@ -851,6 +853,26 @@ void SatMgr::addUnateOutputConstraint()
     }
     return;
 
+}
+
+void SatMgr::addOutputGroupingConstraint()  // will not match outputs with different group number if |f| != |g|
+{
+     vector<variable*>&f = cirmgr.f, &g = cirmgr.g;
+    for (size_t i = 0, ni = f.size(); i < ni; ++i) {
+        for (size_t j = 0, nj = g.size(); j < nj; ++j) {
+            if (f[i]->outputGroupingNum() != g[j]->outputGroupingNum()) {
+                vec<Lit> lits;
+                lits.push(~Lit(cirmgr.MO[i * 2][j]->getVar()));
+                solver.addClause(lits);
+                lits.clear();
+                lits.push(~Lit(cirmgr.MO[i * 2 + 1][j]->getVar()));
+                solver.addClause(lits);
+                lits.clear();
+
+            }
+        }
+    }
+    return;
 }
 // cirmgr.inputNum_ckt1, outputNum_ckt1, cirmgr.inputNum_ckt2, outputNum_ckt2;
 // Construct PHI<0>  (Preprocess not implemented yet.)

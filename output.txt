@@ -1,0 +1,36 @@
+INGROUP
+1 + c
+2 + z
+END
+INGROUP
+1 + b0
+2 + y0
+END
+INGROUP
+1 + b1
+2 + y1
+END
+INGROUP
+1 + a1
+2 + x1
+END
+INGROUP
+1 + a0
+2 + x0
+END
+OUTGROUP
+1 + m1
+2 + w1
+END
+OUTGROUP
+1 + h1
+2 + u1
+END
+OUTGROUP
+1 + m0
+2 + w0
+END
+OUTGROUP
+1 + h0
+2 + u0
+END

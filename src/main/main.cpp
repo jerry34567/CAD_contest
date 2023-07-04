@@ -167,16 +167,19 @@ main(int argc, char** argv) {
     // 1125
     // cmd = "set engine abc";
     // gvCmdMgr->execOneCmd(cmd);
-    remove("funcsupp.txt");
-    remove("unateness.txt");
+    remove("./preprocess/funcsupp.txt");
+    remove("./preprocess/outputUnateness.txt");
+    remove("./preprocess/inputUnateness.txt");
 
     cmd = "abccmd read_verilog cir1.v";
     gvCmdMgr->execOneCmd(cmd);
 
+    cmd = "abccmd print_io";
+    gvCmdMgr->execOneCmd(cmd);
     cmd = "abccmd fraig";
     gvCmdMgr->execOneCmd(cmd);
 
-    cmd = "abccmd print_unate";
+    cmd = "abccmd print_unate -v";
     gvCmdMgr->execOneCmd(cmd);
 
     cmd = "abccmd write_aiger -s top1.aig";
@@ -184,7 +187,7 @@ main(int argc, char** argv) {
 
     aig2aag("top1.aig", "top1.aag");
 
-    cmd = "abccmd print_supp";
+    cmd = "abccmd print_supp -s";
     gvCmdMgr->execOneCmd(cmd);
 
     cmd = "abccmd write_cnf top1.cnf";
@@ -193,10 +196,13 @@ main(int argc, char** argv) {
     cmd = "abccmd read_verilog cir2.v";
     gvCmdMgr->execOneCmd(cmd);
 
+    cmd = "abccmd print_io";
+    gvCmdMgr->execOneCmd(cmd);
+
     cmd = "abccmd fraig";
     gvCmdMgr->execOneCmd(cmd);
 
-    cmd = "abccmd print_unate";
+    cmd = "abccmd print_unate -v";
     gvCmdMgr->execOneCmd(cmd);
 
     cmd = "abccmd write_aiger -s top2.aig";
@@ -207,14 +213,14 @@ main(int argc, char** argv) {
     cmd = "abccmd write_cnf top2.cnf";
     gvCmdMgr->execOneCmd(cmd);
 
-    cmd = "abccmd print_supp";
+    cmd = "abccmd print_supp -s";
     gvCmdMgr->execOneCmd(cmd);
     // cmd = "read design -v cir1.v";
     // gvCmdMgr->execOneCmd(cmd);
     // cmd = "set sys vrf";
     // gvCmdMgr->execOneCmd(cmd);
     // gvCmdMgr->setPrompt();
-    cmd = "np3 s";
+    cmd = "np3 s " + std::string(argv[1]);
     gvCmdMgr->execOneCmd(cmd);
     cout << '\a';
     cmd = "usage";

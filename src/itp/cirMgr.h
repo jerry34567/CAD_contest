@@ -10,13 +10,14 @@
 enum preprocess
 {
     support,
-    unateness
+    outputUnateness,
+    inputUnateness
 };
 class variable
 {
     public:
         variable(char name, Var sub1, Var sub2)
-            : _name(name), _sub1(sub1), _sub2(sub2), _busIndex(0), _busSize(0) {
+            : _name(name), _sub1(sub1), _sub2(sub2), _busIndex(0), _busSize(0),_suppSize(0), _inputUnateNum(0),_outputUnateNum(0), _outputGroupingNum(0){
         }
         ~variable() {}
         char   getName() const { return _name; }
@@ -28,7 +29,9 @@ class variable
         size_t busIndex() { return _busIndex; }
         size_t busSize() { return _busSize; }
         size_t suppSize() { return _suppSize; }
-        size_t unateNum() { return _unateNum; }
+        size_t outputUnateNum() { return _outputUnateNum; }
+        size_t inputUnateNum() { return _inputUnateNum; }
+        size_t outputGroupingNum() { return _outputGroupingNum; }
         void   setName(const char& v) { _name = v; }
         void   setSub1(const Var& v) { _sub1 = v; }
         void   setSub2(const Var& v) { _sub2 = v; }
@@ -38,7 +41,10 @@ class variable
         void   setBusIndex(const size_t _i) { _busIndex = _i; }
         void   setBusSize(const size_t _s) { _busSize = _s; }
         void   setSuppSize(const size_t _s) { _suppSize = _s; }
-        void   setUnateSum(const size_t _s) { _unateNum = _s; }
+        void   setInputUnateNum(const size_t _s) { _inputUnateNum = _s; }
+        void   setOutputUnateNum(const size_t _s) { _outputUnateNum = _s; }
+        void   setOutputGroupingNum(const size_t _s) { _outputGroupingNum = _s; }
+        void   addInputUnateNum() { ++_inputUnateNum; }
 
     private:
         char   _name;
@@ -51,8 +57,10 @@ class variable
                           // belongs to in bus vector
         size_t _busSize;  // bus_size denotes the number of the elements in the
                           // bus it belongs to
-        size_t _suppSize; // currently : structral support
-        size_t _unateNum; // the number of unate variables
+        size_t _suppSize; // currently : functional support
+        size_t _inputUnateNum;  // how many outputs are unate w.r.t this PI 
+        size_t _outputUnateNum; // the number of output unate variables
+        size_t _outputGroupingNum; // index of the output grouping
         // Var _aigVar; do we need this??
 };
 
@@ -104,8 +112,10 @@ class CirMgr
         void readAAG();
         void readMAP();
         void readCNF(SatSolver& s_miter, SatSolver& s_verifier);
-        void readBus();
+        void readBus(string &);
         void readPreporcess(preprocess _p);
+        void readInputUnateness();  // mix positive / negative unate together
+        void outputGrouping();
         // void readSupp();
         // void readUnate();
 
@@ -141,6 +151,8 @@ class CirMgr
             ifstream& fbus, vector<vector<string>>& bus_list_ckt,
             bool _isCkt1); // _ckti = 1 denotes is reading ckt1; = 0 -> ckt2
         void _readPreprocess(ifstream& fPreprocess, bool _isCkt1, preprocess _p);// _ckti = 1 denotes is reading ckt1; = 0 -> ckt2
+        void _readInputUnateness(ifstream& , bool _isCkt1);
+        static bool _outputsorting(variable* a, variable* b);
         // void _readSupp(
         //     ifstream& fbus,
         //     bool _isCkt1); 

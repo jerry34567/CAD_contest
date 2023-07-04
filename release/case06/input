@@ -1,4 +1,4 @@
-circuit_1.v
+./release/case06/circuit_1.v
 10
 3 n2 n75 n287
 26 n11 n46 n74 n81 n84 n101 n134 n139 n153 n309 n346 n360 n377 n394 n447 n457 n500 n507 n519 n569 n571 n581 n603 n609 n614 n673
@@ -10,7 +10,7 @@ circuit_1.v
 4 n216 n454 n616 n659
 3 n409 n428 n468
 3 n435 n582 n600
-circuit_2.v
+./release/case06/circuit_2.v
 10
 4 n5 n157 n503 n680
 3 n13 n111 n742

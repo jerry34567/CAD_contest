@@ -68,7 +68,7 @@ SolverMgr::verification(bool isManualBinded) {
 }
 
 void
-SolverMgr::solveNP3() {
+SolverMgr::solveNP3(string& inputFilename) {
     double time;
     clock_t start, stop;
     start = clock();
@@ -84,14 +84,17 @@ SolverMgr::solveNP3() {
     satmgr.initCircuit(satmgr.solver, satmgr.miterSolver,
                        satmgr.verifierSolver);
     satmgr.cirmgr.readCNF(satmgr.miterSolver, satmgr.verifierSolver);
-    satmgr.cirmgr.readBus();
-    satmgr.cirmgr.readPreporcess(unateness);
+    satmgr.cirmgr.readBus(inputFilename);
+    satmgr.cirmgr.readPreporcess(outputUnateness);
     satmgr.cirmgr.readPreporcess(support);
-    // satmgr.cirmgr.readSupp();
-    // satmgr.cirmgr.readUnate();
+    satmgr.cirmgr.readInputUnateness();
+    satmgr.cirmgr.outputGrouping();
     satmgr.addBusConstraint();
-    satmgr.addSuppConstraint();
-    satmgr.addUnateOutputConstraint();
+    satmgr.addSuppConstraint();  
+    // satmgr.addUnateConstraint(1); // add input unate constraint
+    // satmgr.addUnateConstraint(0); // add output unate constraint
+    satmgr.addOutputGroupingConstraint();
+    
     vector<vector<variable*>>&MI = satmgr.cirmgr.MI, &MO = satmgr.cirmgr.MO;
 
     // for level sovle (output sould at least some number)
