@@ -816,16 +816,18 @@ void SatMgr::addSuppConstraint()
 {
     vector<variable*>&f = cirmgr.f, &g = cirmgr.g;
     int cnt = 0;
+    vec<Lit> lits;
     for (size_t i = 0, ni = f.size(); i < ni; ++i) {
         for (size_t j = 0, nj = g.size(); j < nj; ++j) {
             if (f[i]->suppSize() > g[j]->suppSize()) {
-                vec<Lit> lits;
-                lits.push(~Lit(cirmgr.MO[i * 2][j]->getVar()));
-                solver.addClause(lits);
-                lits.clear();
-                lits.push(~Lit(cirmgr.MO[i * 2 + 1][j]->getVar()));
-                solver.addClause(lits);
-                lits.clear();
+                closeMatching(lits, i * 2, j, 0);    //close output positve matching
+                closeMatching(lits, i * 2 + 1, j, 0);    //close output negative matching
+                // lits.push(~Lit(cirmgr.MO[i * 2][j]->getVar()));
+                // solver.addClause(lits);
+                // lits.clear();
+                // lits.push(~Lit(cirmgr.MO[i * 2 + 1][j]->getVar()));
+                // solver.addClause(lits);
+                // lits.clear();
 
             }
         }
@@ -837,21 +839,39 @@ void SatMgr::addUnateConstraint(bool _isInput)// |Uo1| <= |Uo2| ; |Ui1| <= |Ui2|
 {
     vector<variable*>&f = cirmgr.f, &g = cirmgr.g;
     int cnt = 0;
+    vec<Lit> lits;
     for (size_t i = 0, ni = f.size(); i < ni; ++i) {
         for (size_t j = 0, nj = g.size(); j < nj; ++j) {
-            size_t f_unateNum = _isInput ? f[i]->inputUnateNum() : f[i]->outputUnateNum(),
-                   g_unateNum = _isInput ? g[j]->inputUnateNum() : g[j]->outputUnateNum();
-            if (f_unateNum > g_unateNum) {
-                ++cnt;
-                vec<Lit> lits;
-                lits.push(~Lit(cirmgr.MO[i * 2][j]->getVar()));
-                solver.addClause(lits);
-                lits.clear();
-                lits.push(~Lit(cirmgr.MO[i * 2 + 1][j]->getVar()));
-                solver.addClause(lits);
-                lits.clear();
-
+            if(_isInput){
+                size_t f_unateNum_p = f[i]->inputUnateNum_p(), f_unateNum_n = f[i]->inputUnateNum_n(),
+                       g_unateNum_p = g[j]->inputUnateNum_p(), g_unateNum_n = g[j]->inputUnateNum_n();
+                if(f_unateNum_p > g_unateNum_p && f_unateNum_n > g_unateNum_n)
+                    closeMatching(lits, i * 2, j, 1);   //close input positve matching
+                if(f_unateNum_n > g_unateNum_p && f_unateNum_p > g_unateNum_n)
+                    closeMatching(lits, i * 2 + 1, j, 1);   //close input negative matching
             }
+            else{
+                size_t f_unateNum = f[i]->outputUnateNum(), g_unateNum = g[j]->outputUnateNum();
+                if (f_unateNum > g_unateNum) {
+                    closeMatching(lits, i * 2, j, 0);    //close output positve matching
+                    closeMatching(lits, i * 2 + 1, j, 0);    //close output negative matching
+                }
+            }
+            // size_t _isInput ? f[i]->inputUnateNum() : f[i]->outputUnateNum(),
+            //        g_unateNum = _isInput ? g[j]->inputUnateNum() : g[j]->outputUnateNum();
+            // if (f_unateNum > g_unateNum) {
+            //     ++cnt;
+            //     vec<Lit> lits;
+            //     closeMatching(lits, i * 2, j, 0);    //close output positve matching
+            //     closeMatching(lits, i * 2 + 1, j, 0);    //close output negative matching
+            //     // lits.push(~Lit(cirmgr.MO[i * 2][j]->getVar()));
+            //     // solver.addClause(lits);
+            //     // lits.clear();
+            //     // lits.push(~Lit(cirmgr.MO[i * 2 + 1][j]->getVar()));
+            //     // solver.addClause(lits);
+            //     // lits.clear();
+
+            // }
         }
     }
     return;
@@ -861,16 +881,18 @@ void SatMgr::addUnateConstraint(bool _isInput)// |Uo1| <= |Uo2| ; |Ui1| <= |Ui2|
 void SatMgr::addOutputGroupingConstraint()  // will not match outputs with different group number if |f| != |g|
 {
      vector<variable*>&f = cirmgr.f, &g = cirmgr.g;
+    vec<Lit> lits;
     for (size_t i = 0, ni = f.size(); i < ni; ++i) {
         for (size_t j = 0, nj = g.size(); j < nj; ++j) {
             if (f[i]->outputGroupingNum() != g[j]->outputGroupingNum()) {
-                vec<Lit> lits;
-                lits.push(~Lit(cirmgr.MO[i * 2][j]->getVar()));
-                solver.addClause(lits);
-                lits.clear();
-                lits.push(~Lit(cirmgr.MO[i * 2 + 1][j]->getVar()));
-                solver.addClause(lits);
-                lits.clear();
+                closeMatching(lits, i * 2, j, 0);    //close output positve matching
+                closeMatching(lits, i * 2 + 1, j, 0);    //close output negative matching
+                // lits.push(~Lit(cirmgr.MO[i * 2][j]->getVar()));
+                // solver.addClause(lits);
+                // lits.clear();
+                // lits.push(~Lit(cirmgr.MO[i * 2 + 1][j]->getVar()));
+                // solver.addClause(lits);
+                // lits.clear();
 
             }
         }

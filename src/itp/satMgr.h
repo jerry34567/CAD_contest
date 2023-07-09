@@ -154,6 +154,17 @@ class SatMgr
         // record the best match so far
         vector<vector<variable*>> record_input, record_output;
         unsigned point = 0;
+
+        //helper function
+        void closeMatching(vec<Lit> &lits, size_t _i, size_t _j, bool _isInput){  // _isInput == 1 -> close input matching
+            if(_isInput)
+                lits.push(~Lit(cirmgr.MI[_i][_j]->getVar()));
+            else
+                lits.push(~Lit(cirmgr.MO[_i][_j]->getVar()));
+            solver.addClause(lits);
+            lits.clear();
+        }
+
 };
 
 #endif // SATMGR_H

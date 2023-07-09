@@ -462,11 +462,12 @@ CirMgr::_readPreprocess(ifstream& fPreprocess, bool _isCkt1, preprocess _p) {
         (_isCkt1 ? portNameNumpairs_ckt1 : portNameNumpairs_ckt2);
     size_t outputNum = _isCkt1 ? outputNum_ckt1 : outputNum_ckt2;
     size_t inputNum  = _isCkt1 ? inputNum_ckt1 : inputNum_ckt2;
-    string port;
+    string port, portName = "";
     int num = 0;
     int cnt = 0;
     for (size_t i = 0; i < outputNum; ++i) {
         fPreprocess >> port >> num;
+        cout << port << ' ' << num << ' ';
         for (size_t k = inputNum, n = portNameNumpairs_ckt.size(); k < n; ++k) {
             if (portNameNumpairs_ckt[k].second == port) {
                 cnt++;
@@ -478,12 +479,27 @@ CirMgr::_readPreprocess(ifstream& fPreprocess, bool _isCkt1, preprocess _p) {
                         break;
                     case support:
                         vecVar[k - _offset]->setSuppSize(num);
+                        while(fPreprocess >> portName)
+                        {
+                            if(portName == ";")
+                                break;
+                            for (size_t j = 0; j < inputNum; ++j) {
+                                if (portNameNumpairs_ckt[j].second == portName){
+                                    // cout << portName << ' ';
+                                    vecVar[k - _offset]->funcSupp().push_back(vecVar[j]);
+                                    break;
+                                }
+                            }
+                        }
+                        // cout << endl;
                         break;
                 }
                 break;
             }
         }
     }
+    for(auto i : f)
+        cout << "funcSupp size = "<<i->funcSupp().size() << endl;
     return;
 }
 void
@@ -499,16 +515,21 @@ CirMgr::_readInputUnateness(ifstream& fInputUnateness, bool _isCkt1) {
     {
         fInputUnateness >> resultingOutputs;
         for(size_t j = 0, nj = resultingOutputs.length(); j < nj; ++j)
-            if(resultingOutputs[j] != '.')
+            if(resultingOutputs[j] == 'p')
             {
                 vector<variable*>& vecVar  = _isCkt1 ? x : y;
-                vecVar[j]->addInputUnateNum();
+                vecVar[j]->addInputUnateNum_p();
+            }
+            else if(resultingOutputs[j] == 'n')
+            {
+                vector<variable*>& vecVar  = _isCkt1 ? x : y;
+                vecVar[j]->addInputUnateNum_n();
             }
 
     }
     // vector<variable*>& vecVar  = _isCkt1 ? x : y;
     // for(auto i : vecVar)
-    //     cout << i->inputUnateNum() << ' ';
+    //     cout << "( "<<i->inputUnateNum_p() << " , " << i->inputUnateNum_n() << " ) ; ";
     // cout << endl;
 }
 // void

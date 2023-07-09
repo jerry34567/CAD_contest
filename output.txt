@@ -1,50 +1,50 @@
 INGROUP
 1 + n49
-2 + n13
+2 - n9
 END
 INGROUP
 1 + n48
-2 + n49
-END
-INGROUP
-1 + n45
-2 + n38
-END
-INGROUP
-1 + n35
-2 + n48
-END
-INGROUP
-1 + n46
-2 + n31
-END
-INGROUP
-1 + n24
-2 + n4
-END
-INGROUP
-1 + n19
-2 + n30
-END
-INGROUP
-1 + n11
 2 + n44
 END
 INGROUP
-1 + n5
-2 + n40
+1 + n45
+2 + n15
 END
 INGROUP
-1 + n4
-2 + n9
+1 + n35
+2 + n49
 END
 INGROUP
-1 + n39
+1 + n46
 2 + n3
 END
 INGROUP
+1 + n24
+2 + n31
+END
+INGROUP
+1 + n19
+2 + n38
+END
+INGROUP
+1 + n11
+2 + n48
+END
+INGROUP
+1 + n5
+2 + n13
+END
+INGROUP
+1 + n4
+2 - n40
+END
+INGROUP
+1 + n39
+2 + n4
+END
+INGROUP
 1 + n1
-2 + n15
+2 + n30
 END
 OUTGROUP
 1 + n44

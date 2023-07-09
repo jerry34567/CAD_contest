@@ -174,13 +174,15 @@ main(int argc, char** argv) {
     cmd = "abccmd read_verilog cir1.v";
     gvCmdMgr->execOneCmd(cmd);
 
-    cmd = "abccmd print_io";
-    gvCmdMgr->execOneCmd(cmd);
+    // cmd = "abccmd print_io";
+    // gvCmdMgr->execOneCmd(cmd);
     cmd = "abccmd fraig";
     gvCmdMgr->execOneCmd(cmd);
 
+
     cmd = "abccmd print_unate -v";
     gvCmdMgr->execOneCmd(cmd);
+
 
     cmd = "abccmd write_aiger -s top1.aig";
     gvCmdMgr->execOneCmd(cmd);
@@ -202,6 +204,9 @@ main(int argc, char** argv) {
     cmd = "abccmd fraig";
     gvCmdMgr->execOneCmd(cmd);
 
+    cmd = "abccmd print_symm";
+    gvCmdMgr->execOneCmd(cmd);
+
     cmd = "abccmd print_unate -v";
     gvCmdMgr->execOneCmd(cmd);
 
@@ -215,6 +220,7 @@ main(int argc, char** argv) {
 
     cmd = "abccmd print_supp -s";
     gvCmdMgr->execOneCmd(cmd);
+
     // cmd = "read design -v cir1.v";
     // gvCmdMgr->execOneCmd(cmd);
     // cmd = "set sys vrf";

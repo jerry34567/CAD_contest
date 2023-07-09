@@ -18,7 +18,7 @@ class variable
 {
     public:
         variable(char name, Var sub1, Var sub2)
-            : _name(name), _sub1(sub1), _sub2(sub2), _busIndex(0), _busSize(0),_suppSize(0), _inputUnateNum(0),_outputUnateNum(0), _outputGroupingNum(0){
+            : _name(name), _sub1(sub1), _sub2(sub2), _busIndex(0), _busSize(0),_suppSize(0), _inputUnateNum_p(0),_inputUnateNum_n(0),_outputUnateNum(0), _outputGroupingNum(0){
         }
         ~variable() {}
         char   getName() const { return _name; }
@@ -31,8 +31,10 @@ class variable
         size_t busSize() { return _busSize; }
         size_t suppSize() { return _suppSize; }
         size_t outputUnateNum() { return _outputUnateNum; }
-        size_t inputUnateNum() { return _inputUnateNum; }
+        size_t inputUnateNum_p() { return _inputUnateNum_p; }
+        size_t inputUnateNum_n() { return _inputUnateNum_n; }
         size_t outputGroupingNum() { return _outputGroupingNum; }
+        vector<variable*>& funcSupp(){return _funcSupp;}
         void   setName(const char& v) { _name = v; }
         void   setSub1(const Var& v) { _sub1 = v; }
         void   setSub2(const Var& v) { _sub2 = v; }
@@ -42,11 +44,12 @@ class variable
         void   setBusIndex(const size_t _i) { _busIndex = _i; }
         void   setBusSize(const size_t _s) { _busSize = _s; }
         void   setSuppSize(const size_t _s) { _suppSize = _s; }
-        void   setInputUnateNum(const size_t _s) { _inputUnateNum = _s; }
+        void   setInputUnateNum_p(const size_t _s) { _inputUnateNum_p = _s; }
+        void   setInputUnateNum_n(const size_t _s) { _inputUnateNum_n = _s; }
         void   setOutputUnateNum(const size_t _s) { _outputUnateNum = _s; }
         void   setOutputGroupingNum(const size_t _s) { _outputGroupingNum = _s; }
-        void   addInputUnateNum() { ++_inputUnateNum; }
-
+        void   addInputUnateNum_p() { ++_inputUnateNum_p; }
+        void   addInputUnateNum_n() { ++_inputUnateNum_n; }
     private:
         char   _name;
         Var    _sub1;
@@ -59,9 +62,12 @@ class variable
         size_t _busSize;  // bus_size denotes the number of the elements in the
                           // bus it belongs to
         size_t _suppSize; // currently : functional support
-        size_t _inputUnateNum;  // how many outputs are unate w.r.t this PI 
+        // size_t _inputUnateNum;  // how many outputs are unate w.r.t this PI 
+        size_t _inputUnateNum_p;  // how many outputs are positive unate w.r.t this PI 
+        size_t _inputUnateNum_n;  // how many outputs are negative unate w.r.t this PI 
         size_t _outputUnateNum; // the number of output unate variables
         size_t _outputGroupingNum; // index of the output grouping
+        vector<variable*> _funcSupp;    // record the functional support of PO
         // Var _aigVar; do we need this??
 };
 

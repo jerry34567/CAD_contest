@@ -92,7 +92,7 @@ SolverMgr::solveNP3(string& inputFilename) {
     satmgr.cirmgr.outputGrouping();
     // satmgr.addBusConstraint();
     satmgr.addSuppConstraint();  
-    satmgr.addUnateConstraint(1); // add input unate constraint
+    satmgr.addUnateConstraint(1); // add input unate constraint         // !(input # of p of ckt1 > input # of p of ckt2 && input # of n of ckt1 > input # of n of ckt2) -> 關掉正的match || !((input # of n of ckt1 > input # of p of ckt2) && (input # of p of ckt1 > input # of n of ckt2))-> 關掉負的match
     satmgr.addUnateConstraint(0); // add output unate constraint
     satmgr.addOutputGroupingConstraint();
     
