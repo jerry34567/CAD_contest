@@ -57,8 +57,9 @@ top*
 map*
 
 bin/*
-/gv
 funcsupp.txt
 unateness.txt
 preprocess/*
 abc.tar.gz
+gv
+output.txt
