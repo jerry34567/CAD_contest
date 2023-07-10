@@ -113,7 +113,7 @@ SolverMgr::solveNP3(string& inputFilename) {
         }
     }
 
-    while (satmgr.point != (satmgr.cirmgr.outputNum_ckt1 + satmgr.cirmgr.outputNum_ckt2) && time < 20) {
+    while (satmgr.point != (satmgr.cirmgr.outputNum_ckt1 + satmgr.cirmgr.outputNum_ckt2) && time < 3570) {
         if (level == 0 && next_level){
             cout << "a" << endl;
             satmgr.solver.addAtLeast(vec_var, satmgr.cirmgr.outputNum_ckt2 / 2, 0, 0);
