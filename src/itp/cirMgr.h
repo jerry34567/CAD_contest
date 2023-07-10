@@ -4,6 +4,7 @@
 #include "sat.h"
 #include <string>
 #include <unordered_map>
+#include <unordered_set>
 #include <vector>
 #include <algorithm>
 // #include "satMgr.h"
@@ -17,14 +18,18 @@ enum preprocess
 class variable
 {
     public:
-        variable(char name, Var sub1, Var sub2)
-            : _name(name), _sub1(sub1), _sub2(sub2), _busIndex(0), _busSize(0),_suppSize(0), _inputUnateNum_p(0),_inputUnateNum_n(0),_outputUnateNum(0), _outputGroupingNum(0){
+        variable(char type, Var sub1, Var sub2)
+            : _type(type), _sub1(sub1), _sub2(sub2), _busIndex(0), _busSize(0),_suppSize(0), _inputUnateNum_p(0),_inputUnateNum_n(0),_outputUnateNum(0), _outputGroupingNum(0){
         }
         ~variable() {}
-        char   getName() const { return _name; }
-        Var    getSub1() const { return _sub1; }
+
+        vector<variable*> _funcSupp;    // record the functional support of PO
+
+        char   gettype() const { return _type; }
+        string getname() const { return _name; }
         Var    getSub2() const { return _sub2; }
         Var    getVar() const { return _var; }
+        Var    getSub1() const { return _sub1; }
         Var    getVar2() const { return _var2; }
         Var    getVar3() const { return _var3; }
         size_t busIndex() { return _busIndex; }
@@ -34,8 +39,8 @@ class variable
         size_t inputUnateNum_p() { return _inputUnateNum_p; }
         size_t inputUnateNum_n() { return _inputUnateNum_n; }
         size_t outputGroupingNum() { return _outputGroupingNum; }
-        vector<variable*>& funcSupp(){return _funcSupp;}
-        void   setName(const char& v) { _name = v; }
+        void   settype(const char& v) { _type = v; }
+        void   setname(const string& name) { _name = name; }
         void   setSub1(const Var& v) { _sub1 = v; }
         void   setSub2(const Var& v) { _sub2 = v; }
         void   setVar(const Var& v) { _var = v; }
@@ -50,8 +55,10 @@ class variable
         void   setOutputGroupingNum(const size_t _s) { _outputGroupingNum = _s; }
         void   addInputUnateNum_p() { ++_inputUnateNum_p; }
         void   addInputUnateNum_n() { ++_inputUnateNum_n; }
+
     private:
-        char   _name;
+        char   _type;
+        string _name;
         Var    _sub1;
         Var    _sub2;
         Var    _var;      // for solver1
@@ -67,7 +74,6 @@ class variable
         size_t _inputUnateNum_n;  // how many outputs are negative unate w.r.t this PI 
         size_t _outputUnateNum; // the number of output unate variables
         size_t _outputGroupingNum; // index of the output grouping
-        vector<variable*> _funcSupp;    // record the functional support of PO
         // Var _aigVar; do we need this??
 };
 

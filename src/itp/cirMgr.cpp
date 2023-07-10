@@ -472,6 +472,7 @@ CirMgr::_readPreprocess(ifstream& fPreprocess, bool _isCkt1, preprocess _p) {
             if (portNameNumpairs_ckt[k].second == port) {
                 cnt++;
                 vector<variable*>& vecVar  = _isCkt1 ? f : g;
+                vector<variable*>& vecVar2  = _isCkt1 ? x : y;
                 size_t _offset = _isCkt1 ? inputNum_ckt1 : inputNum_ckt2; // have to substract the input num if vecVar is the output port vector
                 switch (_p){
                     case outputUnateness:
@@ -486,7 +487,7 @@ CirMgr::_readPreprocess(ifstream& fPreprocess, bool _isCkt1, preprocess _p) {
                             for (size_t j = 0; j < inputNum; ++j) {
                                 if (portNameNumpairs_ckt[j].second == portName){
                                     // cout << portName << ' ';
-                                    vecVar[k - _offset]->funcSupp().push_back(vecVar[j]);
+                                    vecVar[k - _offset]->_funcSupp.push_back(vecVar2[j]);
                                     break;
                                 }
                             }
@@ -499,7 +500,7 @@ CirMgr::_readPreprocess(ifstream& fPreprocess, bool _isCkt1, preprocess _p) {
         }
     }
     for(auto i : f)
-        cout << "funcSupp size = "<<i->funcSupp().size() << endl;
+        cout << "funcSupp size = "<< i->_funcSupp.size() << endl;
     return;
 }
 void

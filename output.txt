@@ -1,64 +1,36 @@
 INGROUP
-1 + n49
-2 - n9
+1 + c
+2 + z
 END
 INGROUP
-1 + n48
-2 + n44
+1 + b0
+2 + y0
 END
 INGROUP
-1 + n45
-2 + n15
+1 + b1
+2 + y1
 END
 INGROUP
-1 + n35
-2 + n49
+1 + a1
+2 + x1
 END
 INGROUP
-1 + n46
-2 + n3
-END
-INGROUP
-1 + n24
-2 + n31
-END
-INGROUP
-1 + n19
-2 + n38
-END
-INGROUP
-1 + n11
-2 + n48
-END
-INGROUP
-1 + n5
-2 + n13
-END
-INGROUP
-1 + n4
-2 - n40
-END
-INGROUP
-1 + n39
-2 + n4
-END
-INGROUP
-1 + n1
-2 + n30
+1 + a0
+2 + x0
 END
 OUTGROUP
-1 + n44
-2 + n18
+1 + m1
+2 + w1
 END
 OUTGROUP
-1 + n36
-2 + n10
+1 + h1
+2 + u1
 END
 OUTGROUP
-1 + n16
-2 + n33
+1 + m0
+2 + w0
 END
 OUTGROUP
-1 + n6
-2 + n6
+1 + h0
+2 + u0
 END

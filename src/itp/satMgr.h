@@ -106,7 +106,7 @@ class SatMgr
         }
         void printArr(const SatSolver& s, vector<variable*> const& Arr) {
             for (int i = 0; i < Arr.size(); i++) {
-                cout << Arr[i]->getName() << " " << Arr[i]->getSub1() << " "
+                cout << Arr[i]->gettype() << " " << Arr[i]->getSub1() << " "
                      << Arr[i]->getSub2() << " ";
                 cout << Arr[i]->getVar() << " " << Arr[i]->getVar2()
                      << "\tAssign: ";
