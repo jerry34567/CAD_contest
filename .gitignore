@@ -50,8 +50,8 @@ lib/*
 !include/gmpxx.h
 !src/Makefile.lib
 
-input
-*.v
+cir1.v
+cir2.v
 yosys*
 top*
 map*
