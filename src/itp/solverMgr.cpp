@@ -113,7 +113,7 @@ SolverMgr::solveNP3(string& inputFilename) {
         }
     }
 
-    while (satmgr.point != (satmgr.cirmgr.outputNum_ckt1 + satmgr.cirmgr.outputNum_ckt2) && time < 3570) {
+    while (satmgr.point != (satmgr.cirmgr.outputNum_ckt1 + satmgr.cirmgr.outputNum_ckt2) && time < 20) {
         if (level == 0 && next_level){
             cout << "a" << endl;
             satmgr.solver.addAtLeast(vec_var, satmgr.cirmgr.outputNum_ckt2 / 2, 0, 0);
@@ -248,8 +248,32 @@ SolverMgr::solveNP3(string& inputFilename) {
 
                 if (temp_point > satmgr.point){
                     satmgr.point = temp_point;
-                    satmgr.record_input = MI;
-                    satmgr.record_output = MO;
+                    satmgr.record_input.clear();
+                    satmgr.record_output.clear();
+                    for (int i = 0, n = MI.size(); i < n; i++){
+                        vector<int> temp;
+                        for (int j = 0, u = MI[0].size(); j < u; j++){
+                            if (satmgr.solver.getValue(MI[i][j]->getVar()) == 1){
+                                temp.push_back(1);
+                            }
+                            else{
+                                temp.push_back(0);
+                            }
+                        }
+                        satmgr.record_input.push_back(temp);
+                    }
+                    for (int i = 0, n = MO.size(); i < n; i++){
+                        vector<int> temp;
+                        for (int j = 0, u = MO[0].size(); j < u; j++){
+                            if (satmgr.solver.getValue(MO[i][j]->getVar()) == 1){
+                                temp.push_back(1);
+                            }
+                            else{
+                                temp.push_back(0);
+                            }
+                        }
+                        satmgr.record_output.push_back(temp);
+                    }
                 }
             } else {
                 // cout << "ELSE" << endl;
@@ -260,4 +284,5 @@ SolverMgr::solveNP3(string& inputFilename) {
         }
     }
     satmgr.reportResult(satmgr.solver);
+    cout << "point : " << satmgr.point << endl;
 }

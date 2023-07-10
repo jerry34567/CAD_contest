@@ -212,7 +212,7 @@ SatMgr::verification(bool isManualBinded) {
 //                    << " " << M[j][i]->getSub2() << " ";
 //               cout << M[j][i]->getVar() << " " << M[j][i]->getVar2()
 //                    << "\tAssign: ";
-//               cout << s.getValue(M[j][i]->getVar());
+//               cout << M[j][i];
 //               cout << endl;
 //           }
 //       }
@@ -220,7 +220,7 @@ SatMgr::verification(bool isManualBinded) {
 //   }
 
 void
-SatMgr::recordResult(const SatSolver& s, vector<vector<variable*>> const& M,
+SatMgr::recordResult(const SatSolver& s, vector<vector<int>> const& M,
                      int IO) { // IO: 1 -> MI, 2 -> MO
     vector<variable*>&x = cirmgr.x, &y = cirmgr.y, &f = cirmgr.f, &g = cirmgr.g;
     for (int j = 0; j < M.size(); j++) {
@@ -228,9 +228,9 @@ SatMgr::recordResult(const SatSolver& s, vector<vector<variable*>> const& M,
             // cout << M[j][i]->getName() << " " << M[j][i]->getSub1()
             // << " " << M[j][i]->getSub2() << " "; cout <<
             // M[j][i]->getVar() << " " << M[j][i]->getVar2() <<
-            // "\tAssign: "; cout << s.getValue(M[j][i]->getVar()); cout
+            // "\tAssign: "; cout << M[j][i]; cout
             // << endl;
-            if (s.getValue(M[j][i]->getVar()) == 1 && IO == 1) {
+            if (M[j][i] == 1 && IO == 1) {
                 // input match
                 if (j == 2 * cirmgr.inputNum_ckt1) {
                     // port2 == CONST 0
@@ -282,7 +282,7 @@ SatMgr::recordResult(const SatSolver& s, vector<vector<variable*>> const& M,
                     // inputMatch.push_back(tuple<bool, Var, Var>(
                     //     1, x[j / 2]->getVar3(), y[i]->getVar3()));
                 }
-            } else if (s.getValue(M[j][i]->getVar()) == 1 && IO == 2) {
+            } else if (M[j][i] == 1 && IO == 2) {
                 // output match
                 if (j % 2 == 0) {
                     // port1 == port2
@@ -369,7 +369,7 @@ SatMgr::generateResult() {
     fout.close();
 }
 void
-SatMgr::printMatrix(const SatSolver& s, vector<vector<variable*>> const& M,
+SatMgr::printMatrix(const SatSolver& s, vector<vector<int>> const& M,
                     int IO) { // IO: 1 -> MI, 2 -> MO
     vector<variable*>&x = cirmgr.x, &y = cirmgr.y, &f = cirmgr.f, &g = cirmgr.g;
     for (int j = 0; j < M.size(); j++) {
@@ -377,9 +377,9 @@ SatMgr::printMatrix(const SatSolver& s, vector<vector<variable*>> const& M,
             // cout << M[j][i]->getName() << " " << M[j][i]->getSub1()
             // << " " << M[j][i]->getSub2() << " "; cout <<
             // M[j][i]->getVar() << " " << M[j][i]->getVar2() <<
-            // "\tAssign: "; cout << s.getValue(M[j][i]->getVar()); cout
+            // "\tAssign: "; cout << M[j][i]; cout
             // << endl;
-            if (s.getValue(M[j][i]->getVar()) == 1 && IO == 1) {
+            if (M[j][i] == 1 && IO == 1) {
                 // input match
                 if (j == 2 * cirmgr.inputNum_ckt1) {
                     // port2 == CONST 0
@@ -404,7 +404,7 @@ SatMgr::printMatrix(const SatSolver& s, vector<vector<variable*>> const& M,
                     inputMatch.push_back(tuple<bool, Var, Var>(
                         1, x[j / 2]->getVar3(), y[i]->getVar3()));
                 }
-            } else if (s.getValue(M[j][i]->getVar()) == 1 && IO == 2) {
+            } else if (M[j][i] == 1 && IO == 2) {
                 // output match
                 if (j % 2 == 0) {
                     // port1 == port2

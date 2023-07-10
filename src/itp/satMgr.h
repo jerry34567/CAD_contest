@@ -75,10 +75,10 @@ class SatMgr
                            string _p1 = "", string _p2 = "");
         bool outputBind(int _port1, bool _isPositive1, int _port2,
                         string _p1 = "", string _p2 = "");
-        void printMatrix(const SatSolver& s, vector<vector<variable*>> const& M,
+        void printMatrix(const SatSolver& s, vector<vector<int>> const& M,
                          int IO);
         void recordResult(const SatSolver&                 s,
-                          vector<vector<variable*>> const& M, int IO);
+                          vector<vector<int>> const& M, int IO);
         void generateResult();
         void reportResult(const SatSolver& solver) {
             solver.printStats();
@@ -152,7 +152,7 @@ class SatMgr
         unordered_map<string, bool>  constGroup;
 
         // record the best match so far
-        vector<vector<variable*>> record_input, record_output;
+        vector<vector<int>> record_input, record_output;
         unsigned point = 0;
 
         //helper function
