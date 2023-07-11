@@ -19,52 +19,54 @@ class variable
 {
     public:
         variable(char type, Var sub1, Var sub2)
-            : _type(type), _sub1(sub1), _sub2(sub2), _busIndex(0), _busSize(0),_suppSize(0), _inputUnateNum_p(0),_inputUnateNum_n(0),_outputUnateNum(0), _outputGroupingNum(0){
+            : _type(type), _sub1(sub1), _sub2(sub2), _busIndex(-1), _busSize(0),_suppSize(0), _inputUnateNum_p(0),_inputUnateNum_n(0),_outputUnateNum(0), _outputGroupingNum(0), _suppBus(0){
         }
         ~variable() {}
 
         vector<variable*> _funcSupp;    // record the functional support of PO
 
-        char   gettype() const { return _type; }
-        string getname() const { return _name; }
-        Var    getSub2() const { return _sub2; }
-        Var    getVar() const { return _var; }
-        Var    getSub1() const { return _sub1; }
-        Var    getVar2() const { return _var2; }
-        Var    getVar3() const { return _var3; }
-        size_t busIndex() { return _busIndex; }
-        size_t busSize() { return _busSize; }
-        size_t suppSize() { return _suppSize; }
-        size_t outputUnateNum() { return _outputUnateNum; }
-        size_t inputUnateNum_p() { return _inputUnateNum_p; }
-        size_t inputUnateNum_n() { return _inputUnateNum_n; }
-        size_t outputGroupingNum() { return _outputGroupingNum; }
-        void   settype(const char& v) { _type = v; }
-        void   setname(const string& name) { _name = name; }
-        void   setSub1(const Var& v) { _sub1 = v; }
-        void   setSub2(const Var& v) { _sub2 = v; }
-        void   setVar(const Var& v) { _var = v; }
-        void   setVar2(const Var& v) { _var2 = v; }
-        void   setVar3(const Var& v) { _var3 = v; }
-        void   setBusIndex(const size_t _i) { _busIndex = _i; }
-        void   setBusSize(const size_t _s) { _busSize = _s; }
-        void   setSuppSize(const size_t _s) { _suppSize = _s; }
-        void   setInputUnateNum_p(const size_t _s) { _inputUnateNum_p = _s; }
-        void   setInputUnateNum_n(const size_t _s) { _inputUnateNum_n = _s; }
-        void   setOutputUnateNum(const size_t _s) { _outputUnateNum = _s; }
-        void   setOutputGroupingNum(const size_t _s) { _outputGroupingNum = _s; }
-        void   addInputUnateNum_p() { ++_inputUnateNum_p; }
-        void   addInputUnateNum_n() { ++_inputUnateNum_n; }
+        char                        gettype() const { return _type; }
+        string                      getname() const { return _name; }
+        Var                         getSub2() const { return _sub2; }
+        Var                         getVar() const { return _var; }
+        Var                         getSub1() const { return _sub1; }
+        Var                         getVar2() const { return _var2; }
+        Var                         getVar3() const { return _var3; }
+        int                         busIndex() { return _busIndex; }
+        size_t                      busSize() { return _busSize; }
+        size_t                      suppSize() { return _suppSize; }
+        unsigned long long          suppBus() { return _suppBus;}
+        size_t                      outputUnateNum() { return _outputUnateNum; }
+        size_t                      inputUnateNum_p() { return _inputUnateNum_p; }
+        size_t                      inputUnateNum_n() { return _inputUnateNum_n; }
+        size_t                      outputGroupingNum() { return _outputGroupingNum; }
+        void                        settype(const char& v) { _type = v; }
+        void                        setname(const string& name) { _name = name; }
+        void                        setSub1(const Var& v) { _sub1 = v; }
+        void                        setSub2(const Var& v) { _sub2 = v; }
+        void                        setVar(const Var& v) { _var = v; }
+        void                        setVar2(const Var& v) { _var2 = v; }
+        void                        setVar3(const Var& v) { _var3 = v; }
+        void                        setBusIndex(const int _i) { _busIndex = _i; }
+        void                        setBusSize(const size_t _s) { _busSize = _s; }
+        void                        setSuppSize(const size_t _s) { _suppSize = _s; }
+        void                        setInputUnateNum_p(const size_t _s) { _inputUnateNum_p = _s; }
+        void                        setInputUnateNum_n(const size_t _s) { _inputUnateNum_n = _s; }
+        void                        setOutputUnateNum(const size_t _s) { _outputUnateNum = _s; }
+        void                        setOutputGroupingNum(const size_t _s) { _outputGroupingNum = _s; }
+        void                        setSuppBus(const size_t _s){ _suppBus |= 1 << _s;}
+        void                        addInputUnateNum_p() { ++_inputUnateNum_p; }
+        void                        addInputUnateNum_n() { ++_inputUnateNum_n; }
 
     private:
-        char   _type;
-        string _name;
-        Var    _sub1;     // _sub1 - 1 == the index in x , y, f, g
-        Var    _sub2;     // if == PI or PO -> _sub2 = -1
-        Var    _var;      // for solver1
-        Var    _var2;     // for miter solver
-        Var    _var3;     // for verification solver
-        size_t _busIndex; // bus_index denotes the position of the bus it
+        char    _type;
+        string  _name;
+        Var     _sub1;     // _sub1 - 1 == the index in x , y, f, g
+        Var     _sub2;     // if == PI or PO -> _sub2 = -1
+        Var     _var;      // for solver1
+        Var     _var2;     // for miter solver
+        Var     _var3;     // for verification solver
+        int     _busIndex; // bus_index denotes the position of the bus it
                           // belongs to in bus vector
         size_t _busSize;  // bus_size denotes the number of the elements in the
                           // bus it belongs to
@@ -74,6 +76,11 @@ class variable
         size_t _inputUnateNum_n;  // how many outputs are negative unate w.r.t this PI 
         size_t _outputUnateNum; // the number of output unate variables
         size_t _outputGroupingNum; // index of the output grouping
+        
+        // collect those buses that this output's support inputs lie in    
+        // if five bus -> 2 inputs in 2nd & 3rd bus respectively --> 00110
+        // ( can be visualize by cout << bitset<16>(_suppBus) << endl; )
+        unsigned long long _suppBus; 
         // Var _aigVar; do we need this??
 };
 
@@ -97,7 +104,7 @@ class Bus
     public:
         // Bus (bool I, bool C, size_t N): isInput(I), isCkt1(C), portNum(N) {}
         Bus ():_unionSupportSize(0), _outputUnatenessNum(0), _busIndex(-1){}
-        Bus (const size_t _portidx, const int _numBus):_unionSupportSize(0), _outputUnatenessNum(0), _busIndex(_portidx){
+        Bus (const size_t _portidx, const int _numBus):_unionSupportSize(0), _outputUnatenessNum(0), _busIndex(_portidx), _busNum(_numBus){
             _bus_matching = new bool[_numBus];
             for(size_t i = 0; i < _numBus; ++i)
                 _bus_matching[i] = 0;
@@ -109,6 +116,7 @@ class Bus
         size_t          unionSupportSize() const {return _unionSupportSize;}
         size_t          outputUnatenessNum() const {return _outputUnatenessNum;}
         size_t          busIndex() const {return _busIndex;}
+        size_t          busNum() const {return _busNum;}
         bool*           busMatching() const {return _bus_matching;}
         unordered_map<variable*, bool>& unionSupport(){return _unionSupport;}
         // vector<size_t>  getIndexes() const {return indexes;}
@@ -129,6 +137,7 @@ class Bus
         bool isInput;
         bool isCkt1;
         size_t _busIndex; // each input bus (output bus) should have a unique busIndex (to close specific pair of bus matching)
+        size_t _busNum; // number of bus in this circuit
         size_t portNum;
         size_t _unionSupportSize; // the support size of this bus' outputs
         size_t _outputUnatenessNum; // the sum of the input unateness of a output bus
@@ -160,7 +169,7 @@ class CirMgr
         // void readUnate();
         void readBus_class(string&); 
         void feasibleBusMatching(); // calculate valid bus match permutation
-
+        void supportBusClassification(); // calculate the bus distribution of each output's inputs
     private:
         int inputNum_ckt1, outputNum_ckt1, inputNum_ckt2, outputNum_ckt2;
         // portnum: i0, i1.., o0, o1..

@@ -3,6 +3,7 @@
 #include <fstream>
 #include <string>
 #include <algorithm>
+#include <bitset>
 
 void
 CirMgr::reset() {
@@ -679,6 +680,25 @@ void CirMgr::feasibleBusMatching(){
     
     return;
 }
+void CirMgr::supportBusClassification(){
+    for(size_t i = 0, ni = f.size(); i < ni; ++i){
+        vector<variable*>& functionalSupport = f[i]->_funcSupp;
+        for(size_t j = 0, nj = functionalSupport.size(); j < nj; ++j){
+            if(functionalSupport[j]->busIndex() != -1)
+                f[i]->setSuppBus(functionalSupport[j]->busIndex());
+        }
+        // cout << bitset<64>(f[i]->suppBus()) << endl;
+    }
+    for(size_t i = 0, ni = g.size(); i < ni; ++i){
+        vector<variable*>& functionalSupport = g[i]->_funcSupp;
+        for(size_t j = 0, nj = functionalSupport.size(); j < nj; ++j){
+            if(functionalSupport[j]->busIndex() != -1)
+                g[i]->setSuppBus(functionalSupport[j]->busIndex());
+        }
+        // cout << bitset<64>(g[i]->suppBus()) << endl;
+    }
+    return;
+} 
 void
 CirMgr::readBus_class(string& inputfilename){
     ifstream fbus(inputfilename);
@@ -706,6 +726,7 @@ CirMgr::readBus_class(string& inputfilename){
             newBus->setPortNum(num_port);
             newBus->insertIndex(u_name_index_ckt1[port]);
             newBus->insertName(port);
+            newBus->getIsInput() ? x[u_name_index_ckt1[port]]->setBusIndex(portidx - 1) : f[u_name_index_ckt1[port]]->setBusIndex(portidx - 1);
         }
         if(newBus->getIsInput()) bus_ckt1_input.push_back(newBus);
         else                     bus_ckt1_output.push_back(newBus);
@@ -729,11 +750,43 @@ CirMgr::readBus_class(string& inputfilename){
             newBus->setPortNum(num_port);
             newBus->insertIndex(u_name_index_ckt2[port]);
             newBus->insertName(port);
+            newBus->getIsInput() ? y[u_name_index_ckt2[port]]->setBusIndex(portidx - 1) : g[u_name_index_ckt2[port]]->setBusIndex(portidx - 1);
         }
         if(newBus->getIsInput()) bus_ckt2_input.push_back(newBus);
         else                     bus_ckt2_output.push_back(newBus);
     }
-
+    // cout << "portidx for bus_ckt1_input\n";
+    // for(auto i : bus_ckt1_input)
+    //     cout << i->busIndex() << ' ';
+    // cout << endl;
+    // cout << "busidx for x\n";
+    // for(auto i : x)
+    //     cout << i->busIndex() << ' ';
+    // cout << endl;
+    // cout << "portidx for bus_ckt1_output\n";
+    // for(auto i : bus_ckt1_output)
+    //     cout << i->busIndex() << ' ';
+    // cout << endl;
+    // cout << "busidx for f\n";
+    // for(auto i : f)
+    //     cout << i->busIndex() << ' ';
+    // cout << endl;
+    // cout << "portidx for bus_ckt2_input\n";
+    // for(auto i : bus_ckt2_input)
+    //     cout << i->busIndex() << ' ';
+    // cout << endl;
+    // cout << "busidx for y\n";
+    // for(auto i : y)
+    //     cout << i->busIndex() << ' ';
+    // cout << endl;
+    // cout << "portidx for bus_ckt2_output\n";
+    // for(auto i : bus_ckt2_output)
+    //     cout << i->busIndex() << ' ';
+    // cout << endl;
+    // cout << "busidx for g\n";
+    // for(auto i : g)
+    //     cout << i->busIndex() << ' ';
+    // cout << endl;
     sort(bus_ckt1_input.begin(), bus_ckt1_input.end(), [](Bus* a, Bus* b){return a->getPortNum() > b->getPortNum();});
     sort(bus_ckt1_output.begin(), bus_ckt1_output.end(), [](Bus* a, Bus* b){return a->getPortNum() > b->getPortNum();});
     sort(bus_ckt2_input.begin(), bus_ckt2_input.end(), [](Bus* a, Bus* b){return a->getPortNum() > b->getPortNum();});
