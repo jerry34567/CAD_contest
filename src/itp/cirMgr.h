@@ -59,8 +59,8 @@ class variable
     private:
         char   _type;
         string _name;
-        Var    _sub1;
-        Var    _sub2;
+        Var    _sub1;     // _sub1 - 1 == the index in x , y, f, g
+        Var    _sub2;     // if == PI or PO -> _sub2 = -1
         Var    _var;      // for solver1
         Var    _var2;     // for miter solver
         Var    _var3;     // for verification solver
@@ -96,16 +96,31 @@ class Bus
 {
     public:
         // Bus (bool I, bool C, size_t N): isInput(I), isCkt1(C), portNum(N) {}
-        Bus (){}
-        ~Bus(){}
+        Bus ():_unionSupportSize(0), _outputUnatenessNum(0), _busIndex(-1){}
+        Bus (const size_t _portidx, const int _numBus):_unionSupportSize(0), _outputUnatenessNum(0), _busIndex(_portidx){
+            _bus_matching = new bool[_numBus];
+            for(size_t i = 0; i < _numBus; ++i)
+                _bus_matching[i] = 0;
+        }
+        ~Bus(){delete []_bus_matching; _bus_matching = 0;}
         bool            getIsInput() const {return isInput;}
         bool            getIsCkt1 () const {return isCkt1 ;}
         size_t          getPortNum() const {return portNum;}
+        size_t          unionSupportSize() const {return _unionSupportSize;}
+        size_t          outputUnatenessNum() const {return _outputUnatenessNum;}
+        size_t          busIndex() const {return _busIndex;}
+        bool*           busMatching() const {return _bus_matching;}
+        unordered_map<variable*, bool>& unionSupport(){return _unionSupport;}
         // vector<size_t>  getIndexes() const {return indexes;}
         // vector<string>  getNames  () const {return names  ;}
         void            setIsInput (const bool v)  {isInput = v;}
         void            setIsCkt1  (const bool v)  {isCkt1  = v;}
         void            setPortNum (const size_t v){portNum = v;}
+        void            setUnionSupportSize(const size_t v){_unionSupportSize = v;}
+        void            setOutputUnatenessNum(const size_t v){_outputUnatenessNum = v;}
+        void            setBusIndex(const size_t v){_busIndex = v;}
+        void            addOutputUnatenessNum(const size_t v){_outputUnatenessNum += v;}
+        void            addUnionSupportSize(const size_t v){_unionSupportSize += v;}
         void            insertIndex(const size_t v){indexes.push_back(v);}
         void            insertName (const string v){names.push_back(v);}
         vector<size_t> indexes;
@@ -113,7 +128,14 @@ class Bus
     private:
         bool isInput;
         bool isCkt1;
+        size_t _busIndex; // each input bus (output bus) should have a unique busIndex (to close specific pair of bus matching)
         size_t portNum;
+        size_t _unionSupportSize; // the support size of this bus' outputs
+        size_t _outputUnatenessNum; // the sum of the input unateness of a output bus
+        unordered_map<variable*, bool> _unionSupport;
+        // boolean array to indicate which buses can't this bus match with 
+        // e.g., if bus i can't match with bus j, then bus i 's bus_matching[j] == 1 && bus j 's bus_matching[i] == 1
+        bool* _bus_matching; 
 };
 
 class CirMgr
@@ -132,9 +154,12 @@ class CirMgr
         void readPreporcess(preprocess _p);
         void readInputUnateness();  // mix positive / negative unate together
         void outputGrouping();
+        void busSupportUnion(); // collect the union support size of output bus and close the infeasible bus matching
+        void busOutputUnateness(); // collect the union input unateness of output bus and close the infeasible bus matching
         // void readSupp();
         // void readUnate();
-        void readBus_class(string&); // also calculate valid bus match permutation
+        void readBus_class(string&); 
+        void feasibleBusMatching(); // calculate valid bus match permutation
 
     private:
         int inputNum_ckt1, outputNum_ckt1, inputNum_ckt2, outputNum_ckt2;
@@ -178,6 +203,8 @@ class CirMgr
             bool _isCkt1); // _ckti = 1 denotes is reading ckt1; = 0 -> ckt2
         void _readPreprocess(ifstream& fPreprocess, bool _isCkt1, preprocess _p);// _ckti = 1 denotes is reading ckt1; = 0 -> ckt2
         void _readInputUnateness(ifstream& , bool _isCkt1);
+        void _busOutputUnateness(bool _isCkt1); // collect the union input unateness of output bus
+        void _busSupportUnion(bool _isCkt1); // collect the union support size of output bus
         static bool _outputsorting(variable* a, variable* b);
         // void _readSupp(
         //     ifstream& fbus,
@@ -188,11 +215,11 @@ class CirMgr
              
         vector<vector<Bus*>> permute(vector<Bus*>& num){
             vector<vector<Bus*>> ans;
-            permutation(num, 0, ans);
+            int cnt = 0;
+            permutation(num, 0, ans, cnt);
             return ans;
         }
-        int cnt = 0;
-        void permutation(vector<Bus*>& num, int begin, vector<vector<Bus*>>& ans){
+        void permutation(vector<Bus*>& num, int begin, vector<vector<Bus*>>& ans, int& cnt){
             vector<Bus*>& b = num[0]->getIsInput() ? bus_ckt1_input : bus_ckt1_output;
             // cout << begin << endl;
             if(begin >= num.size()){
@@ -203,7 +230,7 @@ class CirMgr
             for(int i=begin; i< num.size(); i++){
                 swap(num[begin], num[i]);
                 if(num[begin]->getPortNum() >= b[begin]->getPortNum() && num[i]->getPortNum() >= b[i]->getPortNum())
-                    permutation(num, begin+1, ans);
+                    permutation(num, begin+1, ans, cnt);
                 swap(num[begin], num[i]);
             }
         }

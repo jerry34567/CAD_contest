@@ -773,44 +773,6 @@ SatMgr::constraint5_miter(
     }
 }
 
-void
-SatMgr::addBusConstraint() {
-    // cout << "ADDBUSCONST" << endl;
-    vector<variable*>&x = cirmgr.x, &y = cirmgr.y;
-    for (size_t i = 0, ni = x.size(); i < ni; ++i) {
-        for (size_t j = 0, nj = y.size(); j < nj; ++j) {
-                // cout << "x[i] bussize: " << x[i]->busSize() << " y[j]->busSize(): " << y[j]->busSize() << endl;
-            if (x[i]->busSize() > y[j]->busSize()) {
-                vec<Lit> lits;
-                lits.push(~Lit(cirmgr.MI[i * 2][j]->getVar()));
-                solver.addClause(lits);
-                lits.clear();
-                lits.push(~Lit(cirmgr.MI[i * 2 + 1][j]->getVar()));
-                solver.addClause(lits);
-                lits.clear();
-
-            }
-        }
-    }
-
-    vector<variable*>&f = cirmgr.f, &g = cirmgr.g;
-    for (size_t i = 0, ni = f.size(); i < ni; ++i) {
-        for (size_t j = 0, nj = g.size(); j < nj; ++j) {
-                // cout << "f[i] bussize: " << f[i]->busSize() << " g[j]->busSize(): " << g[j]->busSize() << endl;
-            if (f[i]->busSize() > g[j]->busSize()) {
-                // ++cnt;
-                vec<Lit> lits;
-                lits.push(~Lit(cirmgr.MO[i * 2][j]->getVar()));
-                solver.addClause(lits);
-                lits.clear();
-                lits.push(~Lit(cirmgr.MO[i * 2 + 1][j]->getVar()));
-                solver.addClause(lits);
-                lits.clear();
-
-            }
-        }
-    }
-}
 
 void SatMgr::addSuppConstraint()
 {

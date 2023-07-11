@@ -90,6 +90,9 @@ SolverMgr::solveNP3(string& inputFilename) {
     satmgr.cirmgr.readPreporcess(support);
     satmgr.cirmgr.readInputUnateness();
     satmgr.cirmgr.outputGrouping();
+    satmgr.cirmgr.busSupportUnion();
+    satmgr.cirmgr.busOutputUnateness();
+    satmgr.cirmgr.feasibleBusMatching();
     // satmgr.addBusConstraint();
     satmgr.addSuppConstraint();  
     satmgr.addUnateConstraint(1); // add input unate constraint         // !(input # of p of ckt1 > input # of p of ckt2 && input # of n of ckt1 > input # of n of ckt2) -> 關掉正的match || !((input # of n of ckt1 > input # of p of ckt2) && (input # of p of ckt1 > input # of n of ckt2))-> 關掉負的match
@@ -140,17 +143,40 @@ SolverMgr::solveNP3(string& inputFilename) {
         // cout << "BS: " << BusMatchAssump.size() << endl;
         if (!SAT1_result) {
             cout << "!sat1 result: BI: " << BusMatchIdx_I << " BO: " << BusMatchIdx_O << endl;
-            if(BusMatchIdx_I == totalBusMatch_I-1 && BusMatchIdx_O == totalBusMatch_O-1){
-                cout << "No match!!" << endl;
-                break;
-            }
-            else if(BusMatchIdx_O == totalBusMatch_O-1){
-                BusMatchIdx_I++;
-                BusMatchIdx_O = 0;
-            }
-            else{
-                BusMatchIdx_O++;
-            }
+            // while(1){
+            //     bool _watchpoint = 1;
+                if(BusMatchIdx_I == totalBusMatch_I-1 && BusMatchIdx_O == totalBusMatch_O-1){
+                    cout << "No match!!" << endl;
+                    break;
+                }
+                else if(BusMatchIdx_O == totalBusMatch_O-1){
+                    BusMatchIdx_I++;
+                    BusMatchIdx_O = 0;
+                }
+                else{
+                    BusMatchIdx_O++;
+                }
+            //     bool _valid_i = 0, _valid_o = 0;
+            //     vector<Bus*>& i1 = satmgr.cirmgr.bus_ckt1_input;
+            //     vector<Bus*>& o1 = satmgr.cirmgr.bus_ckt1_output;
+            //     vector<Bus*>& i2 = satmgr.cirmgr.valid_busMatch_ckt2_input[BusMatchIdx_I];
+            //     vector<Bus*>& o2 = satmgr.cirmgr.valid_busMatch_ckt2_output[BusMatchIdx_O];
+            //     for(size_t i = 0, ni = i1.size(); i < ni; ++i){
+            //         if(i1[i]->busMatching()[i2[i]->busIndex()] == 1 && i2[i]->busMatching()[i1[i]->busIndex()] == 1 )
+            //             break;
+            //         if(i == ni - 1)
+            //             _valid_i = 1;
+            //     }
+            //     for(size_t i = 0, ni = o1.size(); i < ni; ++i){
+            //         if(o1[i]->busMatching()[o2[i]->busIndex()] == 1 && o2[i]->busMatching()[o1[i]->busIndex()] == 1 )
+            //             break;
+            //         if(i == ni - 1)
+            //             _valid_o = 1;
+            //     }
+            //     if(_valid_i == 1 && _valid_o == 1)
+            //         break;
+
+            // }
             satmgr.addBusConstraint_match(BusMatchIdx_I, BusMatchIdx_O, BusMatchAssump);
         } else {
             unordered_set<variable*>  circuit2_func_supp_union;

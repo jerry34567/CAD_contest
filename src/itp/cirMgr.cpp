@@ -472,7 +472,7 @@ CirMgr::_readPreprocess(ifstream& fPreprocess, bool _isCkt1, preprocess _p) {
             if (portNameNumpairs_ckt[k].second == port) {
                 cnt++;
                 vector<variable*>& vecVar  = _isCkt1 ? f : g;
-                vector<variable*>& vecVar2  = _isCkt1 ? x : y;
+                // vector<variable*>& vecVar2  = _isCkt1 ? x : y;
                 size_t _offset = _isCkt1 ? inputNum_ckt1 : inputNum_ckt2; // have to substract the input num if vecVar is the output port vector
                 switch (_p){
                     case outputUnateness:
@@ -480,6 +480,7 @@ CirMgr::_readPreprocess(ifstream& fPreprocess, bool _isCkt1, preprocess _p) {
                         break;
                     case support:
                         vecVar[k - _offset]->setSuppSize(num);
+                        vector<variable*>& inputVec  = _isCkt1 ? x : y;
                         while(fPreprocess >> portName)
                         {
                             if(portName == ";")
@@ -487,7 +488,7 @@ CirMgr::_readPreprocess(ifstream& fPreprocess, bool _isCkt1, preprocess _p) {
                             for (size_t j = 0; j < inputNum; ++j) {
                                 if (portNameNumpairs_ckt[j].second == portName){
                                     // cout << portName << ' ';
-                                    vecVar[k - _offset]->_funcSupp.push_back(vecVar2[j]);
+                                    vecVar[k - _offset]->_funcSupp.push_back(inputVec[j]);
                                     break;
                                 }
                             }
@@ -499,8 +500,8 @@ CirMgr::_readPreprocess(ifstream& fPreprocess, bool _isCkt1, preprocess _p) {
             }
         }
     }
-    for(auto i : f)
-        cout << "funcSupp size = "<< i->_funcSupp.size() << endl;
+    // for(auto i : f)
+    //     cout << "funcSupp size = "<< i->_funcSupp.size() << endl;
     return;
 }
 void
@@ -555,7 +556,27 @@ CirMgr::readPreporcess(preprocess _p) {
     _readPreprocess(fPreprocess, 1, _p);
     _readPreprocess(fPreprocess, 0, _p);
 }
+void CirMgr::busSupportUnion(){
+    _busSupportUnion(1);
+    _busSupportUnion(0);
+    int cnt = 0;
+    for(size_t i = 0, ni = bus_ckt1_output.size(); i < ni; ++i)
+        for(size_t j = 0, nj = bus_ckt2_output.size(); j < nj; ++j){
+            if(bus_ckt1_output[i]->unionSupportSize() > bus_ckt2_output[j]->unionSupportSize())
+            {
+                cnt++;
+                bus_ckt1_output[i]->busMatching()[bus_ckt2_output[j]->busIndex()] = 1;
+                bus_ckt2_output[j]->busMatching()[bus_ckt1_output[i]->busIndex()] = 1;
+            }
+        }
+    return;
+}
 
+void CirMgr::busOutputUnateness(){
+    _busOutputUnateness(1);
+    _busOutputUnateness(0);
+    
+}
 
 void
 CirMgr::readInputUnateness() {
@@ -566,6 +587,15 @@ CirMgr::readInputUnateness() {
 }
 
 void CirMgr::outputGrouping(){  // |f| = |g|
+    // cout << "bus : \n";
+    // for(auto j : bus_ckt1_input){
+
+    //     for(auto i : j->names){
+    //     cout << i << ' ';
+
+    //     }
+    // cout << endl;
+    // }
     vector<variable*> f_sorted = f, g_sorted = g; // sorted by (functional supp), structral support, fanin size
     vector<vector<variable*>> f_groups({{}}), g_groups({{}}); // set of groups of f & g
     std::sort(f_sorted.begin(), f_sorted.end(), _outputsorting);
@@ -593,18 +623,73 @@ bool CirMgr::_outputsorting(variable* a, variable* b)
     return a->suppSize() < b->suppSize();
 }
 
+void CirMgr::_busOutputUnateness(bool _isCkt1){
+    vector<pair<string, string>>& portNameNumpairs_ckt =
+        (_isCkt1 ? portNameNumpairs_ckt1 : portNameNumpairs_ckt2);
+    vector<Bus*>& bus_output = _isCkt1 ? bus_ckt1_output : bus_ckt2_output;
+    size_t outputNum = _isCkt1 ? outputNum_ckt1 : outputNum_ckt2;
+    size_t inputNum  = _isCkt1 ? inputNum_ckt1 : inputNum_ckt2;
+    for(size_t i = 0, ni = bus_output.size(); i < ni; ++i){
+        cout << "names = ";
+        for(auto j : bus_output[i]->names)
+            cout << j << ' ';
+        cout << endl;
+        for(unordered_map<variable*, bool>::iterator it = bus_output[i]->unionSupport().begin(), _end = bus_output[i]->unionSupport().end(); it != _end; ++it)
+                bus_output[i]->addOutputUnatenessNum((*it).first->inputUnateNum_p() + (*it).first->inputUnateNum_n());
+        // cout << "outputUnatenessnum = "<< (bus_output[i]->outputUnatenessNum())<< endl;
+    }
+}
 
+void CirMgr::_busSupportUnion(bool _isCkt1){
+    vector<pair<string, string>>& portNameNumpairs_ckt =
+        (_isCkt1 ? portNameNumpairs_ckt1 : portNameNumpairs_ckt2);
+    vector<Bus*>& bus_output = _isCkt1 ? bus_ckt1_output : bus_ckt2_output;
+    size_t outputNum = _isCkt1 ? outputNum_ckt1 : outputNum_ckt2;
+    size_t inputNum  = _isCkt1 ? inputNum_ckt1 : inputNum_ckt2;
+    for(size_t i = 0, ni = bus_output.size(); i < ni; ++i){
+        // int cnt = 0;
+        // cout << "names = ";
+        for(size_t j = 0, nj = bus_output[i]->indexes.size(); j < nj; ++j)
+        {
+            cout << bus_output[i]->names[j] << ' ';
+            vector<variable*>& vecVar  = _isCkt1 ? f : g;
+            vector<variable*>& functionalSupport = vecVar[bus_output[i]->indexes[j]]->_funcSupp;
+            for(size_t k = 0, nk = functionalSupport.size(); k < nk; ++k)
+                bus_output[i]->unionSupport().insert(pair<variable*, bool>(functionalSupport[k], 1));
+        }
+        cout << endl;
+        // cout << "cnt = " << cnt << endl;
+        // cout << "unionSupport = ";
+        // for(auto mm : bus_output[i]->unionSupport())
+        //     cout << mm.second << ' ';
+        // cout << bus_output[i]->unionSupport().size() << endl;
+        bus_output[i]->setUnionSupportSize(bus_output[i]->unionSupport().size());
+        // cout << "size = " <<bus_output[i]->unionSupportSize() << endl;
+        // cout << endl;
+    }
 
+}
+
+void CirMgr::feasibleBusMatching(){
+    valid_busMatch_ckt2_input = permute(bus_ckt2_input);
+    valid_busMatch_ckt2_output = permute(bus_ckt2_output);
+
+    cout << "Vi size: " << valid_busMatch_ckt2_input.size() << endl;
+    cout << "Vo size: " << valid_busMatch_ckt2_output.size() << endl;
+    
+    return;
+}
 void
 CirMgr::readBus_class(string& inputfilename){
     ifstream fbus(inputfilename);
     string port;
+    size_t portidx = 0;
     int num_bus = 0, num_port = 0;
     
     fbus >> port >> num_bus;
     for(size_t i = 0; i < num_bus; i++){
         fbus >> num_port;
-        Bus* newBus = new Bus();
+        Bus* newBus = new Bus(portidx++, num_bus);
         for(size_t j = 0; j < num_port; j++){
             fbus >> port;
             // cout << u_name_index_ckt1[port] << endl;
@@ -628,7 +713,7 @@ CirMgr::readBus_class(string& inputfilename){
     fbus >> port >> num_bus;
     for(size_t i = 0; i < num_bus; i++){
         fbus >> num_port;
-        Bus* newBus = new Bus();
+        Bus* newBus = new Bus(portidx++, num_bus);
         for(size_t j = 0; j < num_port; j++){
             fbus >> port;
             if(u_name_isInput_ckt2[port]){
@@ -654,12 +739,7 @@ CirMgr::readBus_class(string& inputfilename){
     sort(bus_ckt2_input.begin(), bus_ckt2_input.end(), [](Bus* a, Bus* b){return a->getPortNum() > b->getPortNum();});
     sort(bus_ckt2_output.begin(), bus_ckt2_output.end(), [](Bus* a, Bus* b){return a->getPortNum() > b->getPortNum();});
 
-    valid_busMatch_ckt2_input = permute(bus_ckt2_input);
-    valid_busMatch_ckt2_output = permute(bus_ckt2_output);
-
-    cout << "Vi size: " << valid_busMatch_ckt2_input.size() << endl;
-    cout << "Vo size: " << valid_busMatch_ckt2_output.size() << endl;
-
+    return;
     /*
     //test
     cout << "b 1 i " << bus_ckt1_input.size() << endl;

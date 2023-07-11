@@ -62,7 +62,6 @@ class SatMgr
         void constraint5_miter(SatSolver& s);
         void AddLearnedClause(SatSolver& s, SatSolver& s_miter);
         void AddLearnedClause_const(SatSolver& s, SatSolver& s_miter);
-        void addBusConstraint();
         void addSuppConstraint(); // currently : structral support, |SSo1| <= |SSo2|
         void addUnateConstraint(bool _isInput); // _isInput == 1 -> inputUnateConstraint
         void addOutputGroupingConstraint();
