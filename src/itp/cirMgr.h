@@ -23,7 +23,9 @@ class variable
         }
         ~variable() {}
 
+        vector<variable*> _funcSupp_PI; // record those PO that this PI affect
         vector<variable*> _funcSupp;    // record the functional support of PO
+        vector<string>    candidates;   // record valid match candidate (you can use u_name_index_ckt1, u_name_index_ckt2 and x, y, f, g to get its variable)
 
         char                        gettype() const { return _type; }
         string                      getname() const { return _name; }
@@ -161,13 +163,14 @@ class CirMgr
         void readCNF(SatSolver& s_miter, SatSolver& s_verifier);
         // void readBus(string &);
         void readPreporcess(preprocess _p);
+        void recordPIsupportPO(); // record those POs affected by each PI, record in each PI's _funcSupp_PI
         void readInputUnateness();  // mix positive / negative unate together
         void outputGrouping();
         void busSupportUnion(); // collect the union support size of output bus and close the infeasible bus matching
         void busOutputUnateness(); // collect the union input unateness of output bus and close the infeasible bus matching
         // void readSupp();
         // void readUnate();
-        void readBus_class(string&); 
+        void readBus_class(SatSolver& s, string& inputfilename); 
         void feasibleBusMatching(); // calculate valid bus match permutation
         void supportBusClassification(); // calculate the bus distribution of each output's inputs
     private:
@@ -183,7 +186,12 @@ class CirMgr
                                    // inputNum_ckti to obtain the corresponding
                                    // index in f(g)
         vector<vector<variable*>> MI, MO;
+        // vector<vector<Var>> MO_no_pos_neg; // MO but without positive/negative match, half the size of MO
         vector<variable*>         x, y, f, g; // sub2 = -1
+        vector<vector<bool>>      MI_valid, MO_valid; // record valid match (without +-)(true: can match, false: invalid match) (matrix version of candidates)
+        vector<vector<Var>>       MI_valid_Var, MO_valid_Var; // record valid match (without +-)(true: can match, false: invalid match) (matrix version of candidates)
+        vector<vector<Var>>       MIbus_Var, MObus_Var;       // record bus match Var, bus_ckt1_input * bus_ckt2_input
+        vector<vector<bool>>      MIbus_valid, MObus_valid;   // record bus valid
         bool* exist_x;
         bool* exist_y;
         bool* exist_f;
@@ -241,6 +249,33 @@ class CirMgr
                 if(num[begin]->getPortNum() >= b[begin]->getPortNum() && num[i]->getPortNum() >= b[i]->getPortNum())
                     permutation(num, begin+1, ans, cnt);
                 swap(num[begin], num[i]);
+            }
+        }
+        void printMIMO_valid(){
+            cout << "\nMI_valid: " << endl << "\t";
+            for (int i = 0; i < x.size(); i++){
+                cout << x[i]->getname() << "\t";
+            }
+            cout << endl;
+            for (int j = 0; j < MI_valid[0].size(); j++){
+                cout << y[j]->getname() << "\t";
+                for (int i = 0; i < MI_valid.size(); i++){
+                    cout << MI_valid[i][j] << "\t";
+                }
+                cout << endl;
+            }
+
+            cout << "\nMO_valid: " << endl << "\t";
+            for (int i = 0; i < f.size(); i++){
+                cout << f[i]->getname() << "\t";
+            }
+            cout << endl;
+            for (int j = 0; j < MO_valid[0].size(); j++){
+                cout << g[j]->getname() << "\t";
+                for (int i = 0; i < MO_valid.size(); i++){
+                    cout << MO_valid[i][j] << "\t";
+                }
+                cout << endl;
             }
         }
 };

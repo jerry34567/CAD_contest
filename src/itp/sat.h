@@ -149,9 +149,9 @@ class SatSolver
       }
 
       void recursiveAtLeast(vector<Var>& vec_var, int at_least_num, int sum, int index){
-         cout << "sum: " << sum << " index: " << index << endl;
+         // cout << "sum: " << sum << " index: " << index << endl;
          if(index == vec_var.size()-1){
-            cout << "temp1 " << endl;
+            // cout << "temp1 " << endl;
             if (!map.count({sum,index})){
                vec<Lit> lits;
                Lit lx = Lit(map[{sum,index}]);
@@ -163,7 +163,7 @@ class SatSolver
             }
          }
          else if(sum == at_least_num){
-            cout << "temp2 " << endl;
+            // cout << "temp2 " << endl;
             if(!map.count({sum,index+1})){
                Var V = newVar();
                map[make_pair(sum,index+1)] = V;               
@@ -181,7 +181,7 @@ class SatSolver
             _solver->addClause(lits); lits.clear();
          }
          else if(vec_var.size() - (index - sum + 1) == at_least_num){
-            cout << "temp3 " << endl;
+            // cout << "temp3 " << endl;
             if(!map.count({sum+1,index+1})){
                Var V = newVar();
                map[make_pair(sum+1,index+1)] = V;               
@@ -199,7 +199,7 @@ class SatSolver
             _solver->addClause(lits); lits.clear();
          }
          else{
-            cout << "temp4 " << endl;
+            // cout << "temp4 " << endl;
             if(!map.count({sum,index+1})){
                Var V = newVar();
                map[make_pair(sum,index+1)] = V;               

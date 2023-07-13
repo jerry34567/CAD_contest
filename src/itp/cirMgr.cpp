@@ -557,6 +557,19 @@ CirMgr::readPreporcess(preprocess _p) {
     _readPreprocess(fPreprocess, 1, _p);
     _readPreprocess(fPreprocess, 0, _p);
 }
+void CirMgr::recordPIsupportPO(){ // record those POs affected by each PI, record in each PI's _funcSupp_PI
+    cout << "recordPIsupportPO" << endl;
+    for(int i = 0; i < f.size(); i++){
+        for(int j = 0; j < f[i]->_funcSupp.size(); j++){
+            x[u_name_index_ckt1[f[i]->_funcSupp[j]->getname()]]->_funcSupp_PI.push_back(f[i]);
+        }
+    }
+    for(int i = 0; i < g.size(); i++){
+        for(int j = 0; j < g[i]->_funcSupp.size(); j++){
+            y[u_name_index_ckt2[g[i]->_funcSupp[j]->getname()]]->_funcSupp_PI.push_back(g[i]);
+        }
+    }
+} 
 void CirMgr::busSupportUnion(){
     _busSupportUnion(1);
     _busSupportUnion(0);
@@ -700,7 +713,7 @@ void CirMgr::supportBusClassification(){
     return;
 } 
 void
-CirMgr::readBus_class(string& inputfilename){
+CirMgr::readBus_class(SatSolver& s, string& inputfilename){
     ifstream fbus(inputfilename);
     string port;
     size_t portidx = 0;
@@ -791,6 +804,49 @@ CirMgr::readBus_class(string& inputfilename){
     sort(bus_ckt1_output.begin(), bus_ckt1_output.end(), [](Bus* a, Bus* b){return a->getPortNum() > b->getPortNum();});
     sort(bus_ckt2_input.begin(), bus_ckt2_input.end(), [](Bus* a, Bus* b){return a->getPortNum() > b->getPortNum();});
     sort(bus_ckt2_output.begin(), bus_ckt2_output.end(), [](Bus* a, Bus* b){return a->getPortNum() > b->getPortNum();});
+
+    cout << "BS: " << bus_ckt1_input.size() << " " << bus_ckt2_input.size() << " " << bus_ckt1_output.size() << " " << bus_ckt2_output.size() << endl;
+    // for(int i = 0; i < 1; i++) Var t = s.newVar(); // test var
+    // construct MIbus_Var and MIbus_valid
+    for (int i = 0; i < bus_ckt1_input.size(); i++){
+        vector<Var> tmp;
+        vector<bool> tmp_b;
+        for (int j = 0; j < bus_ckt2_input.size(); j++){
+            // Var v = s.newVar();
+            // cout << "v" << v << endl;
+            // tmp.push_back(v);
+            tmp_b.push_back(true);
+        }
+        MIbus_Var.push_back(tmp);
+        MIbus_valid.push_back(tmp_b);
+    }
+    // construct MObus_Var and MObus_valid
+    for (int i = 0; i < bus_ckt1_output.size(); i++){
+        vector<Var> tmp;
+        vector<bool> tmp_b;
+        for (int j = 0; j < bus_ckt2_output.size(); j++){
+            // Var v = s.newVar();
+            // cout << "v" << v << endl;
+            // tmp.push_back(v);
+            tmp_b.push_back(true);
+        }
+        MObus_Var.push_back(tmp);
+        MObus_valid.push_back(tmp_b);
+    }
+    cout << "test MIbus_valid" << endl;
+    for(int i = 0; i < MIbus_valid.size(); i++){
+        for(int j = 0; j < MIbus_valid[0].size(); j++){
+            cout << MIbus_valid[i][j] << " ";
+        }
+        cout << endl;
+    }
+    cout << "test MObus_valid" << endl;
+    for(int i = 0; i < MObus_valid.size(); i++){
+        for(int j = 0; j < MObus_valid[0].size(); j++){
+            cout << MObus_valid[i][j] << " ";
+        }
+        cout << endl;
+    }
 
     return;
     /*
