@@ -697,18 +697,35 @@ void CirMgr::supportBusClassification(){
     for(size_t i = 0, ni = f.size(); i < ni; ++i){
         vector<variable*>& functionalSupport = f[i]->_funcSupp;
         for(size_t j = 0, nj = functionalSupport.size(); j < nj; ++j){
-            if(functionalSupport[j]->busIndex() != -1)
-                f[i]->setSuppBus(functionalSupport[j]->busIndex());
+            if(functionalSupport[j]->busIndex() != -1){
+                if(f[i]->suppBus().insert(pair<size_t, bool>(functionalSupport[j]->busIndex(), 1)).second == false)
+                    ++f[i]->suppBus()[functionalSupport[j]->busIndex()];    // if not exist -> insert a new element; else, increment by one
+
+            }
         }
-        // cout << bitset<64>(f[i]->suppBus()) << endl;
+        f[i]->suppBus_distribution() = new vector<pair<size_t, size_t>>(f[i]->suppBus().begin(), f[i]->suppBus().end());
+        std::sort(f[i]->suppBus_distribution()->begin(), f[i]->suppBus_distribution()->end(), [](pair<size_t, size_t> a, pair<size_t, size_t> b){ 
+            return a.second > b.second;});  // sort in non-increasing order
+        // for(auto k : *(f[i]->suppBus_distribution()))
+        //     cout<< "( " << k.first << " : " << k.second << " )";
+        // cout << endl;
     }
+    
     for(size_t i = 0, ni = g.size(); i < ni; ++i){
         vector<variable*>& functionalSupport = g[i]->_funcSupp;
         for(size_t j = 0, nj = functionalSupport.size(); j < nj; ++j){
-            if(functionalSupport[j]->busIndex() != -1)
-                g[i]->setSuppBus(functionalSupport[j]->busIndex());
+            if(functionalSupport[j]->busIndex() != -1){
+                if(g[i]->suppBus().insert(pair<size_t, bool>(functionalSupport[j]->busIndex(), 1)).second == false)
+                    ++g[i]->suppBus()[functionalSupport[j]->busIndex()];    // if not exist -> insert a new element; else, increment by one
+
+            }
         }
-        // cout << bitset<64>(g[i]->suppBus()) << endl;
+        g[i]->suppBus_distribution() = new vector<pair<size_t, size_t>>(g[i]->suppBus().begin(), g[i]->suppBus().end());
+        std::sort(g[i]->suppBus_distribution()->begin(), g[i]->suppBus_distribution()->end(), [](pair<size_t, size_t> a, pair<size_t, size_t> b){ 
+            return a.second > b.second;});  // sort in non-increasing order
+        // for(auto k : *(g[i]->suppBus_distribution()))
+        //     cout<< "( " << k.first << " : " << k.second << " )";
+        // cout << endl;
     }
     return;
 } 
@@ -728,16 +745,18 @@ CirMgr::readBus_class(SatSolver& s, string& inputfilename){
             // cout << u_name_index_ckt1[port] << endl;
             if(u_name_isInput_ckt1[port]){
                 exist_x[u_name_index_ckt1[port]] = true;
-                cout << "ex x name: " << port << " idx: " << u_name_index_ckt1[port] << endl;
+                // cout << "ex x name: " << port << " idx: " << u_name_index_ckt1[port] << endl;
             }
             else{
                 exist_f[u_name_index_ckt1[port]] = true;
-                cout << "ex f name: " << port << " idx: " << u_name_index_ckt1[port] << endl;
+                // cout << "ex f name: " << port << " idx: " << u_name_index_ckt1[port] << endl;
             }
             newBus->setIsInput(u_name_isInput_ckt1[port]);
             newBus->setIsCkt1(true);
             newBus->setPortNum(num_port);
             newBus->insertIndex(u_name_index_ckt1[port]);
+            if(u_name_index_ckt1[port] > 1000 || u_name_index_ckt1[port] <= 0)
+                cout << "u_name_index_ckt1[port] = " << u_name_index_ckt1[port] << endl;
             newBus->insertName(port);
             newBus->getIsInput() ? x[u_name_index_ckt1[port]]->setBusIndex(portidx - 1) : f[u_name_index_ckt1[port]]->setBusIndex(portidx - 1);
         }
@@ -752,15 +771,17 @@ CirMgr::readBus_class(SatSolver& s, string& inputfilename){
             fbus >> port;
             if(u_name_isInput_ckt2[port]){
                 exist_y[u_name_index_ckt2[port]] = true;
-                cout << "ex y name: " << port << " idx: " << u_name_index_ckt2[port] << endl;
+                // cout << "ex y name: " << port << " idx: " << u_name_index_ckt2[port] << endl;
             }
             else{
                 exist_g[u_name_index_ckt2[port]] = true;
-                cout << "ex g name: " << port << " idx: " << u_name_index_ckt2[port] << endl;
+                // cout << "ex g name: " << port << " idx: " << u_name_index_ckt2[port] << endl;
             }
             newBus->setIsInput(u_name_isInput_ckt2[port]);
             newBus->setIsCkt1(false);
             newBus->setPortNum(num_port);
+            if(u_name_index_ckt2[port] > 1000 || u_name_index_ckt2[port] <= 0 )
+                cout << "u_name_index_ckt2[port] = "<< u_name_index_ckt2[port] << endl;
             newBus->insertIndex(u_name_index_ckt2[port]);
             newBus->insertName(port);
             newBus->getIsInput() ? y[u_name_index_ckt2[port]]->setBusIndex(portidx - 1) : g[u_name_index_ckt2[port]]->setBusIndex(portidx - 1);

@@ -103,6 +103,7 @@ SolverMgr::solveNP3(string& inputFilename) {
     satmgr.addOutputGroupingConstraint();
     satmgr.cirmgr.printMIMO_valid();
     // for(int i = 0; i < 1; i++) Var t = satmgr.solver.newVar(); // test var
+    satmgr.addOutputConstraint_inputBusNum();    // case08 seg fault
     
     size_t BusMatchIdx_I = 0, BusMatchIdx_O = 0;
     int totalBusMatch_I = satmgr.cirmgr.valid_busMatch_ckt2_input.size();

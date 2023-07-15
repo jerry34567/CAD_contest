@@ -833,9 +833,9 @@ void SatMgr::addUnateConstraint(bool _isInput)// |Uo1| <= |Uo2| ; |Ui1| <= |Ui2|
             if(_isInput){
                 size_t f_unateNum_p = f[i]->inputUnateNum_p(), f_unateNum_n = f[i]->inputUnateNum_n(),
                        g_unateNum_p = g[j]->inputUnateNum_p(), g_unateNum_n = g[j]->inputUnateNum_n();
-                if(f_unateNum_p > g_unateNum_p && f_unateNum_n > g_unateNum_n)
+                if(f_unateNum_p >= g_unateNum_p && f_unateNum_n > g_unateNum_n || f_unateNum_p > g_unateNum_p && f_unateNum_n >= g_unateNum_n)
                     closeMatching(lits, i * 2, j, 1);   //close input positve matching
-                if(f_unateNum_n > g_unateNum_p && f_unateNum_p > g_unateNum_n)
+                if(f_unateNum_n >= g_unateNum_p && f_unateNum_p > g_unateNum_n || f_unateNum_n > g_unateNum_p && f_unateNum_p >= g_unateNum_n)
                     closeMatching(lits, i * 2 + 1, j, 1);   //close input negative matching
             }
             else{
@@ -886,6 +886,50 @@ void SatMgr::addOutputGroupingConstraint()  // will not match outputs with diffe
         }
     }
     return;
+}
+void SatMgr::addOutputConstraint_inputBusNum(){
+    vector<variable*>&f = cirmgr.f, &g = cirmgr.g;
+    vec<Lit> lits;
+    int cnt = 0;
+    for (size_t i = 0, ni = f.size(); i < ni; ++i) {
+        for (size_t j = 0, nj = g.size(); j < nj; ++j) {
+            bool _close = 0;
+            // if (f[i]->suppBus_distribution()->size() > g[j]->suppBus_distribution()->size()) // g's # of bus should >= f's
+            // _close = 1;
+            for(size_t k = 0, nk = f[i]->suppBus_distribution()->size() < g[j]->suppBus_distribution()->size() ? f[i]->suppBus_distribution()->size() : g[j]->suppBus_distribution()->size(); k < nk; ++k)
+                if(f[i]->suppBus_distribution()->at(k).second > g[j]->suppBus_distribution()->at(k).second){
+                    _close = 1;
+                    break;   
+                }
+            if(_close == 1){
+                cout << "_close" << endl;cnt++;
+                closeMatching(lits, i * 2, j, 0);    //close output positve matching
+                closeMatching(lits, i * 2 + 1, j, 0);    //close output negative matching
+            }
+        }
+    }
+    cout << "cnt = " << cnt << endl;
+    return;
+    /*int cnt = 0;
+    for (size_t i = 0, ni = f.size(); i < ni; ++i) {
+        for (size_t j = 0, nj = g.size(); j < nj; ++j) {
+            bool _close = 0;
+            if (f[i]->suppBus_size().size() > g[j]->suppBus_size().size()) // g's # of bus should >= f's
+                _close = 1;
+            else{
+                for(size_t k = 0, nk = f[i]->suppBus_size().size() < g[j]->suppBus_size().size() ? f[i]->suppBus_size().size() : g[j]->suppBus_size().size(); k < nk; ++k)
+                    if(f[i]->suppBus_size()[k] > g[j]->suppBus_size()[k])   // g's bus's # of input should >= f's bus's
+                        _close = 1;
+            }
+            if(_close == 1){
+                cout << "_close" << endl;cnt++;
+                closeMatching(lits, i * 2, j, 0);    //close output positve matching
+                closeMatching(lits, i * 2 + 1, j, 0);    //close output negative matching
+            }
+        }
+    }
+    cout << "cnt = "<<cnt << endl;
+    return;*/
 }
 // cirmgr.inputNum_ckt1, outputNum_ckt1, cirmgr.inputNum_ckt2, outputNum_ckt2;
 // Construct PHI<0>  (Preprocess not implemented yet.)

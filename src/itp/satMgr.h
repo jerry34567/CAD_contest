@@ -68,6 +68,7 @@ class SatMgr
         void addOutputGroupingConstraint();
         void addBusConstraint_match(size_t idxI, size_t idxO, vec<Lit>& ans);
         // void funcSuppInputConstraint(vector<pair<int, int>>& MO_no_pos_neg_pair, int idxI,int idxO, vec<Lit>& as); // given bus match, output match(w/o +-) and funcsupp info, close invalid input match by adding assumption into find_input_given_output_assump
+        void addOutputConstraint_inputBusNum(); // two output can only be matched if they have same amount of input bus
 
         // only bind input
         // use int _port1, int _port2 to check if _port1 < 0 and if _port2 < 0
