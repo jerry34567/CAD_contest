@@ -866,9 +866,60 @@ void SatMgr::addUnateConstraint(bool _isInput)// |Uo1| <= |Uo2| ; |Ui1| <= |Ui2|
     return;
 }
 
+void SatMgr::addSymmConstraint(SatSolver& s)
+{
+    vector<variable*>&f = cirmgr.f, &g = cirmgr.g;
+
+    for (int i = 0, n = f.size(); i < n; i++) {
+        for (int j = 0, n1 = g.size(); j < n1; j++) {
+            if (f[i]->suppSize() == g[j]->suppSize()){ // if f's functional support size == g's functional support size
+                cout << i << " " << j << endl;
+                if (f[i]->symmetric_set.size() > g[j]->symmetric_set.size()) {
+                    continue; // the number of symmetric group of f[i] > the number of symmetric group of g[j]
+                }
+
+                cout << f[i]->symmetric_set.size() << " " << g[j]->symmetric_set.size() << endl;
+                for (int a = 0, n2 = f[i]->symmetric_set.size(); a < n2; a++) {
+                    for (int b = 0, n3 = g[j]->symmetric_set.size(); b < n3; b++) {
+                        cout << "size: " << f[i]->symmetric_set[a].size() << " " << g[j]->symmetric_set[b].size() << endl;
+                        if (f[i]->symmetric_set[a].size() == g[j]->symmetric_set[b].size()) {
+                            for (unordered_set<int>::iterator c = f[i]->symmetric_set[a].begin(); c != f[i]->symmetric_set[a].end(); c++) {
+                                for (unordered_set<int>::iterator d = g[j]->symmetric_set[b].begin(); d != g[j]->symmetric_set[b].end(); d++) {
+                                    for (unordered_set<int>::iterator e = f[i]->symmetric_set[a].begin(); e != f[i]->symmetric_set[a].end(); e++) {
+                                        if (c == e) {
+                                            continue;
+                                        }
+                                        else {
+                                            cout << "abc:  ";
+                                            vec<Lit> v;
+                                            v.push(~Lit(cirmgr.MO_valid_Var[i][j]));
+                                            v.push(~Lit(cirmgr.MI_valid_Var[*c][*d]));
+                                            for (unordered_set<int>::iterator m = g[j]->symmetric_set[b].begin(); m != g[j]->symmetric_set[b].end(); m++) {
+                                                if (d == m) {
+                                                    continue;
+                                                }
+                                                else {
+                                                    v.push(Lit(cirmgr.MI_valid_Var[*e][*m]));
+                                                    cout << "MO: " << i << " " << j << " MI: " << *c << " " << *d << " R: " << *e << " " << *m << endl;
+                                                }
+                                            }
+                                            s.addClause(v);
+                                            v.clear();
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
 void SatMgr::addOutputGroupingConstraint()  // will not match outputs with different group number if |f| != |g|
 {
-     vector<variable*>&f = cirmgr.f, &g = cirmgr.g;
+    vector<variable*>&f = cirmgr.f, &g = cirmgr.g;
     vec<Lit> lits;
     for (size_t i = 0, ni = f.size(); i < ni; ++i) {
         for (size_t j = 0, nj = g.size(); j < nj; ++j) {

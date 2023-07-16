@@ -26,6 +26,7 @@ class variable
         vector<variable*> _funcSupp_PI; // record those PO that this PI affect
         vector<variable*> _funcSupp;    // record the functional support of PO
         vector<string>    candidates;   // record valid match candidate (you can use u_name_index_ckt1, u_name_index_ckt2 and x, y, f, g to get its variable)
+        vector<unordered_set<int>> symmetric_set; // record the symmetric set (only in output variable)
 
         char                                gettype() const { return _type; }
         string                              getname() const { return _name; }
@@ -166,6 +167,7 @@ class CirMgr
         void readPreporcess(preprocess _p);
         void recordPIsupportPO(); // record those POs affected by each PI, record in each PI's _funcSupp_PI
         void readInputUnateness();  // mix positive / negative unate together
+        void readSymmetric();
         void outputGrouping();
         void busSupportUnion(); // collect the union support size of output bus and close the infeasible bus matching
         void busOutputUnateness(); // collect the union input unateness of output bus and close the infeasible bus matching
@@ -242,7 +244,7 @@ class CirMgr
             // cout << begin << endl;
             if(begin >= num.size()){
                 ans.push_back(num);
-                cout << "valid permu" << cnt++ << endl;
+                // cout << "valid permu" << cnt++ << endl;
                 return;
             }
             for(int i=begin; i< num.size(); i++){

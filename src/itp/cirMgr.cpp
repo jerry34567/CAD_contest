@@ -592,12 +592,68 @@ void CirMgr::busOutputUnateness(){
     
 }
 
-void
-CirMgr::readInputUnateness() {
+void CirMgr::readInputUnateness() {
     string   fInputUnateness_name = "./preprocess/inputUnateness.txt";
     ifstream fInputUnateness(fInputUnateness_name);
     _readInputUnateness(fInputUnateness, 1);    // read ckt1
     _readInputUnateness(fInputUnateness, 0);    // read ckt2
+}
+
+void CirMgr::readSymmetric() {
+    string   fSymmetric_name = "./preprocess/symmetric.txt";
+    ifstream fSymmetric(fSymmetric_name);
+    int counter = 0;
+    string temp;
+    string temp2;
+    while (counter != (outputNum_ckt1 + outputNum_ckt2)) {
+        fSymmetric >> temp;
+        if (counter < outputNum_ckt1){
+            if (temp != "end") {
+                fSymmetric >> temp2;
+                bool has_been_inserted = false;
+                for (int i = 0, n = f[counter]->symmetric_set.size(); i < n; i++) {
+                    if (f[counter]->symmetric_set[i].count(stoi(temp))) {
+                        has_been_inserted = true;
+                        if (!f[counter]->symmetric_set[i].count(stoi(temp2))) {
+                            f[counter]->symmetric_set[i].insert(stoi(temp2));
+                        }
+                    }
+                }
+                if (!has_been_inserted){
+                    unordered_set<int> set;
+                    set.insert(stoi(temp));
+                    set.insert(stoi(temp2));
+                    f[counter]->symmetric_set.push_back(set);
+                }
+            }
+            else {
+                counter++;
+            }
+        }
+        else {
+            if (temp != "end") {
+                fSymmetric >> temp2;
+                bool has_been_inserted = false;
+                for (int i = 0, n = g[counter - outputNum_ckt1]->symmetric_set.size(); i < n; i++) {
+                    if (g[counter - outputNum_ckt1]->symmetric_set[i].count(stoi(temp))) {
+                        has_been_inserted = true;
+                        if (!g[counter - outputNum_ckt1]->symmetric_set[i].count(stoi(temp2))) {
+                            g[counter - outputNum_ckt1]->symmetric_set[i].insert(stoi(temp2));
+                        }
+                    }
+                }
+                if (!has_been_inserted){
+                    unordered_set<int> set;
+                    set.insert(stoi(temp));
+                    set.insert(stoi(temp2));
+                    g[counter - outputNum_ckt1]->symmetric_set.push_back(set);
+                }
+            }
+            else {
+                counter++;
+            }
+        }
+    }
 }
 
 void CirMgr::outputGrouping(){  // |f| = |g|

@@ -170,6 +170,7 @@ main(int argc, char** argv) {
     remove("./preprocess/funcsupp.txt");
     remove("./preprocess/outputUnateness.txt");
     remove("./preprocess/inputUnateness.txt");
+    remove("./preprocess/symmetric.txt");
 
     cmd = "abccmd read_verilog cir1.v";
     gvCmdMgr->execOneCmd(cmd);
@@ -192,6 +193,12 @@ main(int argc, char** argv) {
     cmd = "abccmd print_supp -s";
     gvCmdMgr->execOneCmd(cmd);
 
+    cmd = "abccmd print_io";
+    gvCmdMgr->execOneCmd(cmd);
+
+    cmd = "abccmd print_symm";
+    gvCmdMgr->execOneCmd(cmd);    
+
     cmd = "abccmd write_cnf top1.cnf";
     gvCmdMgr->execOneCmd(cmd);
 
@@ -206,6 +213,8 @@ main(int argc, char** argv) {
 
     cmd = "abccmd print_symm";
     gvCmdMgr->execOneCmd(cmd);
+
+    // return 0;
 
     cmd = "abccmd print_unate -v";
     gvCmdMgr->execOneCmd(cmd);

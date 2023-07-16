@@ -65,6 +65,7 @@ class SatMgr
         void addSuppConstraint(); // currently : structral support, |SSo1| <= |SSo2|
         void addSuppConstraint_input(); // currently : structral support, |SSo1| <= |SSo2|, for PI constraint, using _funcSupp_PI.size() 
         void addUnateConstraint(bool _isInput); // _isInput == 1 -> inputUnateConstraint
+        void addSymmConstraint(SatSolver& s);
         void addOutputGroupingConstraint();
         void addBusConstraint_match(size_t idxI, size_t idxO, vec<Lit>& ans);
         // void funcSuppInputConstraint(vector<pair<int, int>>& MO_no_pos_neg_pair, int idxI,int idxO, vec<Lit>& as); // given bus match, output match(w/o +-) and funcsupp info, close invalid input match by adding assumption into find_input_given_output_assump
@@ -86,6 +87,9 @@ class SatMgr
             solver.printStats();
             printMatrix(solver, record_input, 1);
             printMatrix(solver, record_output, 2);
+            inputGroup.clear();
+            outputGroup.clear();
+            constGroup.clear();
             recordResult(solver, record_input, 1);
             recordResult(solver, record_output, 2);
             generateResult();

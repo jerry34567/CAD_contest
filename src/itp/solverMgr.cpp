@@ -90,6 +90,7 @@ SolverMgr::solveNP3(string& inputFilename) {
     satmgr.cirmgr.readPreporcess(support);
     satmgr.cirmgr.recordPIsupportPO();
     satmgr.cirmgr.readInputUnateness();
+    satmgr.cirmgr.readSymmetric();
     satmgr.cirmgr.outputGrouping();
     satmgr.cirmgr.busSupportUnion();
     satmgr.cirmgr.busOutputUnateness();
@@ -133,6 +134,22 @@ SolverMgr::solveNP3(string& inputFilename) {
         cout << endl;
     }
     cout << "AAAAAAA125" << endl;
+    satmgr.addSymmConstraint(satmgr.solver);
+
+    for (int i = 0, n = satmgr.cirmgr.f[0]->symmetric_set.size(); i < n; i++) {
+        for (auto j : satmgr.cirmgr.f[0]->symmetric_set[i]) {
+            cout << j << " ";
+        }
+        cout << endl;
+    }
+    
+    // for (int i = 0, n = satmgr.cirmgr.g[6]->symmetric_set.size(); i < n; i++) {
+    //     for (auto j : satmgr.cirmgr.g[6]->symmetric_set[i]) {
+    //         cout << j << " ";
+    //     }
+    //     cout << endl;
+    // }
+
     // for level sovle (output sould at least some number)
     int level = -1;
     // int level = 2; // start from full match
@@ -147,20 +164,27 @@ SolverMgr::solveNP3(string& inputFilename) {
 
     while (satmgr.point != (satmgr.cirmgr.outputNum_ckt1 + satmgr.cirmgr.outputNum_ckt2) && time < 3570) {
         if (level == 0 && next_level){
+            cout << "a0" << endl;
+            satmgr.solver.addAtLeast(vec_var, satmgr.cirmgr.outputNum_ckt2 / 4, 0, 0);
+            satmgr.solver.MapClear();
+            // level++;
+            next_level = false;
+        }
+        else if (level == 1 && next_level){
             cout << "a" << endl;
             satmgr.solver.addAtLeast(vec_var, satmgr.cirmgr.outputNum_ckt2 / 2, 0, 0);
             satmgr.solver.MapClear();
             // level++;
             next_level = false;
         }
-        else if (level == 1 && next_level){
+        else if (level == 2 && next_level){
             cout << "b" << endl;
             satmgr.solver.addAtLeast(vec_var, (satmgr.cirmgr.outputNum_ckt2 * 3) / 4, 0, 0);
             satmgr.solver.MapClear();
             // level++;
             next_level = false;
         }
-        else if (level == 2 && next_level){
+        else if (level == 3 && next_level){
             cout << "c" << endl;
             satmgr.solver.addAtLeast(vec_var, satmgr.cirmgr.outputNum_ckt2, 0, 0);
             next_level = false;
@@ -312,6 +336,8 @@ SolverMgr::solveNP3(string& inputFilename) {
                         }
                         satmgr.record_output.push_back(temp);
                     }
+                    satmgr.reportResult(satmgr.solver);
+                    cout << "point : " << float(satmgr.point) / float(satmgr.cirmgr.outputNum_ckt1 + satmgr.cirmgr.outputNum_ckt2) << endl;
                 }
             } else {
                 // cout << "ELSE" << endl;
@@ -326,5 +352,5 @@ SolverMgr::solveNP3(string& inputFilename) {
         }
     }
     satmgr.reportResult(satmgr.solver);
-    cout << "point : " << satmgr.point << endl;
+    cout << "point : " << float(satmgr.point) / float(satmgr.cirmgr.outputNum_ckt1 + satmgr.cirmgr.outputNum_ckt2) << endl;
 }
