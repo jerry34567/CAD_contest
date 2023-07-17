@@ -191,8 +191,8 @@ class CirMgr
         vector<vector<variable*>> MI, MO;
         // vector<vector<Var>> MO_no_pos_neg; // MO but without positive/negative match, half the size of MO
         vector<variable*>         x, y, f, g; // sub2 = -1
-        vector<vector<bool>>      MI_valid, MO_valid; // record valid match (without +-)(true: can match, false: invalid match) (matrix version of candidates)
-        vector<vector<Var>>       MI_valid_Var, MO_valid_Var; // record valid match (without +-)(true: can match, false: invalid match) (matrix version of candidates)
+        vector<vector<bool>>      MI_valid, MO_valid; // record valid match (without +-)(true: can match, false: invalid match) (matrix version of candidates) (including constant)
+        vector<vector<Var>>       MI_valid_Var, MO_valid_Var; // record valid match (without +-)(true: can match, false: invalid match) (matrix version of candidates) (including constant)
         vector<vector<Var>>       MIbus_Var, MObus_Var;       // record bus match Var, bus_ckt1_input * bus_ckt2_input
         vector<vector<bool>>      MIbus_valid, MObus_valid;   // record bus valid
         bool* exist_x;
@@ -200,7 +200,7 @@ class CirMgr
         bool* exist_f;
         bool* exist_g; 
         vector<Bus*>              bus_ckt1_input, bus_ckt1_output, bus_ckt2_input, bus_ckt2_output;
-        vector<vector<Bus*>>      valid_busMatch_ckt2_input, valid_busMatch_ckt2_output; // permute ckt2's bus to match ckt1's bus
+        vector<vector<Bus*>>      valid_busMatch_ckt2_input, valid_busMatch_ckt2_output; // don't use anymore after using addCandidateBusConstraint // permute ckt2's bus to match ckt1's bus
         vector<vector<string>>    bus_list_ckt1,
             bus_list_ckt2; // record the bus (including input and output )info
                            // of circuit1 & circuit2
@@ -215,6 +215,7 @@ class CirMgr
 
         unordered_map<string, int> u_name_index_ckt1, u_name_index_ckt2; // index can be used for x, y, f, g immediately
         unordered_map<string, bool> u_name_isInput_ckt1, u_name_isInput_ckt2;
+        unordered_map<string, int> u_name_busIndex_input_ckt1, u_name_busIndex_output_ckt1, u_name_busIndex_input_ckt2, u_name_busIndex_output_ckt2; // index for bus_ckt1_input, bus_ckt2_input
 
         // helper function
 

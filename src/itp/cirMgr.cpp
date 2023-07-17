@@ -801,10 +801,12 @@ CirMgr::readBus_class(SatSolver& s, string& inputfilename){
             // cout << u_name_index_ckt1[port] << endl;
             if(u_name_isInput_ckt1[port]){
                 exist_x[u_name_index_ckt1[port]] = true;
+                u_name_busIndex_input_ckt1[port] = bus_ckt1_input.size();
                 // cout << "ex x name: " << port << " idx: " << u_name_index_ckt1[port] << endl;
             }
             else{
                 exist_f[u_name_index_ckt1[port]] = true;
+                u_name_busIndex_output_ckt1[port] = bus_ckt1_output.size();
                 // cout << "ex f name: " << port << " idx: " << u_name_index_ckt1[port] << endl;
             }
             newBus->setIsInput(u_name_isInput_ckt1[port]);
@@ -827,10 +829,12 @@ CirMgr::readBus_class(SatSolver& s, string& inputfilename){
             fbus >> port;
             if(u_name_isInput_ckt2[port]){
                 exist_y[u_name_index_ckt2[port]] = true;
+                u_name_busIndex_input_ckt2[port] = bus_ckt2_input.size();
                 // cout << "ex y name: " << port << " idx: " << u_name_index_ckt2[port] << endl;
             }
             else{
                 exist_g[u_name_index_ckt2[port]] = true;
+                u_name_busIndex_output_ckt2[port] = bus_ckt2_output.size();
                 // cout << "ex g name: " << port << " idx: " << u_name_index_ckt2[port] << endl;
             }
             newBus->setIsInput(u_name_isInput_ckt2[port]);
@@ -877,22 +881,43 @@ CirMgr::readBus_class(SatSolver& s, string& inputfilename){
     // for(auto i : g)
     //     cout << i->busIndex() << ' ';
     // cout << endl;
+
+    /* don't have to sort after using addCandidateBusConstraint
     sort(bus_ckt1_input.begin(), bus_ckt1_input.end(), [](Bus* a, Bus* b){return a->getPortNum() > b->getPortNum();});
     sort(bus_ckt1_output.begin(), bus_ckt1_output.end(), [](Bus* a, Bus* b){return a->getPortNum() > b->getPortNum();});
     sort(bus_ckt2_input.begin(), bus_ckt2_input.end(), [](Bus* a, Bus* b){return a->getPortNum() > b->getPortNum();});
     sort(bus_ckt2_output.begin(), bus_ckt2_output.end(), [](Bus* a, Bus* b){return a->getPortNum() > b->getPortNum();});
-
+    */
     cout << "BS: " << bus_ckt1_input.size() << " " << bus_ckt2_input.size() << " " << bus_ckt1_output.size() << " " << bus_ckt2_output.size() << endl;
     // for(int i = 0; i < 1; i++) Var t = s.newVar(); // test var
     // construct MIbus_Var and MIbus_valid
+    // (!MIbus_Var[][] + !MI_valid_var[][] (invalid matching)) clauses
     for (int i = 0; i < bus_ckt1_input.size(); i++){
         vector<Var> tmp;
         vector<bool> tmp_b;
         for (int j = 0; j < bus_ckt2_input.size(); j++){
-            // Var v = s.newVar();
-            // cout << "v" << v << endl;
-            // tmp.push_back(v);
+            Var v = s.newVar();
+            tmp.push_back(v);
             tmp_b.push_back(true);
+            cout << "902" << endl;
+            for(int i1 = 0; i1 < bus_ckt1_input[i]->indexes.size(); i1++){
+                bool* exist = new bool[y.size()]{0};
+                cout << "905" << endl;
+                for(int yidx = 0; yidx < bus_ckt2_input[j]->indexes.size(); yidx++) exist[bus_ckt2_input[j]->indexes[yidx]] = true;
+                cout << "907" << endl;
+                for(int yidx = 0; yidx < y.size(); yidx++){
+                    cout << "909" << endl;
+                    if(!exist[yidx]){
+                        cout << "911" << endl;
+                        vec<Lit> invalid_match;
+                        invalid_match.push(~Lit(v));
+                        invalid_match.push(~Lit(MI_valid_Var[bus_ckt1_input[i]->indexes[i1]][yidx]));
+                        s.addClause(invalid_match);
+                        invalid_match.clear();
+                    }
+                }
+                delete[] exist;
+            }
         }
         MIbus_Var.push_back(tmp);
         MIbus_valid.push_back(tmp_b);
@@ -902,14 +927,35 @@ CirMgr::readBus_class(SatSolver& s, string& inputfilename){
         vector<Var> tmp;
         vector<bool> tmp_b;
         for (int j = 0; j < bus_ckt2_output.size(); j++){
-            // Var v = s.newVar();
-            // cout << "v" << v << endl;
-            // tmp.push_back(v);
+            Var v = s.newVar();
+            tmp.push_back(v);
             tmp_b.push_back(true);
+            cout << "929" << endl;
+            for(int i1 = 0; i1 < bus_ckt1_output[i]->indexes.size(); i1++){
+                bool* exist = new bool[g.size()]{0};
+                for(int gidx = 0; gidx < bus_ckt2_output[j]->indexes.size(); gidx++) exist[bus_ckt2_output[j]->indexes[gidx]] = true;
+                for(int gidx = 0; gidx < g.size(); gidx++){
+                    if(!exist[gidx]){
+                        vec<Lit> invalid_match;
+                        invalid_match.push(~Lit(v));
+                        invalid_match.push(~Lit(MI_valid_Var[bus_ckt1_output[i]->indexes[i1]][gidx]));
+                        s.addClause(invalid_match);
+                        invalid_match.clear();
+                    }
+                }
+                delete[] exist;
+            }
         }
         MObus_Var.push_back(tmp);
         MObus_valid.push_back(tmp_b);
     }
+
+
+
+
+
+
+
     cout << "test MIbus_valid" << endl;
     for(int i = 0; i < MIbus_valid.size(); i++){
         for(int j = 0; j < MIbus_valid[0].size(); j++){

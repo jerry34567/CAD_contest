@@ -105,7 +105,7 @@ SolverMgr::solveNP3(string& inputFilename) {
     satmgr.cirmgr.printMIMO_valid();
     // for(int i = 0; i < 1; i++) Var t = satmgr.solver.newVar(); // test var
     satmgr.addOutputConstraint_inputBusNum();    // case08 seg fault
-    
+    /*
     size_t BusMatchIdx_I = 0, BusMatchIdx_O = 0;
     int totalBusMatch_I = satmgr.cirmgr.valid_busMatch_ckt2_input.size();
     int totalBusMatch_O = satmgr.cirmgr.valid_busMatch_ckt2_output.size();
@@ -115,6 +115,7 @@ SolverMgr::solveNP3(string& inputFilename) {
     satmgr.addBusConstraint_match(0, 0, BusMatchAssump);
     // BusMatchAssump.copyTo(find_valid_output_assump);
     // BusMatchAssump.copyTo(find_input_given_output_assump);
+    */
     vector<vector<variable*>>&MI = satmgr.cirmgr.MI, &MO = satmgr.cirmgr.MO;
 
     cout << "AAAAAAA110" << endl;
@@ -142,7 +143,12 @@ SolverMgr::solveNP3(string& inputFilename) {
         }
         cout << endl;
     }
-    
+
+    satmgr.addCandidateBusConstraint(satmgr.solver);
+    satmgr.addBusValidConstraint(satmgr.solver);
+
+
+
     // for (int i = 0, n = satmgr.cirmgr.g[6]->symmetric_set.size(); i < n; i++) {
     //     for (auto j : satmgr.cirmgr.g[6]->symmetric_set[i]) {
     //         cout << j << " ";
@@ -191,7 +197,17 @@ SolverMgr::solveNP3(string& inputFilename) {
         }
 
         bool                      SAT1_result, SAT2_result;
-        // SAT1_result = satmgr.solver.solve();
+        vec<Lit> close_constant_assump; bool enable_constant = false; // close constant matching initially, until no match then enable constant
+        for(int j = 0; j < satmgr.cirmgr.MI_valid_Var[0].size(); j++){
+            close_constant_assump.push(~Lit(satmgr.cirmgr.MI_valid_Var[satmgr.cirmgr.MI_valid_Var.size()-1][j]));
+        }
+        if(enable_constant){
+            SAT1_result = satmgr.solver.solve();
+        }
+        else{
+            SAT1_result = satmgr.solver.assumpSolve(close_constant_assump);
+        }
+        /*
         SAT1_result = satmgr.solver.assumpSolve(BusMatchAssump);
         if (!SAT1_result) { // when find_valid_output_assump couldn't find feasible match, change bus match
             cout << "!sat1 result: BI: " << BusMatchIdx_I << " BO: " << BusMatchIdx_O << endl;
@@ -209,6 +225,16 @@ SolverMgr::solveNP3(string& inputFilename) {
             satmgr.addBusConstraint_match(BusMatchIdx_I, BusMatchIdx_O, BusMatchAssump);
             // BusMatchAssump.copyTo(find_valid_output_assump);
         }
+        */
+        if (!SAT1_result) { // use satmgr.addCandidateBusConstraint(satmgr.solver), no manual BusMatchAssump anymore
+            if(enable_constant){ // even enable constant matching can't find answer.
+                cout << "No match!!" << endl;
+                break;
+            }
+            else{
+                enable_constant = true;
+            }
+        }
         else {
             unordered_set<variable*>  circuit2_func_supp_union;
             vec<Lit>                  assump;
@@ -223,9 +249,14 @@ SolverMgr::solveNP3(string& inputFilename) {
 
                         Lit v = Lit(MI[i][j]->getVar2());
                         assump.push(v);
-                        // cout << "MI i: " << i << " j: " << j << " val: "
+                        // cout << "MI i: " << i << "\tj: " << j << " val: "
                         //      << satmgr.solver.getValue(MI[i][j]->getVar())
                         //      << endl;
+                        cout << "MI i:\t" << i << "\t" <<  ((i%2 == 0 || i >= MI.size() - 2) ? "" : "!") << ((i == MI.size() - 2) ? "0" : (i == MI.size() - 1) ? "1" : satmgr.cirmgr.x[i/2]->getname())
+                             << "\tin bus:\t" << ((i < MI.size() - 2) ? to_string(satmgr.cirmgr.u_name_busIndex_input_ckt1[satmgr.cirmgr.x[i/2]->getname()]) : "")                    
+                             << "\tj:\t"   << j << "\t" <<                             satmgr.cirmgr.y[j]->getname()
+                             << "\tin bus:\t" << satmgr.cirmgr.u_name_busIndex_input_ckt2[satmgr.cirmgr.y[j]->getname()]                    
+                             << endl;
                     }
                     else if (satmgr.solver.getValue(MI[i][j]->getVar()) ==0) {
                         Lit v = ~Lit(MI[i][j]->getVar2());
@@ -254,7 +285,11 @@ SolverMgr::solveNP3(string& inputFilename) {
                         // cout << "MO i: " << i << " j: " << j << " val: "
                         //      << satmgr.solver.getValue(MO[i][j]->getVar())
                         //      << endl;
-
+                        cout << "MO i:\t" << i << "\t" <<  ((i%2 == 0) ? "" : "!") << satmgr.cirmgr.f[i/2]->getname()
+                             << "\tin bus:\t" << satmgr.cirmgr.u_name_busIndex_output_ckt1[satmgr.cirmgr.f[i/2]->getname()]                    
+                             << "\tj:\t"   << j << "\t" <<                             satmgr.cirmgr.g[j]->getname()
+                             << "\tin bus:\t" << satmgr.cirmgr.u_name_busIndex_output_ckt2[satmgr.cirmgr.g[j]->getname()]                    
+                             << endl;
                         // collect matched outputs' function support
                         for (int k = 0, n = satmgr.cirmgr.g[j]->_funcSupp.size(); k < n; k++) {
                             circuit2_func_supp_union.insert(satmgr.cirmgr.g[j]->_funcSupp[k]);
@@ -283,7 +318,7 @@ SolverMgr::solveNP3(string& inputFilename) {
 
             satmgr.solver.addClause(be_searched);
             be_searched.clear();
-            // cout << endl;
+            cout << endl;
 
             SAT2_result = satmgr.miterSolver.assumpSolve(assump);
             stop = clock();

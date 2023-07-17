@@ -57,6 +57,7 @@ class SatMgr
         void cmdrExactlyOne(SatSolver& s, Cmdr* parent, bool is_MO); // recursive addClause
         void constraint2(SatSolver& s);
         void constraint_Cmdr(SatSolver& s, vector<vector<variable*>>& M, bool is_MO);
+        void constraint_Cmdr_control(SatSolver& s, Var control, vector<Var>& v); // for functional support, if control == 1 -> only one Var in vector<Var> will be 1
         void constraint3(SatSolver& s);
         void constraint4_miter(SatSolver& s);
         void constraint5_miter(SatSolver& s);
@@ -67,9 +68,11 @@ class SatMgr
         void addUnateConstraint(bool _isInput); // _isInput == 1 -> inputUnateConstraint
         void addSymmConstraint(SatSolver& s);
         void addOutputGroupingConstraint();
-        void addBusConstraint_match(size_t idxI, size_t idxO, vec<Lit>& ans);
+        void addBusConstraint_match(size_t idxI, size_t idxO, vec<Lit>& ans); // don't use this after using addCandidateBusConstraint
         // void funcSuppInputConstraint(vector<pair<int, int>>& MO_no_pos_neg_pair, int idxI,int idxO, vec<Lit>& as); // given bus match, output match(w/o +-) and funcsupp info, close invalid input match by adding assumption into find_input_given_output_assump
         void addOutputConstraint_inputBusNum(); // two output can only be matched if they have same amount of input bus
+        void addCandidateBusConstraint(SatSolver& s);
+        void addBusValidConstraint(SatSolver& s); // close MIbus_valid, MObus_valid according to |cir1BusSize| <= |cir2BusSize|, also close MIbus_Var, MObus_Var according to MIbus_valid, MObus_valid. Bind control of each MIbus_Var/MObus_Var entry to MI_valid_var/MO_valid_var matching(only true(valid bus match) entry will add port matching clause to solver).
 
         // only bind input
         // use int _port1, int _port2 to check if _port1 < 0 and if _port2 < 0
