@@ -953,6 +953,75 @@ void SatMgr::addOutputGroupingConstraint()  // will not match outputs with diffe
     }
     return;
 }
+void SatMgr::addBusConstraint_inputUnateness(){
+    vector<Bus*>& bus_ckt1_output = cirmgr.bus_ckt1_output, &bus_ckt2_output = cirmgr.bus_ckt2_output;
+    vec<Lit> lits;
+    int cnt = 0;
+    cout << "\nin addBusConstraint_inputUnateness\n";
+    for(size_t i = 0, ni = bus_ckt1_output.size(); i < ni; ++i){
+        for(size_t j = 0, nj = bus_ckt2_output.size(); j < nj; ++j){
+            // cout << "bus_ckt1_input[i]->outputUnatenessNum() = " << bus_ckt1_output[i]->outputUnatenessNum();
+            // cout << " ; bus_ckt2_input[j]->outputUnatenessNum() = " << bus_ckt2_output[j]->outputUnatenessNum() << endl;
+            if(bus_ckt1_output[i]->outputUnatenessNum() > bus_ckt2_output[j]->outputUnatenessNum()){
+                cnt++;
+                closeMatching_bus(lits, i , j, 0);
+            }
+        }
+    }
+    cout << "cnt = " << cnt << endl;
+}
+void SatMgr::addBusConstraint_outputUnateness(){
+    vector<Bus*>& bus_ckt1_input = cirmgr.bus_ckt1_input, &bus_ckt2_input = cirmgr.bus_ckt2_input;
+    vec<Lit> lits;
+    int cnt = 0;
+    cout << " \nin addBusConstraint_outputUnateness \n";
+    for(size_t i = 0, ni = bus_ckt1_input.size(); i < ni; ++i){
+        for(size_t j = 0, nj = bus_ckt2_input.size(); j < nj; ++j){
+            // cout << "bus_ckt1_input[i]->inputUnatenessNum() = " << bus_ckt1_input[i]->inputUnatenessNum();
+            // cout << " ; bus_ckt2_input[j]->inputUnatenessNum() = " << bus_ckt2_input[j]->inputUnatenessNum() << endl;
+            if(bus_ckt1_input[i]->inputUnatenessNum() > bus_ckt2_input[j]->inputUnatenessNum()){
+                cnt++;
+                closeMatching_bus(lits, i , j, 1);
+            }
+        }
+    }
+    cout << "cnt = " << cnt << endl;
+}
+void SatMgr::addBusConstraint_outputSupportSize(){
+    vector<Bus*>& bus_ckt1_output = cirmgr.bus_ckt1_output, &bus_ckt2_output = cirmgr.bus_ckt2_output;
+    vec<Lit> lits;
+    int cnt = 0;
+    cout << "\n in addBusConstraint_outputSupportSize \n";
+    for(size_t i = 0, ni = bus_ckt1_output.size(); i < ni; ++i){
+        for(size_t j = 0, nj = bus_ckt2_output.size(); j < nj; ++j){
+            // cout << "bus_ckt1_output[i]->unionSupportSize() = " << bus_ckt1_output[i]->unionSupportSize();
+            // cout << " ; bus_ckt2_output[j]->unionSupportSize() = " << bus_ckt2_output[j]->unionSupportSize() << endl;
+            if(bus_ckt1_output[i]->unionSupportSize() > bus_ckt2_output[j]->unionSupportSize()){
+                cnt++;
+                closeMatching_bus(lits, i , j, 0);
+            }
+        }
+    }
+    cout << "cnt = " << cnt << endl;
+
+}
+void SatMgr::addBusConstraint_inputSupportSize(){
+    vector<Bus*>& bus_ckt1_input = cirmgr.bus_ckt1_input, &bus_ckt2_input = cirmgr.bus_ckt2_input;
+    vec<Lit> lits;
+    int cnt = 0;
+    cout << "\n in addBusConstraint_inputSupportSize \n";
+    for(size_t i = 0, ni = bus_ckt1_input.size(); i < ni; ++i){
+        for(size_t j = 0, nj = bus_ckt2_input.size(); j < nj; ++j){
+            // cout << "bus_ckt1_input[i]->unionInputSupportSize() = " << bus_ckt1_input[i]->unionInputSupportSize();
+            // cout << " ; bus_ckt2_input[j]->unionInputSupportSize() = " << bus_ckt2_input[j]->unionInputSupportSize() << endl;
+            if(bus_ckt1_input[i]->unionInputSupportSize() > bus_ckt2_input[j]->unionInputSupportSize()){
+                cnt++;
+                closeMatching_bus(lits, i , j, 1);
+            }
+        }
+    }
+    cout << "cnt = " << cnt << endl;
+}
 void SatMgr::addOutputConstraint_inputBusNum(){
     vector<variable*>&f = cirmgr.f, &g = cirmgr.g;
     vec<Lit> lits;
@@ -1651,6 +1720,7 @@ SatMgr::addBindClause(bool isnegate, int _port1, int _port2, string _p1,
     }
     return 1;
 }
+
 
 void
 SatMgr::addBusConstraint_match(size_t idxI, size_t idxO, vec<Lit>& ans){

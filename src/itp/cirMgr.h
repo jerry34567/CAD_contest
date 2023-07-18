@@ -19,7 +19,7 @@ class variable
 {
     public:
         variable(char type, Var sub1, Var sub2)
-            : _type(type), _sub1(sub1), _sub2(sub2), _busIndex(-1), _busSize(0),_suppSize(0), _inputUnateNum_p(0),_inputUnateNum_n(0),_outputUnateNum(0), _outputGroupingNum(0){
+            : _type(type), _sub1(sub1), _sub2(sub2), _busIndex(-1), _busSize(0),_suppSize(0), _inputUnateNum_p(0),_inputUnateNum_n(0),_outputUnateNum(0), _outputGroupingNum(0), _inputUnates(""){
         }
         ~variable() {}
 
@@ -41,6 +41,7 @@ class variable
         unordered_map<size_t, size_t>&      suppBus() { return _suppBus;}
         vector<pair<size_t, size_t>>*&      suppBus_distribution(){return _suppBus_distribution;}
         size_t                              outputUnateNum() { return _outputUnateNum; }
+        string                              inputUnates() { return _inputUnates; }
         size_t                              inputUnateNum_p() { return _inputUnateNum_p; }
         size_t                              inputUnateNum_n() { return _inputUnateNum_n; }
         size_t                              outputGroupingNum() { return _outputGroupingNum; }
@@ -58,6 +59,7 @@ class variable
         void                                setInputUnateNum_n(const size_t _s) { _inputUnateNum_n = _s; }
         void                                setOutputUnateNum(const size_t _s) { _outputUnateNum = _s; }
         void                                setOutputGroupingNum(const size_t _s) { _outputGroupingNum = _s; }
+        void                                setInputUnates(const string _s) { _inputUnates = _s; }
         void                                addInputUnateNum_p() { ++_inputUnateNum_p; }
         void                                addInputUnateNum_n() { ++_inputUnateNum_n; }
 
@@ -77,9 +79,9 @@ class variable
         // size_t _inputUnateNum;  // how many outputs are unate w.r.t this PI 
         size_t _inputUnateNum_p;  // how many outputs are positive unate w.r.t this PI 
         size_t _inputUnateNum_n;  // how many outputs are negative unate w.r.t this PI 
-        size_t _outputUnateNum; // the number of output unate variables
+        size_t _outputUnateNum; // the number of output unate variables(i.e., the number of input that makes this output unate)
+        string _inputUnates; // the detail input unate of this output
         size_t _outputGroupingNum; // index of the output grouping
-        
         // collect those buses that this output's support inputs lie in    
         //_SuppBus[i].first = the bus index; .second = number of inputs in that bus
         unordered_map<size_t, size_t> _suppBus;
@@ -109,6 +111,8 @@ class Bus
         // Bus (bool I, bool C, size_t N): isInput(I), isCkt1(C), portNum(N) {}
         Bus ():_unionSupportSize(0), _outputUnatenessNum(0), _busIndex(-1){}
         Bus (const size_t _portidx, const int _numBus):_unionSupportSize(0), _outputUnatenessNum(0), _busIndex(_portidx), _busNum(_numBus){
+            _inputUnatenessNum = 0;
+            _unionInputSupportSize = 0;
             _bus_matching = new bool[_numBus];
             for(size_t i = 0; i < _numBus; ++i)
                 _bus_matching[i] = 0;
@@ -118,21 +122,27 @@ class Bus
         bool            getIsCkt1 () const {return isCkt1 ;}
         size_t          getPortNum() const {return portNum;}
         size_t          unionSupportSize() const {return _unionSupportSize;}
+        size_t          unionInputSupportSize() const {return _unionInputSupportSize;}
         size_t          outputUnatenessNum() const {return _outputUnatenessNum;}
+        size_t          inputUnatenessNum() const {return _inputUnatenessNum;}
         size_t          busIndex() const {return _busIndex;}
         size_t          busNum() const {return _busNum;}
         bool*           busMatching() const {return _bus_matching;}
         unordered_map<variable*, bool>& unionSupport(){return _unionSupport;}
+        unordered_map<variable*, bool>& unionInputSupport(){return _unionInputSupport;}
         // vector<size_t>  getIndexes() const {return indexes;}
         // vector<string>  getNames  () const {return names  ;}
         void            setIsInput (const bool v)  {isInput = v;}
         void            setIsCkt1  (const bool v)  {isCkt1  = v;}
         void            setPortNum (const size_t v){portNum = v;}
         void            setUnionSupportSize(const size_t v){_unionSupportSize = v;}
+        void            setUnionInputSupportSize(const size_t v){_unionInputSupportSize = v;}
         void            setOutputUnatenessNum(const size_t v){_outputUnatenessNum = v;}
         void            setBusIndex(const size_t v){_busIndex = v;}
         void            addOutputUnatenessNum(const size_t v){_outputUnatenessNum += v;}
+        void            addInputUnatenessNum(const size_t v){_inputUnatenessNum += v;}
         void            addUnionSupportSize(const size_t v){_unionSupportSize += v;}
+        void            addInputUnionSupportSize(const size_t v){_unionInputSupportSize += v;}
         void            insertIndex(const size_t v){indexes.push_back(v);}
         void            insertName (const string v){names.push_back(v);}
         vector<size_t> indexes;
@@ -143,9 +153,13 @@ class Bus
         size_t _busIndex; // each input bus (output bus) should have a unique busIndex (to close specific pair of bus matching)
         size_t _busNum; // number of bus in this circuit
         size_t portNum;
-        size_t _unionSupportSize; // the support size of this bus' outputs
+        size_t _unionSupportSize; // the input support size(i.e., the number of inputs this output bus support) of this bus' outputs
+        size_t _unionInputSupportSize; // the output support size(i.e., the number of outputs this input bus support) of this bus' inputs
         size_t _outputUnatenessNum; // the sum of the input unateness of a output bus
-        unordered_map<variable*, bool> _unionSupport;
+        size_t _inputUnatenessNum; // the sum of the output unateness of a input bus
+        unordered_map<variable*, bool> _unionSupport;   // collect the union inputs that is supported by this output bus
+        unordered_map<variable*, bool> _unionInputSupport;  // collect the union outputs that is supported by this input bus
+        // unordered_map<variable*, bool> _unionInputUnateness;    //  the union input unateness of ouptut bus
         // boolean array to indicate which buses can't this bus match with 
         // e.g., if bus i can't match with bus j, then bus i 's bus_matching[j] == 1 && bus j 's bus_matching[i] == 1
         bool* _bus_matching; 
@@ -170,7 +184,12 @@ class CirMgr
         void readSymmetric();
         void outputGrouping();
         void busSupportUnion(); // collect the union support size of output bus and close the infeasible bus matching
-        void busOutputUnateness(); // collect the union input unateness of output bus and close the infeasible bus matching
+        void busInputSupportUnion();
+        // void busInputUnatenessUnion(); // collect the union input unateness of ouptut bus
+        // collect the union input unateness of output bus and close the infeasible bus matching
+        // to close output bus matching
+        void busOutputUnateness();
+        void busInputUnateness();
         // void readSupp();
         // void readUnate();
         void readBus_class(SatSolver& s, string& inputfilename); 
@@ -225,7 +244,9 @@ class CirMgr
         void _readPreprocess(ifstream& fPreprocess, bool _isCkt1, preprocess _p);// _ckti = 1 denotes is reading ckt1; = 0 -> ckt2
         void _readInputUnateness(ifstream& , bool _isCkt1);
         void _busOutputUnateness(bool _isCkt1); // collect the union input unateness of output bus
+        void _busInputUnateness(bool _isCkt1); // collect the union output unateness of input bus
         void _busSupportUnion(bool _isCkt1); // collect the union support size of output bus
+        void _busInputSupportUnion(bool _isCkt1); // collect the union support size of input bus
         static bool _outputsorting(variable* a, variable* b);
         // void _readSupp(
         //     ifstream& fbus,

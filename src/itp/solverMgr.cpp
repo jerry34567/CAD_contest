@@ -93,8 +93,10 @@ SolverMgr::solveNP3(string& inputFilename) {
     satmgr.cirmgr.readSymmetric();
     satmgr.cirmgr.outputGrouping();
     satmgr.cirmgr.busSupportUnion();
+    satmgr.cirmgr.busInputSupportUnion();
     satmgr.cirmgr.busOutputUnateness();
-    satmgr.cirmgr.feasibleBusMatching();
+    satmgr.cirmgr.busInputUnateness();
+    // satmgr.cirmgr.feasibleBusMatching();
     satmgr.cirmgr.supportBusClassification();
     // satmgr.addBusConstraint();
     satmgr.addSuppConstraint();  
@@ -104,18 +106,23 @@ SolverMgr::solveNP3(string& inputFilename) {
     satmgr.addOutputGroupingConstraint();
     satmgr.cirmgr.printMIMO_valid();
     // for(int i = 0; i < 1; i++) Var t = satmgr.solver.newVar(); // test var
-    satmgr.addOutputConstraint_inputBusNum();    // case08 seg fault
-    /*
+    satmgr.addOutputConstraint_inputBusNum();  
+    satmgr.addBusConstraint_inputUnateness();   
+    satmgr.addBusConstraint_outputUnateness();   
+    satmgr.addBusConstraint_inputSupportSize();
+    satmgr.addBusConstraint_outputSupportSize();
+    size_t bp = 0;
+    
     size_t BusMatchIdx_I = 0, BusMatchIdx_O = 0;
     int totalBusMatch_I = satmgr.cirmgr.valid_busMatch_ckt2_input.size();
     int totalBusMatch_O = satmgr.cirmgr.valid_busMatch_ckt2_output.size();
     vec<Lit> BusMatchAssump;
     // vec<Lit> find_valid_output_assump, find_input_given_output_assump;
     bool finding_output = true; // if true: solver.assumpSolve(find_valid_output_assump), else: solver.assumpSolve(find_input_given_output_assump)
-    satmgr.addBusConstraint_match(0, 0, BusMatchAssump);
+    // satmgr.addBusConstraint_match(0, 0, BusMatchAssump);
     // BusMatchAssump.copyTo(find_valid_output_assump);
     // BusMatchAssump.copyTo(find_input_given_output_assump);
-    */
+    
     vector<vector<variable*>>&MI = satmgr.cirmgr.MI, &MO = satmgr.cirmgr.MO;
 
     cout << "AAAAAAA110" << endl;
@@ -144,7 +151,7 @@ SolverMgr::solveNP3(string& inputFilename) {
         cout << endl;
     }
 
-    satmgr.addCandidateBusConstraint(satmgr.solver);
+    // satmgr.addCandidateBusConstraint(satmgr.solver);
     satmgr.addBusValidConstraint(satmgr.solver);
 
 
@@ -197,7 +204,7 @@ SolverMgr::solveNP3(string& inputFilename) {
         }
 
         bool                      SAT1_result, SAT2_result;
-        vec<Lit> close_constant_assump; bool enable_constant = false; // close constant matching initially, until no match then enable constant
+        vec<Lit> close_constant_assump; bool enable_constant = 1; // close constant matching initially, until no match then enable constant
         for(int j = 0; j < satmgr.cirmgr.MI_valid_Var[0].size(); j++){
             close_constant_assump.push(~Lit(satmgr.cirmgr.MI_valid_Var[satmgr.cirmgr.MI_valid_Var.size()-1][j]));
         }

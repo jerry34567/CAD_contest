@@ -71,6 +71,10 @@ class SatMgr
         void addBusConstraint_match(size_t idxI, size_t idxO, vec<Lit>& ans); // don't use this after using addCandidateBusConstraint
         // void funcSuppInputConstraint(vector<pair<int, int>>& MO_no_pos_neg_pair, int idxI,int idxO, vec<Lit>& as); // given bus match, output match(w/o +-) and funcsupp info, close invalid input match by adding assumption into find_input_given_output_assump
         void addOutputConstraint_inputBusNum(); // two output can only be matched if they have same amount of input bus
+        void addBusConstraint_inputUnateness(); // two output bus can only be matched if the inputUnateness of the bus in f <= that of the bus in g
+        void addBusConstraint_outputUnateness(); // two input bus can only be matched if the outputUnateness of the bus in x <= that of the bus in y
+        void addBusConstraint_inputSupportSize(); // two input bus can only be matched if the output functional support size of the bus in f <= that of the bus of g
+        void addBusConstraint_outputSupportSize(); // two output bus can only be matched if the input functional support size of the bus in x <= that of the bus of y        void addCandidateBusConstraint(SatSolver& s);
         void addCandidateBusConstraint(SatSolver& s);
         void addBusValidConstraint(SatSolver& s); // close MIbus_valid, MObus_valid according to |cir1BusSize| <= |cir2BusSize|, also close MIbus_Var, MObus_Var according to MIbus_valid, MObus_valid. Bind control of each MIbus_Var/MObus_Var entry to MI_valid_var/MO_valid_var matching(only true(valid bus match) entry will add port matching clause to solver).
 
@@ -170,6 +174,14 @@ class SatMgr
                 lits.push(~Lit(cirmgr.MI[_i][_j]->getVar()));
             else
                 lits.push(~Lit(cirmgr.MO[_i][_j]->getVar()));
+            solver.addClause(lits);
+            lits.clear();
+        }
+        void closeMatching_bus(vec<Lit> &lits, size_t _i, size_t _j, bool _isInput){  // _isInput == 1 -> close input matching
+            if(_isInput == 1)
+                lits.push(~Lit(cirmgr.MIbus_Var[_i][_j]));
+            else
+                lits.push(~Lit(cirmgr.MObus_Var[_i][_j]));
             solver.addClause(lits);
             lits.clear();
         }
