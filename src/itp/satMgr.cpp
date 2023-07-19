@@ -527,6 +527,29 @@ void SatMgr::constraint_Cmdr_control(SatSolver& s, Var control, vector<Var>& v){
     lits.clear();
     cmdrExactlyOne(s, root, false); // is_MO == false: exactly one will be true
 }
+void SatMgr::constraint_Cmdr_nocontrol(SatSolver& s, vector<Var>& v){ // only one Var in vector<Var> will be 1
+    cirmgr.Cmdr_level.clear();
+    for(int i = 0; i < v.size(); i++){
+        Cmdr* newCmdr = new Cmdr(v[i], true);
+        cirmgr.Cmdr_level.push_back(newCmdr);
+    }
+    constructCmdr(s);
+    Cmdr*    root = cirmgr.Cmdr_level[0];
+    vec<Lit> lits;
+    Lit      a = Lit(root->getVar());
+    lits.push(a);
+    s.addClause(lits);
+    lits.clear();
+    cmdrExactlyOne(s, root, false); // is_MO == false: exactly one will be true
+}
+void SatMgr::busMatchExactlyOne(SatSolver& s){
+    for(int i = 0; i < cirmgr.MIbus_Var.size(); i++){
+        constraint_Cmdr_nocontrol(s, cirmgr.MIbus_Var[i]);
+    }
+    for(int i = 0; i < cirmgr.MObus_Var.size(); i++){
+        constraint_Cmdr_nocontrol(s, cirmgr.MObus_Var[i]);
+    }
+}
 void
 SatMgr::constructCmdr(SatSolver& s) {
     vector<Cmdr*> Cmdr_level_temp;
@@ -1076,6 +1099,7 @@ SatMgr::initCircuit(SatSolver& s, SatSolver& s_miter,
     for (int i = 1; i <= cirmgr.inputNum_ckt1; i++) {
         variable* tmpX = new variable('x', i, -1);
         tmpX->setname(cirmgr.portname_ckt1[i-1]);
+        cirmgr.u_name_busIndex_input_ckt1[tmpX->getname()] = -1; // initialize doesn't exist in any bus, after readBus_class will overwrite with corresponding bus index, we can know those "not in any bus" port: -1
         tmpX->setVar(s.newVar());
         tmpX->setVar2(s_miter.newVar());
         tmpX->setVar3(s_verifier.newVar());
@@ -1084,6 +1108,7 @@ SatMgr::initCircuit(SatSolver& s, SatSolver& s_miter,
     for (int i = 1; i <= cirmgr.inputNum_ckt2; i++) {
         variable* tmpY = new variable('y', i, -1);
         tmpY->setname(cirmgr.portname_ckt2[i - 1]);
+        cirmgr.u_name_busIndex_input_ckt2[tmpY->getname()] = -1; // initialize doesn't exist in any bus, after readBus_class will overwrite with corresponding bus index, we can know those "not in any bus" port: -1
         tmpY->setVar(s.newVar());
         tmpY->setVar2(s_miter.newVar());
         tmpY->setVar3(s_verifier.newVar());
@@ -1094,6 +1119,7 @@ SatMgr::initCircuit(SatSolver& s, SatSolver& s_miter,
     for (int i = 1; i <= cirmgr.outputNum_ckt1; i++) {
         variable* tmpF = new variable('f', i, -1);
         tmpF->setname(cirmgr.portname_ckt1[cirmgr.inputNum_ckt1 + i - 1]);
+        cirmgr.u_name_busIndex_output_ckt1[tmpF->getname()] = -1; // initialize doesn't exist in any bus, after readBus_class will overwrite with corresponding bus index, we can know those "not in any bus" port: -1
         tmpF->setVar(s.newVar());
         tmpF->setVar2(s_miter.newVar());
         tmpF->setVar3(s_verifier.newVar());
@@ -1102,6 +1128,7 @@ SatMgr::initCircuit(SatSolver& s, SatSolver& s_miter,
     for (int i = 1; i <= cirmgr.outputNum_ckt2; i++) {
         variable* tmpG = new variable('g', i, -1);
         tmpG->setname(cirmgr.portname_ckt2[cirmgr.inputNum_ckt2 + i - 1]);
+        cirmgr.u_name_busIndex_output_ckt2[tmpG->getname()] = -1; // initialize doesn't exist in any bus, after readBus_class will overwrite with corresponding bus index, we can know those "not in any bus" port: -1
         tmpG->setVar(s.newVar());
         tmpG->setVar2(s_miter.newVar());
         tmpG->setVar3(s_verifier.newVar());
@@ -1733,7 +1760,7 @@ SatMgr::addBusConstraint_match(size_t idxI, size_t idxO, vec<Lit>& ans){
     // cout << "v: " << cirmgr.valid_busMatch_ckt2_input.size() << endl;
     for (size_t i = 0, ni = i1.size(); i < ni; ++i) { 
         for(auto j: i1[i]->indexes){
-            vector<size_t>& i2_indexes = i2[i]->indexes;
+            vector<int>& i2_indexes = i2[i]->indexes;
             bool* exist = new bool[y.size()]{0};
             for(auto i2idx: i2_indexes) exist[i2idx] = true;
             for (size_t k = 0, nk = y.size(); k < nk; ++k) {
@@ -1745,7 +1772,7 @@ SatMgr::addBusConstraint_match(size_t idxI, size_t idxO, vec<Lit>& ans){
             delete[] exist;
         }
         for(auto j: i2[i]->indexes){
-            vector<size_t>& i1_indexes = i1[i]->indexes;
+            vector<int>& i1_indexes = i1[i]->indexes;
             bool* exist = new bool[x.size()]{0};
             for(auto i1idx: i1_indexes) exist[i1idx] = true;
             for (size_t k = 0, nk = x.size(); k < nk; ++k) {
@@ -1759,7 +1786,7 @@ SatMgr::addBusConstraint_match(size_t idxI, size_t idxO, vec<Lit>& ans){
     }
     for (size_t i = 0, ni = o1.size(); i < ni; ++i) { 
         for(auto j: o1[i]->indexes){
-            vector<size_t>& o2_indexes = o2[i]->indexes;
+            vector<int>& o2_indexes = o2[i]->indexes;
             bool* exist = new bool[g.size()]{0};
             for(auto o2idx: o2_indexes) exist[o2idx] = true;
             for (size_t k = 0, nk = g.size(); k < nk; ++k) {
@@ -1771,7 +1798,7 @@ SatMgr::addBusConstraint_match(size_t idxI, size_t idxO, vec<Lit>& ans){
             delete[] exist;
         }
         for(auto j: o2[i]->indexes){
-            vector<size_t>& o1_indexes = o1[i]->indexes;
+            vector<int>& o1_indexes = o1[i]->indexes;
             bool* exist = new bool[f.size()]{0};
             for(auto o1idx: o1_indexes) exist[o1idx] = true;
             for (size_t k = 0, nk = f.size(); k < nk; ++k) {
@@ -1828,47 +1855,140 @@ SatMgr::addBusConstraint_match(size_t idxI, size_t idxO, vec<Lit>& ans){
 }
 
 void SatMgr::addCandidateBusConstraint(SatSolver& s){
+///////////below is testing, still debugging////    
     for(int j = 0; j < cirmgr.MI_valid[0].size(); j++){
-        vec<Lit> atLeastOneCandidate;
-        for(int i = 0; i < cirmgr.MI_valid.size(); i++){
-            if(cirmgr.MI_valid[i][j]){
-                atLeastOneCandidate.push(Lit(cirmgr.MI_valid_Var[i][j]));
-                if(i != cirmgr.MI_valid.size() - 1){ // not constant
-                    cout << cirmgr.x[i]->getname() << " at bus " << cirmgr.u_name_busIndex_input_ckt1[cirmgr.x[i]->getname()] << "\t" << cirmgr.y[j]->getname() << " at bus " << cirmgr.u_name_busIndex_input_ckt2[cirmgr.y[j]->getname()] << endl;
-                    vec<Lit> implyBusMatch;
-                    Var busVar = cirmgr.MIbus_Var[cirmgr.u_name_busIndex_input_ckt1[cirmgr.x[i]->getname()]][cirmgr.u_name_busIndex_input_ckt2[cirmgr.y[j]->getname()]];
-                    Var candidate = cirmgr.MI_valid_Var[i][j];
-                    implyBusMatch.push(~Lit(candidate));
-                    implyBusMatch.push(Lit(busVar));
-                    s.addClause(implyBusMatch);
-                    implyBusMatch.clear();
-                } 
+        vec<Lit> atLeastOneCandidate; // "in bus" can't be candidate with "not in any bus" 
+        vec<Lit> notInAnyBusCandidate; // match those candidate that both "not in any bus"
+        if(cirmgr.u_name_busIndex_input_ckt2[cirmgr.y[j]->getname()] != -1){ // in some bus
+            for(int i = 0; i < cirmgr.MI_valid.size(); i++){
+                if(cirmgr.MI_valid[i][j]){
+                    if(i != cirmgr.MI_valid.size() - 1){ // not constant, since constant has no bus infomation
+                        if(cirmgr.u_name_busIndex_input_ckt1[cirmgr.x[i]->getname()] != -1){ // in some bus
+                            atLeastOneCandidate.push(Lit(cirmgr.MI_valid_Var[i][j]));
+                            cout << "MI:\t" << cirmgr.x[i]->getname() << " at bus " << cirmgr.u_name_busIndex_input_ckt1[cirmgr.x[i]->getname()] << "\t" << cirmgr.y[j]->getname() << " at bus " << cirmgr.u_name_busIndex_input_ckt2[cirmgr.y[j]->getname()] << endl;
+                            vec<Lit> implyBusMatch;
+                            Var busVar = cirmgr.MIbus_Var[cirmgr.u_name_busIndex_input_ckt1[cirmgr.x[i]->getname()]][cirmgr.u_name_busIndex_input_ckt2[cirmgr.y[j]->getname()]];
+                            // cout << "1773" << endl;
+                            Var candidate = cirmgr.MI_valid_Var[i][j];
+                            implyBusMatch.push(~Lit(candidate));
+                            implyBusMatch.push(Lit(busVar));
+                            s.addClause(implyBusMatch);
+                            implyBusMatch.clear();
+                        }
+                    }
+                    else{ // constant
+                        atLeastOneCandidate.push(Lit(cirmgr.MI_valid_Var[i][j]));
+                    }
+                }
             }
         }
-        s.addClause(atLeastOneCandidate);
+        else{ // not in any bus
+            for(int i = 0; i < cirmgr.MI_valid.size(); i++){
+                if(cirmgr.MI_valid[i][j]){
+                    if(i != cirmgr.MI_valid.size() - 1){ // not constant, since constant has no bus infomation
+                        if(cirmgr.u_name_busIndex_input_ckt1[cirmgr.x[i]->getname()] == -1){ // not in any bus
+                            cout << "MI:\t" << cirmgr.x[i]->getname() << "not in any bus\t" << cirmgr.y[j]->getname() << "not in any bus\t"  << endl;
+                            notInAnyBusCandidate.push(Lit(cirmgr.MI_valid_Var[i][j]));
+                        }
+                    }
+                    else{ // constant
+                        notInAnyBusCandidate.push(Lit(cirmgr.MI_valid_Var[i][j]));
+                    }
+                }
+            }
+        }
+        if(atLeastOneCandidate.size() != 0) s.addClause(atLeastOneCandidate);
+        if(notInAnyBusCandidate.size() != 0) s.addClause(notInAnyBusCandidate);
         atLeastOneCandidate.clear();
+        notInAnyBusCandidate.clear();
     }
     for(int j = 0; j < cirmgr.MO_valid[0].size(); j++){
-        vec<Lit> atLeastOneCandidate;
-        for(int i = 0; i < cirmgr.MO_valid.size(); i++){
-            cout << cirmgr.f[i]->getname() << " " << cirmgr.g[j]->getname() << endl;
-            if(cirmgr.MO_valid[i][j]){
-                atLeastOneCandidate.push(Lit(cirmgr.MO_valid_Var[i][j]));
-                vec<Lit> implyBusMatch;
-                Var busVar = cirmgr.MObus_Var[cirmgr.u_name_busIndex_output_ckt1[cirmgr.f[i]->getname()]][cirmgr.u_name_busIndex_output_ckt2[cirmgr.g[j]->getname()]];
-                Var candidate = cirmgr.MO_valid_Var[i][j];
-                implyBusMatch.push(~Lit(candidate));
-                implyBusMatch.push(Lit(busVar));
-                s.addClause(implyBusMatch);
-                implyBusMatch.clear();
+        vec<Lit> atLeastOneCandidate; // "in bus" can't be candidate with "not in any bus" 
+        vec<Lit> notInAnyBusCandidate; // match those candidate that both "not in any bus"
+        if(cirmgr.u_name_busIndex_output_ckt2[cirmgr.g[j]->getname()] != -1){ // in some bus
+            for(int i = 0; i < cirmgr.MO_valid.size(); i++){
+                if(cirmgr.MO_valid[i][j]){
+                    if(cirmgr.u_name_busIndex_output_ckt1[cirmgr.f[i]->getname()] != -1){ // in some bus
+                        atLeastOneCandidate.push(Lit(cirmgr.MO_valid_Var[i][j]));
+                        cout << "MO:\t" << cirmgr.f[i]->getname() << " at bus " << cirmgr.u_name_busIndex_output_ckt1[cirmgr.f[i]->getname()] << "\t" << cirmgr.g[j]->getname() << " at bus " << cirmgr.u_name_busIndex_output_ckt2[cirmgr.g[j]->getname()] << endl;
+                        vec<Lit> implyBusMatch;
+                        Var busVar = cirmgr.MObus_Var[cirmgr.u_name_busIndex_output_ckt1[cirmgr.f[i]->getname()]][cirmgr.u_name_busIndex_output_ckt2[cirmgr.g[j]->getname()]];
+                        // cout << "1773" << endl;
+                        Var candidate = cirmgr.MO_valid_Var[i][j];
+                        implyBusMatch.push(~Lit(candidate));
+                        implyBusMatch.push(Lit(busVar));
+                        s.addClause(implyBusMatch);
+                        implyBusMatch.clear();
+                    }
+                }
             }
         }
-        s.addClause(atLeastOneCandidate);
+        else{ // not in any bus
+            for(int i = 0; i < cirmgr.MO_valid.size(); i++){
+                if(cirmgr.MO_valid[i][j]){
+                    if(cirmgr.u_name_busIndex_output_ckt1[cirmgr.f[i]->getname()] == -1){ // not in any bus
+                        cout << "MO:\t" << cirmgr.f[i]->getname() << "not in any bus\t" << cirmgr.g[j]->getname() << "not in any bus\t"  << endl;
+                        notInAnyBusCandidate.push(Lit(cirmgr.MO_valid_Var[i][j]));
+                    }
+                }
+            }
+        }
+        if(atLeastOneCandidate.size() != 0)s.addClause(atLeastOneCandidate);
+        if(notInAnyBusCandidate.size() != 0)s.addClause(notInAnyBusCandidate);
         atLeastOneCandidate.clear();
+        notInAnyBusCandidate.clear();
+
     }
+    cout << "test" << endl;
+////////////////////////////below is original part, works for case04, doesn't work for case05(exist not in any bus port) ///////
+    // for(int j = 0; j < cirmgr.MI_valid[0].size(); j++){
+    //     vec<Lit> atLeastOneCandidate;
+    //     for(int i = 0; i < cirmgr.MI_valid.size(); i++){
+    //         if(cirmgr.MI_valid[i][j]){
+    //             atLeastOneCandidate.push(Lit(cirmgr.MI_valid_Var[i][j]));
+    //             if(i != cirmgr.MI_valid.size() - 1){ // not constant
+    //                 cout << "MI:\t" << cirmgr.x[i]->getname() << " at bus " << cirmgr.u_name_busIndex_input_ckt1[cirmgr.x[i]->getname()] << "\t" << cirmgr.y[j]->getname() << " at bus " << cirmgr.u_name_busIndex_input_ckt2[cirmgr.y[j]->getname()] << endl;
+    //                 // cout << cirmgr.x[i]->getname() << " at bus " << cirmgr.u_name_busIndex_input_ckt1[cirmgr.x[i]->getname()] << "\t" << cirmgr.y[j]->getname() << " at bus " << cirmgr.u_name_busIndex_input_ckt2[cirmgr.y[j]->getname()] << endl;
+    //                 vec<Lit> implyBusMatch;
+    //                 Var busVar = cirmgr.MIbus_Var[cirmgr.u_name_busIndex_input_ckt1[cirmgr.x[i]->getname()]][cirmgr.u_name_busIndex_input_ckt2[cirmgr.y[j]->getname()]];
+    //                 Var candidate = cirmgr.MI_valid_Var[i][j];
+    //                 implyBusMatch.push(~Lit(candidate));
+    //                 implyBusMatch.push(Lit(busVar));
+    //                 s.addClause(implyBusMatch);
+    //                 implyBusMatch.clear();
+    //             } 
+    //         }
+    //     }
+    //     s.addClause(atLeastOneCandidate);
+    //     atLeastOneCandidate.clear();
+    // }
+    // for(int j = 0; j < cirmgr.MO_valid[0].size(); j++){
+    //     vec<Lit> atLeastOneCandidate;
+    //     for(int i = 0; i < cirmgr.MO_valid.size(); i++){
+    //         // cout << cirmgr.f[i]->getname() << " " << cirmgr.g[j]->getname() << endl;
+    //         if(cirmgr.MO_valid[i][j]){
+    //             cout << "MO:\t" << cirmgr.f[i]->getname() << " at bus " << cirmgr.u_name_busIndex_output_ckt1[cirmgr.f[i]->getname()] << "\t" << cirmgr.g[j]->getname() << " at bus " << cirmgr.u_name_busIndex_output_ckt2[cirmgr.g[j]->getname()] << endl;
+    //             atLeastOneCandidate.push(Lit(cirmgr.MO_valid_Var[i][j]));
+    //             vec<Lit> implyBusMatch;
+    //             Var busVar = cirmgr.MObus_Var[cirmgr.u_name_busIndex_output_ckt1[cirmgr.f[i]->getname()]][cirmgr.u_name_busIndex_output_ckt2[cirmgr.g[j]->getname()]];
+    //             Var candidate = cirmgr.MO_valid_Var[i][j];
+    //             implyBusMatch.push(~Lit(candidate));
+    //             implyBusMatch.push(Lit(busVar));
+    //             s.addClause(implyBusMatch);
+    //             implyBusMatch.clear();
+    //         }
+    //     }
+    //     s.addClause(atLeastOneCandidate);
+    //     atLeastOneCandidate.clear();
+    // }
+
+
+
+
 }
 
 void SatMgr::addBusValidConstraint(SatSolver& s){ // close MIbus_valid, MObus_valid according to |cir1BusSize| <= |cir2BusSize|, also close MIbus_Var, MObus_Var according to MIbus_valid, MObus_valid
+    cout << "in addBusValidConstraint" << endl;
     for(int i = 0; i < cirmgr.bus_ckt1_input.size(); i++){
         for(int j = 0; j < cirmgr.bus_ckt2_input.size(); j++){
             if(cirmgr.bus_ckt1_input[i]->getPortNum() > cirmgr.bus_ckt2_input[j]->getPortNum()){
@@ -1883,6 +2003,7 @@ void SatMgr::addBusValidConstraint(SatSolver& s){ // close MIbus_valid, MObus_va
             }
         }
     }
+    cout << "1913" << endl;
     for(int i = 0; i < cirmgr.MIbus_valid.size(); i++){
         for(int j = 0; j < cirmgr.MIbus_valid[0].size(); j++){
             if(!cirmgr.MIbus_valid[i][j]){
@@ -1904,8 +2025,11 @@ void SatMgr::addBusValidConstraint(SatSolver& s){ // close MIbus_valid, MObus_va
                     busMatch.clear();
                 }
             }
+
         }
+        
     }
+    cout << "1937" << endl;
     for(int i = 0; i < cirmgr.MObus_valid.size(); i++){
         for(int j = 0; j < cirmgr.MObus_valid[0].size(); j++){
             if(!cirmgr.MObus_valid[i][j]){
@@ -1928,4 +2052,5 @@ void SatMgr::addBusValidConstraint(SatSolver& s){ // close MIbus_valid, MObus_va
             }
         }
     }
+    cout << "out addBusValidConstraint" << endl;
 }

@@ -847,7 +847,8 @@ void CirMgr::supportBusClassification(){
     return;
 } 
 void
-CirMgr::readBus_class(SatSolver& s, string& inputfilename){
+CirMgr::
+readBus_class(SatSolver& s, string& inputfilename){
     ifstream fbus(inputfilename);
     string port;
     size_t portidx = 0;
@@ -859,23 +860,26 @@ CirMgr::readBus_class(SatSolver& s, string& inputfilename){
         Bus* newBus = new Bus(portidx++, num_bus);
         for(size_t j = 0; j < num_port; j++){
             fbus >> port;
+            int busidx = 0;
             // cout << u_name_index_ckt1[port] << endl;
             if(u_name_isInput_ckt1[port]){
                 exist_x[u_name_index_ckt1[port]] = true;
                 u_name_busIndex_input_ckt1[port] = bus_ckt1_input.size();
+                busidx = bus_ckt1_input.size();
                 // cout << "ex x name: " << port << " idx: " << u_name_index_ckt1[port] << endl;
             }
             else{
                 exist_f[u_name_index_ckt1[port]] = true;
                 u_name_busIndex_output_ckt1[port] = bus_ckt1_output.size();
+                busidx = bus_ckt1_output.size();
                 // cout << "ex f name: " << port << " idx: " << u_name_index_ckt1[port] << endl;
             }
             newBus->setIsInput(u_name_isInput_ckt1[port]);
             newBus->setIsCkt1(true);
             newBus->setPortNum(num_port);
             newBus->insertIndex(u_name_index_ckt1[port]);
-            if(u_name_index_ckt1[port] > 1000 || u_name_index_ckt1[port] <= 0)
-                cout << "u_name_index_ckt1[port] = " << u_name_index_ckt1[port] << endl;
+            // if(u_name_index_ckt1[port] > 1000 || u_name_index_ckt1[port] <= 0)
+                cout << "idx: " << busidx << " " << newBus->getIsInput() << " u_name_index_ckt1[port] = " << u_name_index_ckt1[port] << endl;
             newBus->insertName(port);
             newBus->getIsInput() ? x[u_name_index_ckt1[port]]->setBusIndex(portidx - 1) : f[u_name_index_ckt1[port]]->setBusIndex(portidx - 1);
         }
@@ -888,21 +892,24 @@ CirMgr::readBus_class(SatSolver& s, string& inputfilename){
         Bus* newBus = new Bus(portidx++, num_bus);
         for(size_t j = 0; j < num_port; j++){
             fbus >> port;
+            int busidx = 0;
             if(u_name_isInput_ckt2[port]){
                 exist_y[u_name_index_ckt2[port]] = true;
                 u_name_busIndex_input_ckt2[port] = bus_ckt2_input.size();
+                busidx = bus_ckt2_input.size();
                 // cout << "ex y name: " << port << " idx: " << u_name_index_ckt2[port] << endl;
             }
             else{
                 exist_g[u_name_index_ckt2[port]] = true;
                 u_name_busIndex_output_ckt2[port] = bus_ckt2_output.size();
+                busidx = bus_ckt2_output.size();
                 // cout << "ex g name: " << port << " idx: " << u_name_index_ckt2[port] << endl;
             }
             newBus->setIsInput(u_name_isInput_ckt2[port]);
             newBus->setIsCkt1(false);
             newBus->setPortNum(num_port);
-            if(u_name_index_ckt2[port] > 1000 || u_name_index_ckt2[port] <= 0 )
-                cout << "u_name_index_ckt2[port] = "<< u_name_index_ckt2[port] << endl;
+            // if(u_name_index_ckt2[port] > 1000 || u_name_index_ckt2[port] <= 0 )
+                cout << "idx: " << busidx << " " << newBus->getIsInput() << " u_name_index_ckt2[port] = "<< u_name_index_ckt2[port] << endl;
             newBus->insertIndex(u_name_index_ckt2[port]);
             newBus->insertName(port);
             newBus->getIsInput() ? y[u_name_index_ckt2[port]]->setBusIndex(portidx - 1) : g[u_name_index_ckt2[port]]->setBusIndex(portidx - 1);
@@ -949,8 +956,9 @@ CirMgr::readBus_class(SatSolver& s, string& inputfilename){
     sort(bus_ckt2_input.begin(), bus_ckt2_input.end(), [](Bus* a, Bus* b){return a->getPortNum() > b->getPortNum();});
     sort(bus_ckt2_output.begin(), bus_ckt2_output.end(), [](Bus* a, Bus* b){return a->getPortNum() > b->getPortNum();});
     */
-    cout << "BS: " << bus_ckt1_input.size() << " " << bus_ckt2_input.size() << " " << bus_ckt1_output.size() << " " << bus_ckt2_output.size() << endl;
+    // cout << "BS: " << bus_ckt1_input.size() << " " << bus_ckt2_input.size() << " " << bus_ckt1_output.size() << " " << bus_ckt2_output.size() << endl;
     // for(int i = 0; i < 1; i++) Var t = s.newVar(); // test var
+    
     // construct MIbus_Var and MIbus_valid
     // (!MIbus_Var[][] + !MI_valid_var[][] (invalid matching)) clauses
     for (int i = 0; i < bus_ckt1_input.size(); i++){
@@ -960,16 +968,16 @@ CirMgr::readBus_class(SatSolver& s, string& inputfilename){
             Var v = s.newVar();
             tmp.push_back(v);
             tmp_b.push_back(true);
-            cout << "902" << endl;
+            // cout << "902" << endl;
             for(int i1 = 0; i1 < bus_ckt1_input[i]->indexes.size(); i1++){
                 bool* exist = new bool[y.size()]{0};
-                cout << "905" << endl;
+                // cout << "905" << endl;
                 for(int yidx = 0; yidx < bus_ckt2_input[j]->indexes.size(); yidx++) exist[bus_ckt2_input[j]->indexes[yidx]] = true;
-                cout << "907" << endl;
+                // cout << "907" << endl;
                 for(int yidx = 0; yidx < y.size(); yidx++){
-                    cout << "909" << endl;
+                    // cout << "909" << endl;
                     if(!exist[yidx]){
-                        cout << "911" << endl;
+                        // cout << "911" << endl;
                         vec<Lit> invalid_match;
                         invalid_match.push(~Lit(v));
                         invalid_match.push(~Lit(MI_valid_Var[bus_ckt1_input[i]->indexes[i1]][yidx]));
@@ -991,7 +999,7 @@ CirMgr::readBus_class(SatSolver& s, string& inputfilename){
             Var v = s.newVar();
             tmp.push_back(v);
             tmp_b.push_back(true);
-            cout << "929" << endl;
+            // cout << "929" << endl;
             for(int i1 = 0; i1 < bus_ckt1_output[i]->indexes.size(); i1++){
                 bool* exist = new bool[g.size()]{0};
                 for(int gidx = 0; gidx < bus_ckt2_output[j]->indexes.size(); gidx++) exist[bus_ckt2_output[j]->indexes[gidx]] = true;
@@ -1031,6 +1039,9 @@ CirMgr::readBus_class(SatSolver& s, string& inputfilename){
         }
         cout << endl;
     }
+
+
+
 
     return;
     /*

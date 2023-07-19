@@ -143,9 +143,9 @@ class Bus
         void            addInputUnatenessNum(const size_t v){_inputUnatenessNum += v;}
         void            addUnionSupportSize(const size_t v){_unionSupportSize += v;}
         void            addInputUnionSupportSize(const size_t v){_unionInputSupportSize += v;}
-        void            insertIndex(const size_t v){indexes.push_back(v);}
+        void            insertIndex(const int v){indexes.push_back(v);}
         void            insertName (const string v){names.push_back(v);}
-        vector<size_t> indexes;
+        vector<int> indexes;
         vector<string> names;
     private:
         bool isInput;
@@ -302,6 +302,65 @@ class CirMgr
                 }
                 cout << endl;
             }
+        }
+        void printMIMO_valid_notab(){
+            cout << "\nMI_valid: " << endl;
+            // for (int i = 0; i < x.size(); i++){
+            //     cout << x[i]->getname() << "\t";
+            // }
+            cout << endl;
+            for (int j = 0; j < MI_valid[0].size(); j++){
+                cout << y[j]->getname() << "\t";
+                for (int i = 0; i < MI_valid.size(); i++){
+                    cout << MI_valid[i][j];
+                }
+                cout << endl;
+            }
+
+            cout << "\nMO_valid: " << endl;
+            // for (int i = 0; i < f.size(); i++){
+            //     cout << f[i]->getname() << "\t";
+            // }
+            cout << endl;
+            for (int j = 0; j < MO_valid[0].size(); j++){
+                cout << g[j]->getname() << "\t";
+                for (int i = 0; i < MO_valid.size(); i++){
+                    cout << MO_valid[i][j];
+                }
+                cout << endl;
+            }
+        }
+        void printBusIndexes(){
+                        //test cirmgr.bus_ckt1_output[i]->indexes
+            for(int i = 0; i < bus_ckt1_input.size(); i++){
+                cout << "bus_ckt1_input[" << i << "]: ";
+                for(int j = 0; j < bus_ckt1_input[i]->indexes.size(); j++){
+                    cout << bus_ckt1_input[i]->indexes[j] << " ";
+                }
+                cout << endl;
+            }
+            for(int i = 0; i < bus_ckt1_output.size(); i++){
+                cout << "bus_ckt1_output[" << i << "]: ";
+                for(int j = 0; j < bus_ckt1_output[i]->indexes.size(); j++){
+                    cout << bus_ckt1_output[i]->indexes[j] << " ";
+                }
+                cout << endl;
+            }
+            for(int i = 0; i < bus_ckt2_input.size(); i++){
+                cout << "bus_ckt2_input[" << i << "]: ";
+                for(int j = 0; j < bus_ckt2_input[i]->indexes.size(); j++){
+                    cout << bus_ckt2_input[i]->indexes[j] << " ";
+                }
+                cout << endl;
+            }
+            for(int i = 0; i < bus_ckt2_output.size(); i++){
+                cout << "bus_ckt2_output[" << i << "]: ";
+                for(int j = 0; j < bus_ckt2_output[i]->indexes.size(); j++){
+                    cout << bus_ckt2_output[i]->indexes[j] << " ";
+                }
+                cout << endl;
+            }
+
         }
 };
 

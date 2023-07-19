@@ -85,7 +85,8 @@ SolverMgr::solveNP3(string& inputFilename) {
                        satmgr.verifierSolver);
     satmgr.cirmgr.readCNF(satmgr.miterSolver, satmgr.verifierSolver);
     satmgr.cirmgr.readBus_class(satmgr.solver, inputFilename);
-    // satmgr.cirmgr.readBus(inputFilename);
+    satmgr.busMatchExactlyOne(satmgr.solver);
+    // return; //test indexes
     satmgr.cirmgr.readPreporcess(outputUnateness);
     satmgr.cirmgr.readPreporcess(support);
     satmgr.cirmgr.recordPIsupportPO();
@@ -98,11 +99,10 @@ SolverMgr::solveNP3(string& inputFilename) {
     satmgr.cirmgr.busInputUnateness();
     // satmgr.cirmgr.feasibleBusMatching();
     satmgr.cirmgr.supportBusClassification();
-    // satmgr.addBusConstraint();
     satmgr.addSuppConstraint();  
     satmgr.addSuppConstraint_input();  
     satmgr.addUnateConstraint(1); // add input unate constraint         // !(input # of p of ckt1 > input # of p of ckt2 && input # of n of ckt1 > input # of n of ckt2) -> 關掉正的match || !((input # of n of ckt1 > input # of p of ckt2) && (input # of p of ckt1 > input # of n of ckt2))-> 關掉負的match
-    satmgr.addUnateConstraint(0); // add output unate constraint
+    // satmgr.addUnateConstraint(0); // add output unate constraint // test closeTTTTTTTTTTTTTTTTTTTTT
     satmgr.addOutputGroupingConstraint();
     satmgr.cirmgr.printMIMO_valid();
     // for(int i = 0; i < 1; i++) Var t = satmgr.solver.newVar(); // test var
@@ -125,33 +125,35 @@ SolverMgr::solveNP3(string& inputFilename) {
     
     vector<vector<variable*>>&MI = satmgr.cirmgr.MI, &MO = satmgr.cirmgr.MO;
 
-    cout << "AAAAAAA110" << endl;
-    for(auto i: satmgr.cirmgr.x){
-        cout << i->getname() << ": ";
-        for(auto j: i->_funcSupp_PI){
-            cout << j->getname() << " ";
-        }
-        cout << endl;
-    }
-    cout << "AAAAAAA117" << endl;
-    for(auto i: satmgr.cirmgr.y){
-        cout << i->getname() << ": ";
-        for(auto j: i->_funcSupp_PI){
-            cout << j->getname() << " ";
-        }
-        cout << endl;
-    }
-    cout << "AAAAAAA125" << endl;
+    // cout << "AAAAAAA110" << endl;
+    // for(auto i: satmgr.cirmgr.x){
+    //     cout << i->getname() << ": ";
+    //     for(auto j: i->_funcSupp_PI){
+    //         cout << j->getname() << " ";
+    //     }
+    //     cout << endl;
+    // }
+    // cout << "AAAAAAA117" << endl;
+    // for(auto i: satmgr.cirmgr.y){
+    //     cout << i->getname() << ": ";
+    //     for(auto j: i->_funcSupp_PI){
+    //         cout << j->getname() << " ";
+    //     }
+    //     cout << endl;
+    // }
+    // cout << "AAAAAAA125" << endl;
     satmgr.addSymmConstraint(satmgr.solver);
 
-    for (int i = 0, n = satmgr.cirmgr.f[0]->symmetric_set.size(); i < n; i++) {
-        for (auto j : satmgr.cirmgr.f[0]->symmetric_set[i]) {
-            cout << j << " ";
-        }
-        cout << endl;
-    }
+    // for (int i = 0, n = satmgr.cirmgr.f[0]->symmetric_set.size(); i < n; i++) {
+    //     for (auto j : satmgr.cirmgr.f[0]->symmetric_set[i]) {
+    //         cout << j << " ";
+    //     }
+    //     cout << endl;
+    // }
 
-    // satmgr.addCandidateBusConstraint(satmgr.solver);
+    satmgr.cirmgr.printMIMO_valid_notab();
+    satmgr.addCandidateBusConstraint(satmgr.solver);
+    // return; //test
     satmgr.addBusValidConstraint(satmgr.solver);
 
 
@@ -174,6 +176,11 @@ SolverMgr::solveNP3(string& inputFilename) {
             vec_var.push_back(MO[i][j]->getVar());
         }
     }
+    
+    vec<Lit> close_constant_assump; bool enable_constant = false; // close constant matching initially, until no match then enable constant
+    for(int j = 0; j < satmgr.cirmgr.MI_valid_Var[0].size(); j++){
+        close_constant_assump.push(~Lit(satmgr.cirmgr.MI_valid_Var[satmgr.cirmgr.MI_valid_Var.size()-1][j]));
+    }
 
     while (satmgr.point != (satmgr.cirmgr.outputNum_ckt1 + satmgr.cirmgr.outputNum_ckt2) && time < 3570) {
         if (level == 0 && next_level){
@@ -182,6 +189,7 @@ SolverMgr::solveNP3(string& inputFilename) {
             satmgr.solver.MapClear();
             // level++;
             next_level = false;
+            enable_constant = false;
         }
         else if (level == 1 && next_level){
             cout << "a" << endl;
@@ -189,6 +197,7 @@ SolverMgr::solveNP3(string& inputFilename) {
             satmgr.solver.MapClear();
             // level++;
             next_level = false;
+            enable_constant = false;
         }
         else if (level == 2 && next_level){
             cout << "b" << endl;
@@ -196,22 +205,22 @@ SolverMgr::solveNP3(string& inputFilename) {
             satmgr.solver.MapClear();
             // level++;
             next_level = false;
+            enable_constant = false;
         }
         else if (level == 3 && next_level){
             cout << "c" << endl;
             satmgr.solver.addAtLeast(vec_var, satmgr.cirmgr.outputNum_ckt2, 0, 0);
             next_level = false;
+            enable_constant = false;
         }
 
         bool                      SAT1_result, SAT2_result;
-        vec<Lit> close_constant_assump; bool enable_constant = 1; // close constant matching initially, until no match then enable constant
-        for(int j = 0; j < satmgr.cirmgr.MI_valid_Var[0].size(); j++){
-            close_constant_assump.push(~Lit(satmgr.cirmgr.MI_valid_Var[satmgr.cirmgr.MI_valid_Var.size()-1][j]));
-        }
         if(enable_constant){
+            cout << "enable_constant" << endl;
             SAT1_result = satmgr.solver.solve();
         }
         else{
+            cout << "disable_constant" << endl;
             SAT1_result = satmgr.solver.assumpSolve(close_constant_assump);
         }
         /*
