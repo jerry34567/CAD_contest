@@ -693,11 +693,11 @@ void CirMgr::outputGrouping(){  // |f| = |g|
         g_groups.back().push_back(g_sorted[i]);
     }
     for(size_t i = 0, n = f_groups.size(); i < n; ++i)
-        for(auto j : f_groups[i])
-            j->setOutputGroupingNum(i);
+        for(vector<variable *>::iterator j = f_groups[i].begin(); j != f_groups[i].end(); j++)
+            (*j)->setOutputGroupingNum(i);
     for(size_t i = 0, n = g_groups.size(); i < n; ++i)
-        for(auto j : g_groups[i])
-            j->setOutputGroupingNum(i);
+        for(vector<variable *>::iterator j = g_groups[i].begin(); j != g_groups[i].end(); j++)
+            (*j)->setOutputGroupingNum(i);
     // exit(0);
 }
 bool CirMgr::_outputsorting(variable* a, variable* b)
@@ -712,8 +712,8 @@ void CirMgr::_busOutputUnateness(bool _isCkt1){
     size_t inputNum  = _isCkt1 ? inputNum_ckt1 : inputNum_ckt2;
     for(size_t i = 0, ni = bus_output.size(); i < ni; ++i){
         cout << "names = ";
-        for(auto j : bus_output[i]->names)
-            cout << j << ' ';
+        for(vector<std::string>::iterator j = bus_output[i]->names.begin(); j != bus_output[i]->names.end(); j++)
+            cout << (*j) << ' ';
         cout << endl;
         for(size_t j = 0, nj = bus_output[i]->indexes.size(); j < nj; ++j)
             bus_output[i]->addOutputUnatenessNum(outputVariable[bus_output[i]->indexes[j]]->outputUnateNum());
@@ -731,8 +731,8 @@ void CirMgr::_busInputUnateness(bool _isCkt1){
     size_t inputNum  = _isCkt1 ? inputNum_ckt1 : inputNum_ckt2;
     for(size_t i = 0, ni = bus_input.size(); i < ni; ++i){
         cout << "names = ";
-        for(auto j : bus_input[i]->names)
-            cout << j << ' ';
+        for(vector<std::string>::iterator j = bus_input[i]->names.begin(); j != bus_input[i]->names.end(); j++)
+            cout << (*j) << ' ';
         cout << endl;
         for(size_t j = 0, nj = bus_input[i]->indexes.size(); j < nj; ++j){
             size_t unionInputUnateness = inputVariable[bus_input[i]->indexes[j]]->inputUnateNum_n() + inputVariable[bus_input[i]->indexes[j]]->inputUnateNum_p();
@@ -791,8 +791,8 @@ void CirMgr::_busInputSupportUnion(bool _isCkt1){
         cout << endl;
         cout << "cnt = " << cnt << endl;
         cout << "unionInputSupport = ";
-        for(auto mm : bus_input[i]->unionInputSupport())
-            cout << mm.first->getname() << ' ';
+        for(unordered_map<variable *, bool>::iterator mm = bus_input[i]->unionInputSupport().begin(); mm != bus_input[i]->unionInputSupport().end(); mm++)
+            cout << (*mm).first->getname() << ' ';
         // cout << bus_input[i]->unionInputSupport().size() << endl;
         bus_input[i]->setUnionInputSupportSize(bus_input[i]->unionInputSupport().size());
         cout << "size = " <<bus_input[i]->unionInputSupportSize() << endl;

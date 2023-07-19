@@ -20,12 +20,19 @@ using namespace std;
 struct pair_hash {
     template <class T1, class T2>
     std::size_t operator () (const std::pair<T1,T2> &p) const {
-        auto h1 = std::hash<T1>{}(p.first);
-        auto h2 = std::hash<T2>{}(p.second);
+      //   auto h1 = std::hash<T1>{}(p.first);
+      //   auto h2 = std::hash<T2>{}(p.second);
+
+        std::size_t seed = 0;
+        // Hash the first element
+        seed ^= std::hash<T1>()(p.first);
+        // Combine with the hash of the second element
+        seed ^= std::hash<T2>()(p.second) + 0x9e3779b9 + (seed << 6) + (seed >> 2);
+        return seed;
 
         // Mainly for demonstration purposes, i.e. works but is overly simple
         // In the real world, use sth. like boost.hash_combine
-        return h1 ^ h2;  
+      //   return h1 ^ h2;  
     }
 };
 

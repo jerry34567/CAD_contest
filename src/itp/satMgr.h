@@ -69,6 +69,7 @@ class SatMgr
         void addSuppConstraint_input(); // currently : structral support, |SSo1| <= |SSo2|, for PI constraint, using _funcSupp_PI.size() 
         void addUnateConstraint(bool _isInput); // _isInput == 1 -> inputUnateConstraint
         void addSymmConstraint(SatSolver& s);
+        void addSameSuppSizeConstraint(SatSolver& s);
         void addOutputGroupingConstraint();
         void addBusConstraint_match(size_t idxI, size_t idxO, vec<Lit>& ans); // don't use this after using addCandidateBusConstraint
         // void funcSuppInputConstraint(vector<pair<int, int>>& MO_no_pos_neg_pair, int idxI,int idxO, vec<Lit>& as); // given bus match, output match(w/o +-) and funcsupp info, close invalid input match by adding assumption into find_input_given_output_assump
@@ -133,8 +134,9 @@ class SatMgr
 
         template <typename K, typename V>
         void print_map(unordered_map<K, V> const& m) {
-            for (auto const& pair : m) {
-                std::cout << "{" << pair.first << ": " << pair.second << "}\n";
+            typename std::unordered_map<K, V>::const_iterator pair;
+            for (pair = m.begin(); pair != m.end(); pair++) {
+                std::cout << "{" << (*pair).first << ": " << (*pair).second << "}\n";
             }
         }
         vector<tuple<bool, Var, Var>>& getInputMatch() { return inputMatch; }

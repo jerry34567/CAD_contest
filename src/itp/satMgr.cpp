@@ -343,27 +343,27 @@ SatMgr::generateResult() {
     ofstream fout;
     fout.open("output.txt");
     if (!inputGroup.empty()) {
-        for (auto i : inputGroup) {
+        for (unordered_map<string, Group>::iterator i = inputGroup.begin(); i != inputGroup.end(); i++) {
             fout << "INGROUP" << endl;
-            fout << "1 + " << i.first << endl;
-            for (auto j : i.second.group())
-                fout << "2" << (j.second ? " + " : " - ") << j.first << endl;
+            fout << "1 + " << (*i).first << endl;
+            for (vector<std::pair<std::string, bool>>::iterator j = (*i).second.group().begin(); j != (*i).second.group().end(); j++)
+                fout << "2" << ((*j).second ? " + " : " - ") << (*j).first << endl;
             fout << "END" << endl;
         }
     }
     if (!outputGroup.empty()) {
-        for (auto i : outputGroup) {
+        for (unordered_map<string, Group>::iterator i = outputGroup.begin(); i != outputGroup.end(); i++) {
             fout << "OUTGROUP" << endl;
-            fout << "1 + " << i.first << endl;
-            for (auto j : i.second.group())
-                fout << "2" << (j.second ? " + " : " - ") << j.first << endl;
+            fout << "1 + " << (*i).first << endl;
+            for (vector<std::pair<std::string, bool>>::iterator j = (*i).second.group().begin(); j != (*i).second.group().end(); j++)
+                fout << "2" << ((*j).second ? " + " : " - ") << (*j).first << endl;
             fout << "END" << endl;
         }
     }
     if (!constGroup.empty()) {
         fout << "CONSTGROUP" << endl;
-        for (auto i : constGroup)
-            fout << (i.second ? "+ " : "- ") << i.first << endl;
+        for (unordered_map<string, bool>::iterator i = constGroup.begin(); i != constGroup.end(); i++)
+            fout << ((*i).second ? "+ " : "- ") << (*i).first << endl;
         fout << "END" << endl;
     }
     fout.close();
@@ -910,42 +910,86 @@ void SatMgr::addSymmConstraint(SatSolver& s)
 
     for (int i = 0, n = f.size(); i < n; i++) {
         for (int j = 0, n1 = g.size(); j < n1; j++) {
-            if (f[i]->suppSize() == g[j]->suppSize()){ // if f's functional support size == g's functional support size
-                cout << i << " " << j << endl;
-                if (f[i]->symmetric_set.size() > g[j]->symmetric_set.size()) {
-                    continue; // the number of symmetric group of f[i] > the number of symmetric group of g[j]
-                }
+            if (cirmgr.MO_valid[i][j]) {
+                if (f[i]->suppSize() == g[j]->suppSize()){ // if f's functional support size == g's functional support size
+                    cout << i << " " << j << endl;
+                    if (f[i]->symmetric_set.size() > g[j]->symmetric_set.size()) {
+                        continue; // the number of symmetric group of f[i] > the number of symmetric group of g[j]
+                    }
 
-                cout << f[i]->symmetric_set.size() << " " << g[j]->symmetric_set.size() << endl;
-                for (int a = 0, n2 = f[i]->symmetric_set.size(); a < n2; a++) {
-                    for (int b = 0, n3 = g[j]->symmetric_set.size(); b < n3; b++) {
-                        cout << "size: " << f[i]->symmetric_set[a].size() << " " << g[j]->symmetric_set[b].size() << endl;
-                        if (f[i]->symmetric_set[a].size() == g[j]->symmetric_set[b].size()) {
-                            for (unordered_set<int>::iterator c = f[i]->symmetric_set[a].begin(); c != f[i]->symmetric_set[a].end(); c++) {
-                                for (unordered_set<int>::iterator d = g[j]->symmetric_set[b].begin(); d != g[j]->symmetric_set[b].end(); d++) {
-                                    for (unordered_set<int>::iterator e = f[i]->symmetric_set[a].begin(); e != f[i]->symmetric_set[a].end(); e++) {
-                                        if (c == e) {
-                                            continue;
-                                        }
-                                        else {
-                                            cout << "abc:  ";
-                                            vec<Lit> v;
-                                            v.push(~Lit(cirmgr.MO_valid_Var[i][j]));
-                                            v.push(~Lit(cirmgr.MI_valid_Var[*c][*d]));
-                                            for (unordered_set<int>::iterator m = g[j]->symmetric_set[b].begin(); m != g[j]->symmetric_set[b].end(); m++) {
-                                                if (d == m) {
-                                                    continue;
-                                                }
-                                                else {
-                                                    v.push(Lit(cirmgr.MI_valid_Var[*e][*m]));
-                                                    cout << "MO: " << i << " " << j << " MI: " << *c << " " << *d << " R: " << *e << " " << *m << endl;
-                                                }
+                    cout << f[i]->symmetric_set.size() << " " << g[j]->symmetric_set.size() << endl;
+                    for (int a = 0, n2 = f[i]->symmetric_set.size(); a < n2; a++) {
+                        for (int b = 0, n3 = g[j]->symmetric_set.size(); b < n3; b++) {
+                            cout << "size: " << f[i]->symmetric_set[a].size() << " " << g[j]->symmetric_set[b].size() << endl;
+                            if (f[i]->symmetric_set[a].size() == g[j]->symmetric_set[b].size()) {
+                                for (unordered_set<int>::iterator c = f[i]->symmetric_set[a].begin(); c != f[i]->symmetric_set[a].end(); c++) {
+                                    for (unordered_set<int>::iterator d = g[j]->symmetric_set[b].begin(); d != g[j]->symmetric_set[b].end(); d++) {
+                                        for (unordered_set<int>::iterator e = f[i]->symmetric_set[a].begin(); e != f[i]->symmetric_set[a].end(); e++) {
+                                            if (c == e) {
+                                                continue;
                                             }
-                                            s.addClause(v);
-                                            v.clear();
+                                            else {
+                                                cout << "abc:  ";
+                                                vec<Lit> v;
+                                                v.push(~Lit(cirmgr.MO_valid_Var[i][j]));
+                                                v.push(~Lit(cirmgr.MI_valid_Var[*c][*d]));
+                                                for (unordered_set<int>::iterator m = g[j]->symmetric_set[b].begin(); m != g[j]->symmetric_set[b].end(); m++) {
+                                                    if (d == m) {
+                                                        continue;
+                                                    }
+                                                    else {
+                                                        v.push(Lit(cirmgr.MI_valid_Var[*e][*m]));
+                                                        cout << "MO: " << i << " " << j << " MI: " << *c << " " << *d << " R: " << *e << " " << *m << endl;
+                                                    }
+                                                }
+                                                s.addClause(v);
+                                                v.clear();
+                                            }
                                         }
                                     }
                                 }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+void SatMgr::addSameSuppSizeConstraint(SatSolver& s)
+{
+    vector<variable*>&f = cirmgr.f, &g = cirmgr.g;
+    
+    for (int i = 0, n = f.size(); i < n; i++) {
+        for (int j = 0, n1 = g.size(); j < n1; j++) {
+            if (cirmgr.MO_valid[i][j]) {
+                if (f[i]->suppSize() == g[j]->suppSize()){ // if f's functional support size == g's functional support size
+                    unordered_set<int> g_temp;
+                    unordered_set<int> f_temp;
+                    for (int b = 0, n3 = g[j]->_funcSupp.size(); b < n3; b++) {
+                        g_temp.insert(cirmgr.u_name_index_ckt2[g[j]->_funcSupp[b]->getname()]);
+                    }
+                    for (int a = 0, n2 = f[i]->_funcSupp.size(); a < n2; a++) {
+                        f_temp.insert(cirmgr.u_name_index_ckt1[f[i]->_funcSupp[a]->getname()]);
+                    }
+                    for (int b = 0, n3 = g[j]->_funcSupp.size(); b < n3; b++) {
+                        for (int c = 0, n4 = cirmgr.inputNum_ckt1; c < n4; c++) {
+                            vec<Lit> v;
+                            v.push(~Lit(cirmgr.MO_valid_Var[i][j]));
+                            if (!f_temp.count(c)) {
+                                v.push(~Lit(cirmgr.MI_valid_Var[c][cirmgr.u_name_index_ckt2[g[j]->_funcSupp[b]->getname()]]));
+                                // cout << "MO: " << i << " " << j << " MI: " << c << " " << cirmgr.u_name_index_ckt2[g[j]->_funcSupp[b]->getname()] << endl;
+                                s.addClause(v);
+                                v.clear();
+                            }
+                            else {
+                                vector<Var> Var_list;
+                                for (unordered_set<int>::iterator d = g_temp.begin(); d != g_temp.end(); d++){
+                                    Var_list.push_back(cirmgr.MI_valid_Var[c][*d]);
+                                    // cout << "has MO: " << i << " " << j << " MI: " << c << " " << *d << endl;
+                                }
+                                // constraint_Cmdr_control(s,cirmgr.MO_valid_Var[i][j],Var_list);
                             }
                         }
                     }
@@ -1759,52 +1803,52 @@ SatMgr::addBusConstraint_match(size_t idxI, size_t idxO, vec<Lit>& ans){
     vector<Bus*>& o2 = cirmgr.valid_busMatch_ckt2_output[idxO];
     // cout << "v: " << cirmgr.valid_busMatch_ckt2_input.size() << endl;
     for (size_t i = 0, ni = i1.size(); i < ni; ++i) { 
-        for(auto j: i1[i]->indexes){
+        for (vector<Var>::iterator j = i1[i]->indexes.begin(); j != i1[i]->indexes.end(); j++) {
             vector<int>& i2_indexes = i2[i]->indexes;
             bool* exist = new bool[y.size()]{0};
-            for(auto i2idx: i2_indexes) exist[i2idx] = true;
+            for(vector<Var>::iterator i2idx = i2_indexes.begin(); i2idx != i2_indexes.end(); i2idx++) exist[(*i2idx)] = true;
             for (size_t k = 0, nk = y.size(); k < nk; ++k) {
                 if(!exist[k]){
-                    ans.push(~Lit(cirmgr.MI[j*2][k]->getVar()));
-                    ans.push(~Lit(cirmgr.MI[j*2+1][k]->getVar()));
+                    ans.push(~Lit(cirmgr.MI[(*j)*2][k]->getVar()));
+                    ans.push(~Lit(cirmgr.MI[(*j)*2+1][k]->getVar()));
                 }
             }
             delete[] exist;
         }
-        for(auto j: i2[i]->indexes){
+        for (vector<Var>::iterator j = i2[i]->indexes.begin(); j != i2[i]->indexes.end(); j++) {
             vector<int>& i1_indexes = i1[i]->indexes;
             bool* exist = new bool[x.size()]{0};
-            for(auto i1idx: i1_indexes) exist[i1idx] = true;
+            for(vector<Var>::iterator i1idx = i1_indexes.begin(); i1idx != i1_indexes.end(); i1idx++) exist[(*i1idx)] = true;
             for (size_t k = 0, nk = x.size(); k < nk; ++k) {
                 if(!exist[k]){
-                    ans.push(~Lit(cirmgr.MI[k*2][j]->getVar()));
-                    ans.push(~Lit(cirmgr.MI[k*2+1][j]->getVar()));
+                    ans.push(~Lit(cirmgr.MI[k*2][(*j)]->getVar()));
+                    ans.push(~Lit(cirmgr.MI[k*2+1][(*j)]->getVar()));
                 }
             }
             delete[] exist;
         }
     }
     for (size_t i = 0, ni = o1.size(); i < ni; ++i) { 
-        for(auto j: o1[i]->indexes){
+        for (vector<Var>::iterator j = o1[i]->indexes.begin(); j != o1[i]->indexes.end(); j++) {
             vector<int>& o2_indexes = o2[i]->indexes;
             bool* exist = new bool[g.size()]{0};
-            for(auto o2idx: o2_indexes) exist[o2idx] = true;
+            for(vector<Var>::iterator o2idx = o2_indexes.begin(); o2idx != o2_indexes.end(); o2idx++) exist[(*o2idx)] = true;
             for (size_t k = 0, nk = g.size(); k < nk; ++k) {
                 if(!exist[k]){
-                    ans.push(~Lit(cirmgr.MO[j*2][k]->getVar()));
-                    ans.push(~Lit(cirmgr.MO[j*2+1][k]->getVar()));
+                    ans.push(~Lit(cirmgr.MO[(*j)*2][k]->getVar()));
+                    ans.push(~Lit(cirmgr.MO[(*j)*2+1][k]->getVar()));
                 }
             }
             delete[] exist;
         }
-        for(auto j: o2[i]->indexes){
+        for (vector<Var>::iterator j = o2[i]->indexes.begin(); j != o2[i]->indexes.end(); j++) {
             vector<int>& o1_indexes = o1[i]->indexes;
             bool* exist = new bool[f.size()]{0};
-            for(auto o1idx: o1_indexes) exist[o1idx] = true;
+            for(vector<Var>::iterator o1idx = o1_indexes.begin(); o1idx != o1_indexes.end(); o1idx++) exist[(*o1idx)] = true;
             for (size_t k = 0, nk = f.size(); k < nk; ++k) {
                 if(!exist[k]){
-                    ans.push(~Lit(cirmgr.MO[k*2][j]->getVar()));
-                    ans.push(~Lit(cirmgr.MO[k*2+1][j]->getVar()));
+                    ans.push(~Lit(cirmgr.MO[k*2][(*j)]->getVar()));
+                    ans.push(~Lit(cirmgr.MO[k*2+1][(*j)]->getVar()));
                 }
             }
             delete[] exist;

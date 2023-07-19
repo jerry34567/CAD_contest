@@ -76,8 +76,9 @@ printArr(const SatSolver& s, vector<variable*> const& Arr) {
 template <typename K, typename V>
 void
 print_map(unordered_map<K, V> const& m) {
-    for (auto const& pair : m) {
-        std::cout << "{" << pair.first << ": " << pair.second << "}\n";
+    typename std::unordered_map<K, V>::const_iterator pair;
+    for (pair = m.begin(); pair != m.end(); pair++) {
+        std::cout << "{" << (*pair).first << ": " << (*pair).second << "}\n";
     }
 }
 

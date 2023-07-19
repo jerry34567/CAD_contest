@@ -20,15 +20,15 @@ SolverMgr::verification(bool isManualBinded) {
     lits.push(~Lit(f));
     int cnt = 0;
     if (!isManualBinded) {
-        for (auto i : inputMatch) {
+        for (vector<std::tuple<bool, Var, Var>>::iterator i = inputMatch.begin(); i != inputMatch.end(); i++) {
             ++cnt;
-            satmgr.addBindClause(get<0>(i), get<1>(i), get<2>(i));
+            satmgr.addBindClause(get<0>(*i), get<1>(*i), get<2>(*i));
         }
         cout << "input bind " << cnt << "times\n";
         cnt = 0;
-        for (auto i : outputMatch) { // np3v a little bit strange!!!
+        for (vector<std::tuple<bool, Var, Var>>::iterator i = outputMatch.begin(); i != outputMatch.end(); i++) { // np3v a little bit strange!!!
             cnt++;
-            if (!satmgr.outputBind(get<1>(i), get<0>(i), get<2>(i)))
+            if (!satmgr.outputBind(get<1>(*i), get<0>(*i), get<2>(*i)))
 
                 cout << "outputBind fail : solverMgr.cpp:26\n";
             // xorVar.push_back(verifierSolver.newVar());
@@ -54,15 +54,15 @@ SolverMgr::verification(bool isManualBinded) {
     verifierSolver.printStats();
     cout << (result ? "SAT" : "UNSAT") << endl;
     if (result) {
-        for (auto i : inputMatch)
-            cout << (get<0>(i) ? '~' : ' ')
-                 << verifierSolver.getValue(get<1>(i)) << ' '
-                 << verifierSolver.getValue(get<2>(i)) << endl;
+        for (vector<std::tuple<bool, Var, Var>>::iterator i = inputMatch.begin(); i != inputMatch.end(); i++)
+            cout << (get<0>(*i) ? '~' : ' ')
+                 << verifierSolver.getValue(get<1>(*i)) << ' '
+                 << verifierSolver.getValue(get<2>(*i)) << endl;
         cout << endl;
-        for (auto i : outputMatch)
-            cout << (get<0>(i) ? '~' : ' ')
-                 << verifierSolver.getValue(get<1>(i)) << ' '
-                 << verifierSolver.getValue(get<2>(i)) << endl;
+        for (vector<std::tuple<bool, Var, Var>>::iterator i = outputMatch.begin(); i != outputMatch.end(); i++)
+            cout << (get<0>(*i) ? '~' : ' ')
+                 << verifierSolver.getValue(get<1>(*i)) << ' '
+                 << verifierSolver.getValue(get<2>(*i)) << endl;
     }
     // assump.clear();
 }
@@ -143,6 +143,16 @@ SolverMgr::solveNP3(string& inputFilename) {
     // }
     // cout << "AAAAAAA125" << endl;
     satmgr.addSymmConstraint(satmgr.solver);
+    // satmgr.addSameSuppSizeConstraint(satmgr.solver);
+    cout << satmgr.cirmgr.inputNum_ckt1 << satmgr.cirmgr.inputNum_ckt2 << endl;
+    cout << satmgr.cirmgr.outputNum_ckt1 << " " << satmgr.cirmgr.outputNum_ckt2 << endl;
+// return;
+    // for (int i = 0, n = satmgr.cirmgr.f[0]->symmetric_set.size(); i < n; i++) {
+    //     for (auto j : satmgr.cirmgr.f[0]->symmetric_set[i]) {
+    //         cout << j << " ";
+    //     }
+    //     cout << endl;
+    // }
 
     // for (int i = 0, n = satmgr.cirmgr.f[0]->symmetric_set.size(); i < n; i++) {
     //     for (auto j : satmgr.cirmgr.f[0]->symmetric_set[i]) {
@@ -151,9 +161,7 @@ SolverMgr::solveNP3(string& inputFilename) {
     //     cout << endl;
     // }
 
-    satmgr.cirmgr.printMIMO_valid_notab();
-    satmgr.addCandidateBusConstraint(satmgr.solver);
-    // return; //test
+    // satmgr.addCandidateBusConstraint(satmgr.solver);
     satmgr.addBusValidConstraint(satmgr.solver);
 
 

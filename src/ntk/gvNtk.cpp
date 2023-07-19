@@ -526,27 +526,27 @@ GVNtkMgr::printRi() {
 void
 GVNtkMgr::printSummary() {
     // iterate through the net ids
-    for (auto obj : _id2GVNetId) {
-        cout << "net " << setw(7) << obj.first;
+    for (map<unsigned int, GVNetId>::iterator obj = _id2GVNetId.begin(); obj != _id2GVNetId.end(); obj++) {
+        cout << "net " << setw(7) << (*obj).first;
         // if it has fanin
-        if (_id2FaninId.find(obj.first) != _id2FaninId.end()) {
-            cout << " , fanin0 = " << setw(7) << _id2FaninId[obj.first][0];
+        if (_id2FaninId.find((*obj).first) != _id2FaninId.end()) {
+            cout << " , fanin0 = " << setw(7) << _id2FaninId[(*obj).first][0];
             // if it has the second fanin
-            if (_id2FaninId[obj.first].size() >= 2)
-                cout << setw(7) << " , fanin1 = " << _id2FaninId[obj.first][1];
+            if (_id2FaninId[(*obj).first].size() >= 2)
+                cout << setw(7) << " , fanin1 = " << _id2FaninId[(*obj).first][1];
             // cout << endl;
-        } else if (getGateType(getGVNetId(obj.first)) == GV_NTK_OBJ_PI) {
+        } else if (getGateType(getGVNetId((*obj).first)) == GV_NTK_OBJ_PI) {
             cout << " , PI, No fanin.";
-        } else if (getGateType(getGVNetId(obj.first)) == GV_NTK_OBJ_RO) {
+        } else if (getGateType(getGVNetId((*obj).first)) == GV_NTK_OBJ_RO) {
             cout << " , RO, No fanin. (Please also note that RO is overlapped "
                     "with PI, so no BDD "
                     "node is created.)";
         }
-        if (_id2Fanout.find(obj.first) != _id2Fanout.end()) {
-            for (int i = 0; i < _id2Fanout[obj.first].size(); ++i) {
+        if (_id2Fanout.find((*obj).first) != _id2Fanout.end()) {
+            for (int i = 0; i < _id2Fanout[(*obj).first].size(); ++i) {
                 cout << setw(7) << " fanout = " << setw(7)
-                     << _id2Fanout[obj.first][i].id << "'s fanin"
-                     << _id2Fanout[obj.first][i].fanin;
+                     << _id2Fanout[(*obj).first][i].id << "'s fanin"
+                     << _id2Fanout[(*obj).first][i].fanin;
             }
             cout << endl;
         } else {
