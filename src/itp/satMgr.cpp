@@ -871,10 +871,17 @@ void SatMgr::addUnateConstraint(bool _isInput)// |Uo1| <= |Uo2| ; |Ui1| <= |Ui2|
             if(_isInput){
                 size_t f_unateNum_p = f[i]->inputUnateNum_p(), f_unateNum_n = f[i]->inputUnateNum_n(),
                        g_unateNum_p = g[j]->inputUnateNum_p(), g_unateNum_n = g[j]->inputUnateNum_n();
-                if(f_unateNum_p >= g_unateNum_p && f_unateNum_n > g_unateNum_n || f_unateNum_p > g_unateNum_p && f_unateNum_n >= g_unateNum_n)
+                int mo_valid = 0;
+                if(f_unateNum_p >= g_unateNum_p && f_unateNum_n > g_unateNum_n || f_unateNum_p > g_unateNum_p && f_unateNum_n >= g_unateNum_n){
                     closeMatching(lits, i * 2, j, 1);   //close input positve matching
-                if(f_unateNum_n >= g_unateNum_p && f_unateNum_p > g_unateNum_n || f_unateNum_n > g_unateNum_p && f_unateNum_p >= g_unateNum_n)
+                    ++mo_valid;
+                }
+                if(f_unateNum_n >= g_unateNum_p && f_unateNum_p > g_unateNum_n || f_unateNum_n > g_unateNum_p && f_unateNum_p >= g_unateNum_n){
                     closeMatching(lits, i * 2 + 1, j, 1);   //close input negative matching
+                    ++mo_valid;
+                }
+                if(mo_valid == 2)
+                    cirmgr.MO_valid[i][j] = false;
             }
             else{
                 size_t f_unateNum = f[i]->outputUnateNum(), g_unateNum = g[j]->outputUnateNum();
