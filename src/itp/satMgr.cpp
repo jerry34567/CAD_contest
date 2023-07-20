@@ -910,7 +910,17 @@ void SatMgr::addUnateConstraint(bool _isInput)// |Uo1| <= |Uo2| ; |Ui1| <= |Ui2|
     }
     return;
 }
+void SatMgr::addOutput0Constraint(){
+    vector<variable*>&f = cirmgr.f;
+    vec<Lit> lits;
+    for(size_t i = 0, ni = cirmgr.output0.size(); i < ni; ++i){
+        for(size_t j = 0, nj = cirmgr.MO[cirmgr.output0[i]].size(); j < nj; ++j){
+            closeMatching(lits, cirmgr.output0[i], j, 0);
+        }
+    }
+    return;
 
+}
 void SatMgr::addSymmConstraint(SatSolver& s)
 {
     vector<variable*>&f = cirmgr.f, &g = cirmgr.g;
@@ -1079,6 +1089,8 @@ void SatMgr::addBusConstraint_outputSupportSize(){
     cout << "cnt = " << cnt << endl;
 
 }
+
+
 void SatMgr::addBusConstraint_inputSupportSize(){
     vector<Bus*>& bus_ckt1_input = cirmgr.bus_ckt1_input, &bus_ckt2_input = cirmgr.bus_ckt2_input;
     vec<Lit> lits;

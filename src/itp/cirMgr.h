@@ -214,6 +214,7 @@ class CirMgr
         vector<vector<Var>>       MI_valid_Var, MO_valid_Var; // record valid match (without +-)(true: can match, false: invalid match) (matrix version of candidates) (including constant)
         vector<vector<Var>>       MIbus_Var, MObus_Var;       // record bus match Var, bus_ckt1_input * bus_ckt2_input
         vector<vector<bool>>      MIbus_valid, MObus_valid;   // record bus valid
+        vector<size_t>            output0;  // record those output that equals to constant 0 after fraig 
         bool* exist_x;
         bool* exist_y;
         bool* exist_f;

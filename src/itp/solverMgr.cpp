@@ -101,16 +101,17 @@ SolverMgr::solveNP3(string& inputFilename) {
     
     satmgr.addSuppConstraint();  
     satmgr.addSuppConstraint_input();  
-    // satmgr.addUnateConstraint(1); // add input unate constraint         // !(input # of p of ckt1 > input # of p of ckt2 && input # of n of ckt1 > input # of n of ckt2) -> 關掉正的match || !((input # of n of ckt1 > input # of p of ckt2) && (input # of p of ckt1 > input # of n of ckt2))-> 關掉負的match
-    // satmgr.addUnateConstraint(0); // add output unate constraint // test closeTTTTTTTTTTTTTTTTTTTTT
+    satmgr.addUnateConstraint(1); // add input unate constraint         // !(input # of p of ckt1 > input # of p of ckt2 && input # of n of ckt1 > input # of n of ckt2) -> 關掉正的match || !((input # of n of ckt1 > input # of p of ckt2) && (input # of p of ckt1 > input # of n of ckt2))-> 關掉負的match
+    satmgr.addUnateConstraint(0); // add output unate constraint // test closeTTTTTTTTTTTTTTTTTTTTT
     satmgr.addOutputGroupingConstraint();
     satmgr.cirmgr.printMIMO_valid();
     // for(int i = 0; i < 1; i++) Var t = satmgr.solver.newVar(); // test var
     satmgr.addOutputConstraint_inputBusNum();  
-    // satmgr.addBusConstraint_inputUnateness();   
-    // satmgr.addBusConstraint_outputUnateness();   
+    satmgr.addBusConstraint_inputUnateness();   
+    satmgr.addBusConstraint_outputUnateness();   
     satmgr.addBusConstraint_inputSupportSize();
     satmgr.addBusConstraint_outputSupportSize();
+    satmgr.addOutput0Constraint();
     // size_t bp = 0;
     
     size_t BusMatchIdx_I = 0, BusMatchIdx_O = 0;

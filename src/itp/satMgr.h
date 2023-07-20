@@ -80,6 +80,7 @@ class SatMgr
         void addBusConstraint_outputSupportSize(); // two output bus can only be matched if the input functional support size of the bus in x <= that of the bus of y        void addCandidateBusConstraint(SatSolver& s);
         void addCandidateBusConstraint(SatSolver& s);
         void addBusValidConstraint(SatSolver& s); // close MIbus_valid, MObus_valid according to |cir1BusSize| <= |cir2BusSize|, also close MIbus_Var, MObus_Var according to MIbus_valid, MObus_valid. Bind control of each MIbus_Var/MObus_Var entry to MI_valid_var/MO_valid_var matching(only true(valid bus match) entry will add port matching clause to solver).
+        void addOutput0Constraint(); // close the MO of those output whose = 0 after fraig with other outputs
 
         // only bind input
         // use int _port1, int _port2 to check if _port1 < 0 and if _port2 < 0

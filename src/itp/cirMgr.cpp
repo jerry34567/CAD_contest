@@ -43,6 +43,8 @@ CirMgr::readAAG() {
     string aag;
     int    maxidx, ip, latch, op, andgate;
     faag1 >> aag >> maxidx >> ip >> latch >> op >> andgate;
+    int output0counter = ip + 1;
+    bool flag0 = 1;
     inputNum_ckt1  = ip;
     outputNum_ckt1 = op;
 
@@ -52,8 +54,15 @@ CirMgr::readAAG() {
 
     while (true) {
         string tmp, tmp2;
-
+        if(flag0 == 1)
+            --output0counter;
+        else 
+            ++output0counter;
+        if(output0counter == 0)
+            flag0 = 0;
         faag1 >> tmp;
+        if(tmp == "0")
+            output0.push_back(output0counter);
         if (tmp == "i0") { // first line. ex: i0 a
             int cnt = 0;
             portnum_ckt1.push_back(tmp);
