@@ -4,6 +4,8 @@
 #include <string>
 #include <algorithm>
 #include <bitset>
+#include <sstream>
+#include <iomanip>
 
 void
 CirMgr::reset() {
@@ -646,6 +648,11 @@ void CirMgr::readSymmetric() {
                     set.insert(stoi(temp2));
                     f[counter]->symmetric_set.push_back(set);
                 }
+                int tmpXIndex = -1;
+                std::istringstream(temp) >> tmpXIndex;
+                x[tmpXIndex]->setSymmOutput(counter);
+                std::istringstream(temp2) >> tmpXIndex;
+                x[tmpXIndex]->setSymmOutput(counter);
             }
             else {
                 counter++;
@@ -669,12 +676,96 @@ void CirMgr::readSymmetric() {
                     set.insert(stoi(temp2));
                     g[counter - outputNum_ckt1]->symmetric_set.push_back(set);
                 }
+                int tmpXIndex = -1;
+                std::istringstream(temp) >> tmpXIndex;
+                y[tmpXIndex]->setSymmOutput(counter - outputNum_ckt1);
+                std::istringstream(temp2) >> tmpXIndex;
+                y[tmpXIndex]->setSymmOutput(counter - outputNum_ckt1);
             }
             else {
                 counter++;
             }
         }
     }
+    cout << "x = " << endl;
+    // size_t symmGroups_counter = -1;
+    // symmOutputs* symm0 = new symmOutputs(outputNum_ckt1, 0); // used to check if a symmOutputs is 0 or not
+    vector<symmOutputs*> tmp;
+    // vector<variable*> symmGroup;
+    for(size_t i = 0, n = x.size(); i < n; ++i){
+        tmp.push_back(x[i]->symmOutput());
+    }
+    sort(tmp.begin(), tmp.end(), _increasing);
+    // symmGroup.push_back(x[tmp[0]->index()]);
+    // x[tmp[0]->index()]->setSymmGroupIndex(symmGroups_counter);
+    // for(size_t i = 1, n = tmp.size(); i < n; ++i){
+    //     if(tmp[i]->isEqual(symmGroup[0]->symmOutput()) == false){
+    //         if(symm0->isEqual(symmGroup[0]->symmOutput()) == false && symmGroup.size() != 1){
+    //             ++symmGroups_counter;
+    //             for(size_t j = 0, nj = symmGroup.size(); j < nj; ++j){
+    //                 symmGroup[j]->setIsInSymmGroup(1);
+    //                 symmGroup[j]->setSymmGroupIndex(symmGroups_counter);
+    //             }
+    //                 // x[tmp[i]->index()]->setSymmGroupIndex(symmGroups_counter);
+    //             symmGroups_x.push_back(symmGroup);
+    //         }
+    //         else{
+    //             for(size_t j = 0, nj = symmGroup.size(); j < nj; ++j)
+    //                 symmGroup[j]->setSymmGroupIndex(-1);
+    //             // symmGroup[0]->setSymmGroupIndex(-1);
+    //         }
+    //         symmGroup.clear();
+    //     }
+    //     symmGroup.push_back(x[tmp[i]->index()]);
+    // }
+    for(auto i : tmp){
+        for(auto j = i->getSymmOutput().rbegin(), nj = i->getSymmOutput().rend(); j != nj; ++j)
+            cout << setw(3) <<i->index() << " : "<<std::bitset<64>((*j)) << " | ";
+        cout << " end" << endl;
+    }
+    _symmGrouping(1, tmp);
+    for(auto i : symmGroups_x){
+        for(auto j : i){
+            for(auto k = j->symmOutput()->getSymmOutput().rbegin(), nk = j->symmOutput()->getSymmOutput().rend(); k != nk; ++k)
+                cout << setw(3) << j->getSub1() - 1 << " : "<<std::bitset<64>((*k)) << " | ";
+            cout << " " << (j->isInSymmGroup() ? "true" : "false" )<<" "<<j->symmGroupIndex() <<" end" << endl;
+        }
+        cout << "\n ------- end Group -------- \n";
+    }
+
+    // symmGroups_counter = 0;
+    // delete symm0;
+    // symm0 = new symmOutputs(outputNum_ckt2, 0);
+    tmp.clear();
+    for(size_t i = 0, n = y.size(); i < n; ++i){
+        tmp.push_back(y[i]->symmOutput());
+    }
+    sort(tmp.begin(), tmp.end(), _increasing);
+    sort(tmp.begin(), tmp.end(), _increasing); // don't know why have to run ::sort twice to get the correct answer
+    _symmGrouping(0, tmp);
+    cout << "\ny = " << endl;
+    for(auto i : symmGroups_y){
+        for(auto j : i){
+            for(auto k = j->symmOutput()->getSymmOutput().rbegin(), nk = j->symmOutput()->getSymmOutput().rend(); k != nk; ++k)
+                cout << setw(3) << j->getSub1() - 1 << " : "<<std::bitset<64>((*k)) << " | ";
+            cout << " " << (j->isInSymmGroup() ? "true" : "false" )<<" "<<j->symmGroupIndex() <<" end" << endl;
+        }
+        cout << "\n ------- end Group -------- \n";
+    }
+    for(auto i : tmp){
+        for(int j = i->arrayLength() - 1; j >= 0; --j)
+        // for(auto j = i->getSymmOutput().rbegin(), nj = i->getSymmOutput().rend(); j != nj; ++j)
+            cout << i->index() << " : "<<std::bitset<64>(i->getSymmOutput()[j]) << " | ";
+        cout << " end" << endl;
+    }
+    tmp.clear();
+    // for(auto i : y){
+    //     for(int j = i->symmOutput()->arrayLength() - 1, nj = 0; j >= nj; --j){
+    //         cout << std::bitset<64>(i->symmOutput()->getSymmOutput()[j]) << " | ";
+    //     }
+    //     cout << " end" << endl;
+    // }
+    return;
 }
 
 void CirMgr::outputGrouping(){  // |f| = |g|
@@ -810,6 +901,36 @@ void CirMgr::_busInputSupportUnion(bool _isCkt1){
     return;
 }
 
+void CirMgr::_symmGrouping(bool _isCkt1, vector<symmOutputs*>& sortedSymmInputs){
+    size_t symmGroups_counter = -1, outputNum = _isCkt1 ? outputNum_ckt1 : outputNum_ckt2;
+    symmOutputs* symm0 = new symmOutputs(outputNum, 0); // used to check if a symmOutputs is 0 or not
+    vector<variable*> symmGroup, &inputs = _isCkt1 ? x : y;
+    vector<vector<variable*>> &symmGroups = _isCkt1 ? symmGroups_x : symmGroups_y;
+    symmGroup.push_back(inputs[sortedSymmInputs[0]->index()]);
+    inputs[sortedSymmInputs[0]->index()]->setSymmGroupIndex(symmGroups_counter);
+    for(size_t i = 1, n = sortedSymmInputs.size(); i < n; ++i){
+        if(sortedSymmInputs[i]->isEqual(symmGroup[0]->symmOutput()) == false){
+            if(symm0->isEqual(symmGroup[0]->symmOutput()) == false && symmGroup.size() != 1){
+                ++symmGroups_counter;
+                for(size_t j = 0, nj = symmGroup.size(); j < nj; ++j){
+                    symmGroup[j]->setIsInSymmGroup(1);
+                    symmGroup[j]->setSymmGroupIndex(symmGroups_counter);
+                }
+                    // inputs[sortedSymmInputs[i]->index()]->setSymmGroupIndex(symmGroups_counter);
+                symmGroups.push_back(symmGroup);
+            }
+            else{
+                for(size_t j = 0, nj = symmGroup.size(); j < nj; ++j)
+                    symmGroup[j]->setSymmGroupIndex(-1);
+                // symmGroup[0]->setSymmGroupIndex(-1);
+            }
+            symmGroup.clear();
+        }
+        symmGroup.push_back(inputs[sortedSymmInputs[i]->index()]);
+    }
+    symmGroup.clear();
+    delete symm0;
+}
 void CirMgr::feasibleBusMatching(){
     valid_busMatch_ckt2_input = permute(bus_ckt2_input);
     valid_busMatch_ckt2_output = permute(bus_ckt2_output);
