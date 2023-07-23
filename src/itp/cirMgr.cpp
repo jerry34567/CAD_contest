@@ -741,9 +741,15 @@ void CirMgr::readSymmetric() {
         tmp.push_back(y[i]->symmOutput());
     }
     sort(tmp.begin(), tmp.end(), _increasing);
-    sort(tmp.begin(), tmp.end(), _increasing); // don't know why have to run ::sort twice to get the correct answer
-    _symmGrouping(0, tmp);
+    // sort(tmp.begin(), tmp.end(), _increasing); // don't know why have to run ::sort twice to get the correct answer
     cout << "\ny = " << endl;
+    for(auto i : tmp){
+        for(int j = i->arrayLength() - 1; j >= 0; --j)
+        // for(auto j = i->getSymmOutput().rbegin(), nj = i->getSymmOutput().rend(); j != nj; ++j)
+            cout << setw(3) <<i->index() << " : "<<std::bitset<64>(i->getSymmOutput()[j]) << " | ";
+        cout << " end" << endl;
+    }
+    _symmGrouping(0, tmp);
     for(auto i : symmGroups_y){
         for(auto j : i){
             for(auto k = j->symmOutput()->getSymmOutput().rbegin(), nk = j->symmOutput()->getSymmOutput().rend(); k != nk; ++k)
@@ -751,12 +757,6 @@ void CirMgr::readSymmetric() {
             cout << " " << (j->isInSymmGroup() ? "true" : "false" )<<" "<<j->symmGroupIndex() <<" end" << endl;
         }
         cout << "\n ------- end Group -------- \n";
-    }
-    for(auto i : tmp){
-        for(int j = i->arrayLength() - 1; j >= 0; --j)
-        // for(auto j = i->getSymmOutput().rbegin(), nj = i->getSymmOutput().rend(); j != nj; ++j)
-            cout << i->index() << " : "<<std::bitset<64>(i->getSymmOutput()[j]) << " | ";
-        cout << " end" << endl;
     }
     tmp.clear();
     // for(auto i : y){
@@ -906,6 +906,7 @@ void CirMgr::_symmGrouping(bool _isCkt1, vector<symmOutputs*>& sortedSymmInputs)
     symmOutputs* symm0 = new symmOutputs(outputNum, 0); // used to check if a symmOutputs is 0 or not
     vector<variable*> symmGroup, &inputs = _isCkt1 ? x : y;
     vector<vector<variable*>> &symmGroups = _isCkt1 ? symmGroups_x : symmGroups_y;
+    sortedSymmInputs.push_back(symm0);
     symmGroup.push_back(inputs[sortedSymmInputs[0]->index()]);
     inputs[sortedSymmInputs[0]->index()]->setSymmGroupIndex(symmGroups_counter);
     for(size_t i = 1, n = sortedSymmInputs.size(); i < n; ++i){
@@ -930,6 +931,7 @@ void CirMgr::_symmGrouping(bool _isCkt1, vector<symmOutputs*>& sortedSymmInputs)
     }
     symmGroup.clear();
     delete symm0;
+    sortedSymmInputs.clear();
 }
 void CirMgr::feasibleBusMatching(){
     valid_busMatch_ckt2_input = permute(bus_ckt2_input);

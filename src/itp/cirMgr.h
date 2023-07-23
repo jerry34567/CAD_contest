@@ -293,9 +293,12 @@ class CirMgr
         void _symmGrouping(bool _isCkt1, vector<symmOutputs*>& tmp); // to collect those inputs with same positive symmtric outputs
         static bool _outputsorting(variable* a, variable* b);
         static bool _increasing(symmOutputs* a, symmOutputs* b){
+            vector<unsigned long long>& asymm = a->getSymmOutput(), & bsymm = b->getSymmOutput();
             for(int i = a->arrayLength() - 1; i >= 0; --i){
-                if((unsigned long long)(a->getSymmOutput()[i]) < (unsigned long long)(b->getSymmOutput()[i]))
+                if(asymm[i] < bsymm[i])
                     return 1;
+                else if(asymm[i] > bsymm[i])
+                    return 0;
             }
             return 0;
         }
