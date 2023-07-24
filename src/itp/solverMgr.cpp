@@ -162,7 +162,7 @@ SolverMgr::solveNP3(string& inputFilename) {
     //     cout << endl;
     // }
 
-    // satmgr.addCandidateBusConstraint(satmgr.solver);
+    satmgr.addCandidateBusConstraint(satmgr.solver);
     satmgr.addBusValidConstraint(satmgr.solver);
 
 
@@ -330,6 +330,20 @@ SolverMgr::solveNP3(string& inputFilename) {
                     }
                 }
             }
+            for (int i = 0; i < satmgr.cirmgr.MIbus_Var.size(); i++){
+                for(int j = 0; j < satmgr.cirmgr.MIbus_Var[0].size(); j++){
+                    if (satmgr.solver.getValue(satmgr.cirmgr.MIbus_Var[i][j]) == 1){
+                        cout << "MIbus cir1:\t" << i << "\t<->\t" << "MIbus cir2:\t" << j << endl;
+                    }
+                }
+            }
+            for (int i = 0; i < satmgr.cirmgr.MObus_Var.size(); i++){
+                for(int j = 0; j < satmgr.cirmgr.MObus_Var[0].size(); j++){
+                    if (satmgr.solver.getValue(satmgr.cirmgr.MObus_Var[i][j]) == 1){
+                        cout << "MObus cir1:\t" << i << "\t<->\t" << "MObus cir2:\t" << j << endl;
+                    }
+                }
+            }
 
             // assign 0 to inrelevant cir2's input
             for (int i = 0, n = satmgr.cirmgr.y.size(); i < n; i++) {
@@ -397,6 +411,7 @@ SolverMgr::solveNP3(string& inputFilename) {
                         satmgr.record_output.push_back(temp);
                     }
                     satmgr.reportResult(satmgr.solver);
+                    cout << inputFilename << endl;
                     cout << "point : " << float(satmgr.point) / float(satmgr.cirmgr.outputNum_ckt1 + satmgr.cirmgr.outputNum_ckt2) << endl;
                 }
             } else {
@@ -412,5 +427,6 @@ SolverMgr::solveNP3(string& inputFilename) {
         }
     }
     satmgr.reportResult(satmgr.solver);
+    cout << inputFilename << endl;
     cout << "point : " << float(satmgr.point) / float(satmgr.cirmgr.outputNum_ckt1 + satmgr.cirmgr.outputNum_ckt2) << endl;
 }

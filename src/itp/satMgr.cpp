@@ -527,7 +527,7 @@ void SatMgr::constraint_Cmdr_control(SatSolver& s, Var control, vector<Var>& v){
     lits.clear();
     cmdrExactlyOne(s, root, false); // is_MO == false: exactly one will be true
 }
-void SatMgr::constraint_Cmdr_nocontrol(SatSolver& s, vector<Var>& v){ // only one Var in vector<Var> will be 1
+void SatMgr::constraint_Cmdr_nocontrol(SatSolver& s, vector<Var>& v, bool isAtmostOne){ // only one Var in vector<Var> will be 1
     cirmgr.Cmdr_level.clear();
     for(int i = 0; i < v.size(); i++){
         Cmdr* newCmdr = new Cmdr(v[i], true);
@@ -540,15 +540,33 @@ void SatMgr::constraint_Cmdr_nocontrol(SatSolver& s, vector<Var>& v){ // only on
     lits.push(a);
     s.addClause(lits);
     lits.clear();
-    cmdrExactlyOne(s, root, false); // is_MO == false: exactly one will be true
+    cmdrExactlyOne(s, root, isAtmostOne); // is_MO == false: exactly one will be true
 }
 void SatMgr::busMatchExactlyOne(SatSolver& s){
     for(int i = 0; i < cirmgr.MIbus_Var.size(); i++){
-        constraint_Cmdr_nocontrol(s, cirmgr.MIbus_Var[i]);
+        constraint_Cmdr_nocontrol(s, cirmgr.MIbus_Var[i], true);
     }
     for(int i = 0; i < cirmgr.MObus_Var.size(); i++){
-        constraint_Cmdr_nocontrol(s, cirmgr.MObus_Var[i]);
+        constraint_Cmdr_nocontrol(s, cirmgr.MObus_Var[i], true);
     }
+    
+    for(int j = 0; j < cirmgr.MIbus_Var[0].size(); j++){
+        vector<Var> tmp;
+        for(int i = 0; i < cirmgr.MIbus_Var.size(); i++){
+            tmp.push_back(cirmgr.MIbus_Var[i][j]);
+        }
+        constraint_Cmdr_nocontrol(s, tmp, true);
+        tmp.clear();
+    }
+    for(int j = 0; j < cirmgr.MO_valid_Var[0].size(); j++){
+        vector<Var> tmp;
+        for(int i = 0; i < cirmgr.MO_valid_Var.size(); i++){
+            tmp.push_back(cirmgr.MO_valid_Var[i][j]);
+        }
+        constraint_Cmdr_nocontrol(s, tmp, true);
+        tmp.clear();
+    }
+
 }
 void
 SatMgr::constructCmdr(SatSolver& s) {
@@ -2077,20 +2095,21 @@ void SatMgr::addBusValidConstraint(SatSolver& s){ // close MIbus_valid, MObus_va
                 s.addClause(close);
                 close.clear();
             }
-            else{ // Bind control of each MIbus_Var/MObus_Var entry to MI_valid_var/MO_valid_var matching(only true(valid bus match) entry will add port matching clause to solver)
-                vec<Lit> busMatch;
-                for(int c2 = 0; c2 < cirmgr.bus_ckt2_input[j]->getPortNum(); c2++){
-                    busMatch.push(~Lit(cirmgr.MIbus_Var[i][j]));
-                    for(int c1 = 0; c1 < cirmgr.bus_ckt1_input[i]->getPortNum(); c1++){
-                        busMatch.push(Lit(cirmgr.MI_valid_Var[cirmgr.bus_ckt1_input[i]->indexes[c1]][cirmgr.bus_ckt2_input[j]->indexes[c2]]));
-                    }
-                    busMatch.push(Lit(cirmgr.MI_valid_Var[cirmgr.MI_valid_Var.size()-1][cirmgr.bus_ckt2_input[j]->indexes[c2]])); // cir2 can bind to constant
+             // bus match implies each port in this cir2bus must at least match to one of the port (or constant) in matched cir1bus 
+            // else{ // Bind control of each MIbus_Var/MObus_Var entry to MI_valid_var/MO_valid_var matching(only true(valid bus match) entry will add port matching clause to solver)
+            //     vec<Lit> busMatch;
+            //     for(int c2 = 0; c2 < cirmgr.bus_ckt2_input[j]->getPortNum(); c2++){
+            //         busMatch.push(~Lit(cirmgr.MIbus_Var[i][j]));
+            //         for(int c1 = 0; c1 < cirmgr.bus_ckt1_input[i]->getPortNum(); c1++){
+            //             busMatch.push(Lit(cirmgr.MI_valid_Var[cirmgr.bus_ckt1_input[i]->indexes[c1]][cirmgr.bus_ckt2_input[j]->indexes[c2]]));
+            //         }
+            //         busMatch.push(Lit(cirmgr.MI_valid_Var[cirmgr.MI_valid_Var.size()-1][cirmgr.bus_ckt2_input[j]->indexes[c2]])); // cir2 can bind to constant
                     
-                    s.addClause(busMatch);
-                    busMatch.clear();
-                }
-            }
-
+            //         s.addClause(busMatch);
+            //         busMatch.clear();
+            //     }
+            // }
+            
         }
         
     }
@@ -2103,18 +2122,20 @@ void SatMgr::addBusValidConstraint(SatSolver& s){ // close MIbus_valid, MObus_va
                 s.addClause(close);
                 close.clear();
             }
-            else{ // Bind control of each MIbus_Var/MObus_Var entry to MI_valid_var/MO_valid_var matching(only true(valid bus match) entry will add port matching clause to solver)
-                vec<Lit> busMatch;
-                for(int c2 = 0; c2 < cirmgr.bus_ckt2_output[j]->getPortNum(); c2++){
-                    busMatch.push(~Lit(cirmgr.MObus_Var[i][j]));
-                    for(int c1 = 0; c1 < cirmgr.bus_ckt1_output[i]->getPortNum(); c1++){
-                        busMatch.push(Lit(cirmgr.MO_valid_Var[cirmgr.bus_ckt1_output[i]->indexes[c1]][cirmgr.bus_ckt2_output[j]->indexes[c2]]));
-                    }
+             // bus match implies each port in this cir2bus must at least match to one of the port in matched cir1bus
+            // else{ // Bind control of each MIbus_Var/MObus_Var entry to MI_valid_var/MO_valid_var matching(only true(valid bus match) entry will add port matching clause to solver)
+            //     vec<Lit> busMatch;
+            //     for(int c2 = 0; c2 < cirmgr.bus_ckt2_output[j]->getPortNum(); c2++){
+            //         busMatch.push(~Lit(cirmgr.MObus_Var[i][j]));
+            //         for(int c1 = 0; c1 < cirmgr.bus_ckt1_output[i]->getPortNum(); c1++){
+            //             busMatch.push(Lit(cirmgr.MO_valid_Var[cirmgr.bus_ckt1_output[i]->indexes[c1]][cirmgr.bus_ckt2_output[j]->indexes[c2]]));
+            //         }
                     
-                    s.addClause(busMatch);
-                    busMatch.clear();
-                }
-            }
+            //         s.addClause(busMatch);
+            //         busMatch.clear();
+            //     }
+            // }
+            
         }
     }
     cout << "out addBusValidConstraint" << endl;
