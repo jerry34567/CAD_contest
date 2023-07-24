@@ -38,7 +38,7 @@ class SatMgr
 
     public:
         friend class SolverMgr;
-        SatMgr() {}
+        SatMgr() {closeMatching_cnt = 0;}
         ~SatMgr() {}
 
         int string2Var(string _s, bool isckt1, bool isinput);
@@ -172,15 +172,46 @@ class SatMgr
         // record the best match so far
         vector<vector<int>> record_input, record_output;
         unsigned point = 0;
+        size_t closeMatching_cnt;
 
         //helper function
         void closeMatching(vec<Lit> &lits, size_t _i, size_t _j, bool _isInput){  // _isInput == 1 -> close input matching
-            if(_isInput)
+            if(_isInput){
+                vector<variable*>&x = cirmgr.x, &y = cirmgr.y;
                 lits.push(~Lit(cirmgr.MI[_i][_j]->getVar()));
-            else
+                solver.addClause(lits);
+                lits.clear();
+                if(x[_i / 2]->isInSymmGroup() == true){
+                    vector<variable*>& symmGroups_thisX = cirmgr.symmGroups_x[x[_i / 2]->symmGroupIndex()];
+                    for(size_t i = 0, ni = symmGroups_thisX.size(); i < ni; ++i){
+                        if(symmGroups_thisX[i]->getSub1() - 1 != (_i / 2) && symmGroups_thisX[i]->_funcSupp.size() == x[_i / 2]->_funcSupp.size()){
+                            cout<< "closeMatching_cnt = " << closeMatching_cnt++ << endl;
+                            if(_i % 2 == 1)
+                                lits.push(~Lit(cirmgr.MI[(symmGroups_thisX[i]->getSub1() - 1) * 2][_j]->getVar()));
+                            else
+                                lits.push(~Lit(cirmgr.MI[(symmGroups_thisX[i]->getSub1() - 1) * 2 + 1][_j]->getVar()));
+                            solver.addClause(lits);
+                            lits.clear();
+                        }
+                    }
+                }
+                if(y[_j]->isInSymmGroup() == true){
+                    vector<variable*>& symmGroups_thisY = cirmgr.symmGroups_y[y[_j]->symmGroupIndex()];
+                    for(size_t i = 0, ni = symmGroups_thisY.size(); i < ni; ++i){
+                        if(symmGroups_thisY[i]->getSub1() - 1 != _j && symmGroups_thisY[i]->_funcSupp_PI.size() == y[_j]->_funcSupp_PI.size()){
+                            cout<< "closeMatching_cnt = " << closeMatching_cnt++ << endl;
+                            lits.push(~Lit(cirmgr.MI[_i][(symmGroups_thisY[i]->getSub1() - 1)]->getVar()));
+                            solver.addClause(lits);
+                            lits.clear();
+                        }
+                    }
+                }
+            }
+            else{
                 lits.push(~Lit(cirmgr.MO[_i][_j]->getVar()));
-            solver.addClause(lits);
-            lits.clear();
+                solver.addClause(lits);
+                lits.clear();
+            }
         }
         void closeMatching_bus(vec<Lit> &lits, size_t _i, size_t _j, bool _isInput){  // _isInput == 1 -> close input matching
             if(_isInput == 1)

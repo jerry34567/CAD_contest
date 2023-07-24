@@ -718,12 +718,13 @@ void CirMgr::readSymmetric() {
     //     }
     //     symmGroup.push_back(x[tmp[i]->index()]);
     // }
+    _symmGrouping(1, tmp);
     for(auto i : tmp){
         for(auto j = i->getSymmOutput().rbegin(), nj = i->getSymmOutput().rend(); j != nj; ++j)
             cout << setw(3) <<i->index() << " : "<<std::bitset<64>((*j)) << " | ";
-        cout << " end" << endl;
+        cout << " " << (x[i->index()]->isInSymmGroup() ? "true" : "false") << " end" << endl;
     }
-    _symmGrouping(1, tmp);
+    cout << "\nsymmGroups_x = \n";
     for(auto i : symmGroups_x){
         for(auto j : i){
             for(auto k = j->symmOutput()->getSymmOutput().rbegin(), nk = j->symmOutput()->getSymmOutput().rend(); k != nk; ++k)
@@ -743,13 +744,14 @@ void CirMgr::readSymmetric() {
     sort(tmp.begin(), tmp.end(), _increasing);
     // sort(tmp.begin(), tmp.end(), _increasing); // don't know why have to run ::sort twice to get the correct answer
     cout << "\ny = " << endl;
+    _symmGrouping(0, tmp);
     for(auto i : tmp){
         for(int j = i->arrayLength() - 1; j >= 0; --j)
         // for(auto j = i->getSymmOutput().rbegin(), nj = i->getSymmOutput().rend(); j != nj; ++j)
             cout << setw(3) <<i->index() << " : "<<std::bitset<64>(i->getSymmOutput()[j]) << " | ";
-        cout << " end" << endl;
+        cout << " " << (y[i->index()]->isInSymmGroup() ? "true" : "false") << " end" << endl;
     }
-    _symmGrouping(0, tmp);
+    cout << "\nsymmGroups_y = \n";
     for(auto i : symmGroups_y){
         for(auto j : i){
             for(auto k = j->symmOutput()->getSymmOutput().rbegin(), nk = j->symmOutput()->getSymmOutput().rend(); k != nk; ++k)
@@ -931,7 +933,7 @@ void CirMgr::_symmGrouping(bool _isCkt1, vector<symmOutputs*>& sortedSymmInputs)
     }
     symmGroup.clear();
     delete symm0;
-    sortedSymmInputs.clear();
+    sortedSymmInputs.pop_back();
 }
 void CirMgr::feasibleBusMatching(){
     valid_busMatch_ckt2_input = permute(bus_ckt2_input);
