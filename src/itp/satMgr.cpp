@@ -1202,6 +1202,7 @@ SatMgr::initCircuit(SatSolver& s, SatSolver& s_miter,
     for (int i = 1; i <= cirmgr.outputNum_ckt1; i++) {
         variable* tmpF = new variable('f', i, -1);
         tmpF->setname(cirmgr.portname_ckt1[cirmgr.inputNum_ckt1 + i - 1]);
+        tmpF->newSymmInput(cirmgr.inputNum_ckt1, i - 1);
         cirmgr.u_name_busIndex_output_ckt1[tmpF->getname()] = -1; // initialize doesn't exist in any bus, after readBus_class will overwrite with corresponding bus index, we can know those "not in any bus" port: -1
         tmpF->setVar(s.newVar());
         tmpF->setVar2(s_miter.newVar());
@@ -1211,6 +1212,7 @@ SatMgr::initCircuit(SatSolver& s, SatSolver& s_miter,
     for (int i = 1; i <= cirmgr.outputNum_ckt2; i++) {
         variable* tmpG = new variable('g', i, -1);
         tmpG->setname(cirmgr.portname_ckt2[cirmgr.inputNum_ckt2 + i - 1]);
+        tmpG->newSymmInput(cirmgr.inputNum_ckt2, i - 1);
         cirmgr.u_name_busIndex_output_ckt2[tmpG->getname()] = -1; // initialize doesn't exist in any bus, after readBus_class will overwrite with corresponding bus index, we can know those "not in any bus" port: -1
         tmpG->setVar(s.newVar());
         tmpG->setVar2(s_miter.newVar());

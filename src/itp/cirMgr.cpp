@@ -651,8 +651,10 @@ void CirMgr::readSymmetric() {
                 int tmpXIndex = -1;
                 std::istringstream(temp) >> tmpXIndex;
                 x[tmpXIndex]->setSymmOutput(counter);
+                f[counter]->setSymmInput(tmpXIndex);
                 std::istringstream(temp2) >> tmpXIndex;
                 x[tmpXIndex]->setSymmOutput(counter);
+                f[counter]->setSymmInput(tmpXIndex);
             }
             else {
                 counter++;
@@ -679,8 +681,10 @@ void CirMgr::readSymmetric() {
                 int tmpXIndex = -1;
                 std::istringstream(temp) >> tmpXIndex;
                 y[tmpXIndex]->setSymmOutput(counter - outputNum_ckt1);
+                g[counter - outputNum_ckt1]->setSymmInput(tmpXIndex);
                 std::istringstream(temp2) >> tmpXIndex;
                 y[tmpXIndex]->setSymmOutput(counter - outputNum_ckt1);
+                g[counter - outputNum_ckt1]->setSymmInput(tmpXIndex);
             }
             else {
                 counter++;
@@ -761,11 +765,9 @@ void CirMgr::readSymmetric() {
         cout << "\n ------- end Group -------- \n";
     }
     tmp.clear();
-    // for(auto i : y){
-    //     for(int j = i->symmOutput()->arrayLength() - 1, nj = 0; j >= nj; --j){
-    //         cout << std::bitset<64>(i->symmOutput()->getSymmOutput()[j]) << " | ";
-    //     }
-    //     cout << " end" << endl;
+    // for(size_t i = 0, ni = g.size(); i < ni; ++i){
+    //     g[i]->symmInput()->countNumberOfInputs();
+    //     cout << setw(3) <<i << " : "<<g[i]->symmInput()->numOfInputs() << endl;
     // }
     return;
 }
@@ -934,6 +936,23 @@ void CirMgr::_symmGrouping(bool _isCkt1, vector<symmOutputs*>& sortedSymmInputs)
     symmGroup.clear();
     delete symm0;
     sortedSymmInputs.pop_back();
+}
+void CirMgr::_symmSign(bool _isCkt1){
+    /*vector<variable*>& inputs = _isCkt1 ? x : y, outputs = _isCkt1 ? f : g;
+    for(size_t i = 0, ni = inputs.size(); i < ni; ++i){
+        for(size_t j = 0, nj = inputs[i]->symmOutput()->getSymmOutput().size(); j < nj; ++j){
+            unsigned long long x = inputs[i]->symmOutput()->getSymmOutput()[j];
+            size_t counter = 0 + j * sizeof(unsigned long long) * 8;
+            for(size_t k = 0, nk = sizeof(unsigned long long) * 8; k < nk; ++k, ++counter){
+	        if(x & 1ULL){
+		    inputs[i]->
+		}
+	    }
+
+        }
+
+    }*/
+
 }
 void CirMgr::feasibleBusMatching(){
     valid_busMatch_ckt2_input = permute(bus_ckt2_input);

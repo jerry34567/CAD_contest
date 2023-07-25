@@ -175,7 +175,7 @@ class SatMgr
         size_t closeMatching_cnt;
 
         //helper function
-        void closeMatching(vec<Lit> &lits, size_t _i, size_t _j, bool _isInput){  // _isInput == 1 -> close input matching
+        void closeMatching(vec<Lit> &lits, size_t _i, size_t _j, bool _isInput){  // _isInput == 1 -> close input matching // positive symmetry only close negative connection(i % 2 == 1)
             if(_isInput){
                 vector<variable*>&x = cirmgr.x, &y = cirmgr.y;
                 lits.push(~Lit(cirmgr.MI[_i][_j]->getVar()));
@@ -184,12 +184,12 @@ class SatMgr
                 if(x[_i / 2]->isInSymmGroup() == true){
                     vector<variable*>& symmGroups_thisX = cirmgr.symmGroups_x[x[_i / 2]->symmGroupIndex()];
                     for(size_t i = 0, ni = symmGroups_thisX.size(); i < ni; ++i){
-                        if(symmGroups_thisX[i]->getSub1() - 1 != (_i / 2) && symmGroups_thisX[i]->_funcSupp.size() == x[_i / 2]->_funcSupp.size()){
+                        if(symmGroups_thisX[i]->getSub1() - 1 != (_i / 2) && symmGroups_thisX[i]->_funcSupp.size() == x[_i / 2]->_funcSupp.size() && _i % 2 == 1){
                             cout<< "closeMatching_cnt = " << closeMatching_cnt++ << endl;
-                            if(_i % 2 == 1)
-                                lits.push(~Lit(cirmgr.MI[(symmGroups_thisX[i]->getSub1() - 1) * 2][_j]->getVar()));
-                            else
-                                lits.push(~Lit(cirmgr.MI[(symmGroups_thisX[i]->getSub1() - 1) * 2 + 1][_j]->getVar()));
+                            //if(_i % 2 == 1)
+                            lits.push(~Lit(cirmgr.MI[(symmGroups_thisX[i]->getSub1() - 1) * 2 + 1][_j]->getVar()));
+                            /*else
+                                lits.push(~Lit(cirmgr.MI[(symmGroups_thisX[i]->getSub1() - 1) * 2 + 1][_j]->getVar()));*/
                             solver.addClause(lits);
                             lits.clear();
                         }
@@ -198,7 +198,7 @@ class SatMgr
                 if(y[_j]->isInSymmGroup() == true){
                     vector<variable*>& symmGroups_thisY = cirmgr.symmGroups_y[y[_j]->symmGroupIndex()];
                     for(size_t i = 0, ni = symmGroups_thisY.size(); i < ni; ++i){
-                        if(symmGroups_thisY[i]->getSub1() - 1 != _j && symmGroups_thisY[i]->_funcSupp_PI.size() == y[_j]->_funcSupp_PI.size()){
+                        if(symmGroups_thisY[i]->getSub1() - 1 != _j && symmGroups_thisY[i]->_funcSupp_PI.size() == y[_j]->_funcSupp_PI.size() && _i % 2 == 1){
                             cout<< "closeMatching_cnt = " << closeMatching_cnt++ << endl;
                             lits.push(~Lit(cirmgr.MI[_i][(symmGroups_thisY[i]->getSub1() - 1)]->getVar()));
                             solver.addClause(lits);
