@@ -1988,6 +1988,29 @@ void SatMgr::addCandidateBusConstraint(SatSolver& s){
         notInAnyBusCandidate.clear();
     }
     for(int j = 0; j < cirmgr.MO_valid[0].size(); j++){
+        for(int i = 0; i < cirmgr.MO_valid.size(); i++){
+            if(cirmgr.MO_valid[i][j]){
+                if((cirmgr.u_name_busIndex_output_ckt1[cirmgr.f[i]->getname()] == -1 && cirmgr.u_name_busIndex_output_ckt2[cirmgr.g[j]->getname()] != -1) || (cirmgr.u_name_busIndex_output_ckt1[cirmgr.f[i]->getname()] != -1 && cirmgr.u_name_busIndex_output_ckt2[cirmgr.g[j]->getname()] == -1)){ // in some bus
+                    // in some bus <> not in any bus  || not in any bus <> in some bus, close them
+                    vec<Lit> closeInNOutBus;
+                    closeInNOutBus.push(~Lit(cirmgr.MO_valid_Var[i][j]));
+                    s.addClause(closeInNOutBus);
+                    closeInNOutBus.clear();
+                }
+                else if(cirmgr.u_name_busIndex_output_ckt1[cirmgr.f[i]->getname()] != -1 && cirmgr.u_name_busIndex_output_ckt2[cirmgr.g[j]->getname()] != -1){
+                    vec<Lit> implyBusMatch;
+                    Var busVar = cirmgr.MObus_Var[cirmgr.u_name_busIndex_output_ckt1[cirmgr.f[i]->getname()]][cirmgr.u_name_busIndex_output_ckt2[cirmgr.g[j]->getname()]];
+                    Var candidate = cirmgr.MO_valid_Var[i][j];
+                    implyBusMatch.push(~Lit(candidate));
+                    implyBusMatch.push(Lit(busVar));
+                    s.addClause(implyBusMatch);
+                    implyBusMatch.clear();                    
+                }
+            }
+        }
+    }
+    /* // force MO at least one 1 in candidates, which conflicts with constraint 2
+    for(int j = 0; j < cirmgr.MO_valid[0].size(); j++){
         vec<Lit> atLeastOneCandidate; // "in bus" can't be candidate with "not in any bus" 
         vec<Lit> notInAnyBusCandidate; // match those candidate that both "not in any bus"
         if(cirmgr.u_name_busIndex_output_ckt2[cirmgr.g[j]->getname()] != -1){ // in some bus
@@ -2025,6 +2048,7 @@ void SatMgr::addCandidateBusConstraint(SatSolver& s){
 
     }
     cout << "test" << endl;
+    */
 ////////////////////////////below is original part, works for case04, doesn't work for case05(exist not in any bus port) ///////
     // for(int j = 0; j < cirmgr.MI_valid[0].size(); j++){
     //     vec<Lit> atLeastOneCandidate;
@@ -2098,19 +2122,19 @@ void SatMgr::addBusValidConstraint(SatSolver& s){ // close MIbus_valid, MObus_va
                 close.clear();
             }
              // bus match implies each port in this cir2bus must at least match to one of the port (or constant) in matched cir1bus 
-            // else{ // Bind control of each MIbus_Var/MObus_Var entry to MI_valid_var/MO_valid_var matching(only true(valid bus match) entry will add port matching clause to solver)
-            //     vec<Lit> busMatch;
-            //     for(int c2 = 0; c2 < cirmgr.bus_ckt2_input[j]->getPortNum(); c2++){
-            //         busMatch.push(~Lit(cirmgr.MIbus_Var[i][j]));
-            //         for(int c1 = 0; c1 < cirmgr.bus_ckt1_input[i]->getPortNum(); c1++){
-            //             busMatch.push(Lit(cirmgr.MI_valid_Var[cirmgr.bus_ckt1_input[i]->indexes[c1]][cirmgr.bus_ckt2_input[j]->indexes[c2]]));
-            //         }
-            //         busMatch.push(Lit(cirmgr.MI_valid_Var[cirmgr.MI_valid_Var.size()-1][cirmgr.bus_ckt2_input[j]->indexes[c2]])); // cir2 can bind to constant
+            else{ // Bind control of each MIbus_Var/MObus_Var entry to MI_valid_var/MO_valid_var matching(only true(valid bus match) entry will add port matching clause to solver)
+                vec<Lit> busMatch;
+                for(int c2 = 0; c2 < cirmgr.bus_ckt2_input[j]->getPortNum(); c2++){
+                    busMatch.push(~Lit(cirmgr.MIbus_Var[i][j]));
+                    for(int c1 = 0; c1 < cirmgr.bus_ckt1_input[i]->getPortNum(); c1++){
+                        busMatch.push(Lit(cirmgr.MI_valid_Var[cirmgr.bus_ckt1_input[i]->indexes[c1]][cirmgr.bus_ckt2_input[j]->indexes[c2]]));
+                    }
+                    busMatch.push(Lit(cirmgr.MI_valid_Var[cirmgr.MI_valid_Var.size()-1][cirmgr.bus_ckt2_input[j]->indexes[c2]])); // cir2 can bind to constant
                     
-            //         s.addClause(busMatch);
-            //         busMatch.clear();
-            //     }
-            // }
+                    s.addClause(busMatch);
+                    busMatch.clear();
+                }
+            }
             
         }
         
@@ -2125,18 +2149,18 @@ void SatMgr::addBusValidConstraint(SatSolver& s){ // close MIbus_valid, MObus_va
                 close.clear();
             }
              // bus match implies each port in this cir2bus must at least match to one of the port in matched cir1bus
-            // else{ // Bind control of each MIbus_Var/MObus_Var entry to MI_valid_var/MO_valid_var matching(only true(valid bus match) entry will add port matching clause to solver)
-            //     vec<Lit> busMatch;
-            //     for(int c2 = 0; c2 < cirmgr.bus_ckt2_output[j]->getPortNum(); c2++){
-            //         busMatch.push(~Lit(cirmgr.MObus_Var[i][j]));
-            //         for(int c1 = 0; c1 < cirmgr.bus_ckt1_output[i]->getPortNum(); c1++){
-            //             busMatch.push(Lit(cirmgr.MO_valid_Var[cirmgr.bus_ckt1_output[i]->indexes[c1]][cirmgr.bus_ckt2_output[j]->indexes[c2]]));
-            //         }
+            else{ // Bind control of each MIbus_Var/MObus_Var entry to MI_valid_var/MO_valid_var matching(only true(valid bus match) entry will add port matching clause to solver)
+                vec<Lit> busMatch;
+                for(int c2 = 0; c2 < cirmgr.bus_ckt2_output[j]->getPortNum(); c2++){
+                    busMatch.push(~Lit(cirmgr.MObus_Var[i][j]));
+                    for(int c1 = 0; c1 < cirmgr.bus_ckt1_output[i]->getPortNum(); c1++){
+                        busMatch.push(Lit(cirmgr.MO_valid_Var[cirmgr.bus_ckt1_output[i]->indexes[c1]][cirmgr.bus_ckt2_output[j]->indexes[c2]]));
+                    }
                     
-            //         s.addClause(busMatch);
-            //         busMatch.clear();
-            //     }
-            // }
+                    s.addClause(busMatch);
+                    busMatch.clear();
+                }
+            }
             
         }
     }

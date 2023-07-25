@@ -58,8 +58,8 @@ class SatMgr
         void constraint2(SatSolver& s);
         void constraint_Cmdr(SatSolver& s, vector<vector<variable*>>& M, bool is_MO);
         void constraint_Cmdr_control(SatSolver& s, Var control, vector<Var>& v); // for functional support, if control == 1 -> only one Var in vector<Var> will be 1
-        void constraint_Cmdr_nocontrol(SatSolver& s, vector<Var>& v, bool isAtmostOne); // for functional support, if control == 1 -> only one Var in vector<Var> will be 1
-        void busMatchExactlyOne(SatSolver& s); // bus matrix: exactly one 1 in a row
+        void constraint_Cmdr_nocontrol(SatSolver& s, vector<Var>& v, bool isAtmostOne); // for functional support, if isAtmostOne == 1 -> at most one Var in vector<Var> will be 1, if isAtmostOne == 0 -> exactly one Var in vector<Var> will be 1
+        void busMatchExactlyOne(SatSolver& s); // bus matrix: at most one 1 in each row and each col
         void constraint3(SatSolver& s);
         void constraint4_miter(SatSolver& s);
         void constraint5_miter(SatSolver& s);
