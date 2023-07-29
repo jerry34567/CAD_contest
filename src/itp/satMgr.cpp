@@ -881,34 +881,65 @@ void SatMgr::addSuppConstraint_input()
 }
 void SatMgr::addUnateConstraint(bool _isInput)// |Uo1| <= |Uo2| ; |Ui1| <= |Ui2|
 {
-    vector<variable*>&f = cirmgr.f, &g = cirmgr.g;
+    vector<variable*>&x = cirmgr.x, &y = cirmgr.y, &f = cirmgr.f, &g = cirmgr.g;
     int cnt = 0;
     vec<Lit> lits;
-    for (size_t i = 0, ni = f.size(); i < ni; ++i) {
-        for (size_t j = 0, nj = g.size(); j < nj; ++j) {
-            if(_isInput){
-                size_t f_unateNum_p = f[i]->inputUnateNum_p(), f_unateNum_n = f[i]->inputUnateNum_n(),
-                       g_unateNum_p = g[j]->inputUnateNum_p(), g_unateNum_n = g[j]->inputUnateNum_n();
+    if(_isInput){
+        for(size_t i = 0, ni = x.size(); i < ni; ++i){
+            for(size_t j = 0, nj = y.size(); j < nj; ++j){
+                size_t x_unateNum_p = x[i]->inputUnateNum_p(), x_unateNum_n = x[i]->inputUnateNum_n(),
+                       y_unateNum_p = y[j]->inputUnateNum_p(), y_unateNum_n = y[j]->inputUnateNum_n();
                 int mo_valid = 0;
-                if(f_unateNum_p >= g_unateNum_p && f_unateNum_n > g_unateNum_n || f_unateNum_p > g_unateNum_p && f_unateNum_n >= g_unateNum_n){
+                if((x_unateNum_p >= y_unateNum_p && x_unateNum_n > y_unateNum_n )|| (x_unateNum_p > y_unateNum_p && x_unateNum_n >= y_unateNum_n)){
                     closeMatching(lits, i * 2, j, 1);   //close input positve matching
-                    ++mo_valid;
+                    // ++mo_valid;
                 }
-                if(f_unateNum_n >= g_unateNum_p && f_unateNum_p > g_unateNum_n || f_unateNum_n > g_unateNum_p && f_unateNum_p >= g_unateNum_n){
+                if((x_unateNum_n >= y_unateNum_p && x_unateNum_p > y_unateNum_n )||( x_unateNum_n > y_unateNum_p && x_unateNum_p >= y_unateNum_n)){
                     closeMatching(lits, i * 2 + 1, j, 1);   //close input negative matching
-                    ++mo_valid;
+                    // ++mo_valid;
                 }
-                if(mo_valid == 2)
-                    cirmgr.MO_valid[i][j] = false;
+                // if(mo_valid == 2)
+                //     cirmgr.MO_valid[i][j] = false;
             }
-            else{
+        }
+    }
+    else{
+        for (size_t i = 0, ni = f.size(); i < ni; ++i) {
+            for (size_t j = 0, nj = g.size(); j < nj; ++j) {
                 size_t f_unateNum = f[i]->outputUnateNum(), g_unateNum = g[j]->outputUnateNum();
-                if (f_unateNum > g_unateNum) {
-                    closeMatching(lits, i * 2, j, 0);    //close output positve matching
-                    closeMatching(lits, i * 2 + 1, j, 0);    //close output negative matching
-                    cirmgr.MO_valid[i][j] = false;
-                }
+                        if (f_unateNum > g_unateNum) {
+                            closeMatching(lits, i * 2, j, 0);    //close output positve matching
+                            closeMatching(lits, i * 2 + 1, j, 0);    //close output negative matching
+                            // cirmgr.MO_valid[i][j] = false;
+                        }
             }
+        }    
+    }
+    // for (size_t i = 0, ni = f.size(); i < ni; ++i) {
+    //     for (size_t j = 0, nj = g.size(); j < nj; ++j) {
+    //         if(_isInput == 1){
+    //             size_t f_unateNum_p = f[i]->inputUnateNum_p(), f_unateNum_n = f[i]->inputUnateNum_n(),
+    //                    g_unateNum_p = g[j]->inputUnateNum_p(), g_unateNum_n = g[j]->inputUnateNum_n();
+    //             int mo_valid = 0;
+    //             if(f_unateNum_p >= g_unateNum_p && f_unateNum_n > g_unateNum_n || f_unateNum_p > g_unateNum_p && f_unateNum_n >= g_unateNum_n){
+    //                 closeMatching(lits, i * 2, j, 1);   //close input positve matching
+    //                 ++mo_valid;
+    //             }
+    //             if(f_unateNum_n >= g_unateNum_p && f_unateNum_p > g_unateNum_n || f_unateNum_n > g_unateNum_p && f_unateNum_p >= g_unateNum_n){
+    //                 closeMatching(lits, i * 2 + 1, j, 1);   //close input negative matching
+    //                 ++mo_valid;
+    //             }
+    //             if(mo_valid == 2)
+    //                 cirmgr.MO_valid[i][j] = false;
+    //         }
+    //         else{
+                // size_t f_unateNum = f[i]->outputUnateNum(), g_unateNum = g[j]->outputUnateNum();
+                // if (f_unateNum > g_unateNum) {
+                //     closeMatching(lits, i * 2, j, 0);    //close output positve matching
+                //     closeMatching(lits, i * 2 + 1, j, 0);    //close output negative matching
+                //     cirmgr.MO_valid[i][j] = false;
+                // }
+            // }
             // size_t _isInput ? f[i]->inputUnateNum() : f[i]->outputUnateNum(),
             //        g_unateNum = _isInput ? g[j]->inputUnateNum() : g[j]->outputUnateNum();
             // if (f_unateNum > g_unateNum) {
@@ -924,8 +955,8 @@ void SatMgr::addUnateConstraint(bool _isInput)// |Uo1| <= |Uo2| ; |Ui1| <= |Ui2|
             //     // lits.clear();
 
             // }
-        }
-    }
+        // }
+    // }
     return;
 }
 void SatMgr::addOutput0Constraint(){
@@ -1172,6 +1203,41 @@ void SatMgr::addOutputConstraint_inputBusNum(){
 }
 // cirmgr.inputNum_ckt1, outputNum_ckt1, cirmgr.inputNum_ckt2, outputNum_ckt2;
 // Construct PHI<0>  (Preprocess not implemented yet.)
+void SatMgr::addSymmSignConstraint(){
+    vector<variable*>&x = cirmgr.x, &y = cirmgr.y, &f = cirmgr.f, &g = cirmgr.g;
+    for(size_t i = 0, ni = f.size(); i < ni; ++i){
+        for(size_t j = 0, nj = g.size(); j < nj; ++j){
+            if(f[i]->_funcSupp.size() == g[j]->_funcSupp.size()){
+                for(size_t k = 0, nk = x.size(); k < nk; ++k){
+                    for(size_t l = 0, nl = y.size(); l < nl; ++l){
+                        if(x[k]->checkSymmSign(y[l]->symmSign(), i, j) == false){
+                            cout << "f" << i << " <-> " << "g" << j << " ; " << "( " << k << " ," << l << " )" << endl;
+                            vec<Lit> lits;
+                            lits.push(~Lit(cirmgr.MO[i * 2][j]->getVar()));
+                            lits.push(~Lit(cirmgr.MI[k * 2][l]->getVar()));
+                            solver.addClause(lits);
+                            lits.clear();
+                            lits.push(~Lit(cirmgr.MO[i * 2][j]->getVar()));
+                            lits.push(~Lit(cirmgr.MI[k * 2 + 1][l]->getVar()));
+                            solver.addClause(lits);
+                            lits.clear();
+                            lits.push(~Lit(cirmgr.MO[i * 2 + 1][j]->getVar()));
+                            lits.push(~Lit(cirmgr.MI[k * 2][l]->getVar()));
+                            solver.addClause(lits);
+                            lits.clear();
+                            lits.push(~Lit(cirmgr.MO[i * 2 + 1][j]->getVar()));
+                            lits.push(~Lit(cirmgr.MI[k * 2 + 1][l]->getVar()));
+                            solver.addClause(lits);
+                            lits.clear();
+
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
 void
 SatMgr::initCircuit(SatSolver& s, SatSolver& s_miter,
                     SatSolver& s_verifier) { // create 2D array ETs

@@ -87,17 +87,18 @@ SolverMgr::solveNP3(string& inputFilename) {
     satmgr.cirmgr.readBus_class(satmgr.solver, inputFilename);
     satmgr.busMatchExactlyOne(satmgr.solver);
     // return; //test indexes
-    satmgr.cirmgr.readPreporcess(outputUnateness);
+    // satmgr.cirmgr.readPreporcess(outputUnateness);
     satmgr.cirmgr.readPreporcess(support);
     satmgr.cirmgr.recordPIsupportPO();
-    satmgr.cirmgr.readInputUnateness();
+    // satmgr.cirmgr.readInputUnateness();
     satmgr.cirmgr.readSymmetric();
     satmgr.cirmgr.outputGrouping();
     satmgr.cirmgr.busSupportUnion();
     satmgr.cirmgr.busInputSupportUnion();
-    satmgr.cirmgr.busOutputUnateness();
-    satmgr.cirmgr.busInputUnateness();
+    // satmgr.cirmgr.busOutputUnateness();
+    // satmgr.cirmgr.busInputUnateness();
     satmgr.cirmgr.supportBusClassification();
+    satmgr.cirmgr.symmSign();
     
     satmgr.addSuppConstraint();  
     satmgr.addSuppConstraint_input();  
@@ -108,10 +109,12 @@ SolverMgr::solveNP3(string& inputFilename) {
     // for(int i = 0; i < 1; i++) Var t = satmgr.solver.newVar(); // test var
     satmgr.addOutputConstraint_inputBusNum();  
     // satmgr.addBusConstraint_inputUnateness();   
-    satmgr.addBusConstraint_outputUnateness();   
+    // satmgr.addBusConstraint_outputUnateness();   
     satmgr.addBusConstraint_inputSupportSize();
     satmgr.addBusConstraint_outputSupportSize();
     satmgr.addOutput0Constraint();
+    satmgr.addSymmConstraint(satmgr.solver);
+    satmgr.addSymmSignConstraint();
     // size_t bp = 0;
     
     size_t BusMatchIdx_I = 0, BusMatchIdx_O = 0;

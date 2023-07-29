@@ -7,6 +7,26 @@
 #include <sstream>
 #include <iomanip>
 
+bool variable::checkSymmSign(map<size_t, size_t>& _ss, size_t _p, size_t _q){   //_ss is the symmSign of y[l], _p is fp, _q is gq
+    bool tmp1 = _ss.find(_q) == _ss.end(), tmp2 = _symmSign.find(_p) == _symmSign.end();
+    if(tmp1 == 1 && tmp2 == 1)  // both not symmetric to this output respectively
+        return 1;
+    else if((tmp1 == 0 && tmp2 == 1) || (tmp1 == 1 && tmp2 == 0))
+        return 0;
+    return (_ss.find(_q)->second == _symmSign.find(_p)->second);
+}
+
+void variable::inputSymmGroupClassification(size_t _input1, size_t _input2){
+    if(_inputSymmGroup.find(_input1) != _inputSymmGroup.end())
+        _inputSymmGroup.insert(pair<size_t, size_t>(_input2, _inputSymmGroup[_input1]));
+    else if( _inputSymmGroup.find(_input2) != _inputSymmGroup.end())
+        _inputSymmGroup.insert(pair<size_t, size_t>(_input1, _inputSymmGroup[_input2]));
+    else{
+        _inputSymmGroup.insert(pair<size_t, size_t>(_input2, _maxInputSymmGroupIndex));
+        _inputSymmGroup.insert(pair<size_t, size_t>(_input1, _maxInputSymmGroupIndex++));
+    }
+}
+
 void
 CirMgr::reset() {
     portnum_ckt1.clear();
@@ -648,13 +668,16 @@ void CirMgr::readSymmetric() {
                     set.insert(stoi(temp2));
                     f[counter]->symmetric_set.push_back(set);
                 }
-                int tmpXIndex = -1;
-                std::istringstream(temp) >> tmpXIndex;
-                x[tmpXIndex]->setSymmOutput(counter);
-                f[counter]->setSymmInput(tmpXIndex);
-                std::istringstream(temp2) >> tmpXIndex;
-                x[tmpXIndex]->setSymmOutput(counter);
-                f[counter]->setSymmInput(tmpXIndex);
+                int tmpXIndex1 = -1, tmpXIndex2 = -1;
+                std::istringstream(temp) >> tmpXIndex1;
+                x[tmpXIndex1]->setSymmOutput(counter);
+                f[counter]->setSymmInput(tmpXIndex1);
+                std::istringstream(temp2) >> tmpXIndex2;
+                x[tmpXIndex2]->setSymmOutput(counter);
+                f[counter]->setSymmInput(tmpXIndex2);
+                f[counter]->inputSymmGroupClassification(tmpXIndex1, tmpXIndex2);
+                x[tmpXIndex1]->setInputSymmGroupIndex(f[counter]->inputSymmGroup()[tmpXIndex1]);
+                x[tmpXIndex2]->setInputSymmGroupIndex(f[counter]->inputSymmGroup()[tmpXIndex2]);
             }
             else {
                 counter++;
@@ -678,23 +701,48 @@ void CirMgr::readSymmetric() {
                     set.insert(stoi(temp2));
                     g[counter - outputNum_ckt1]->symmetric_set.push_back(set);
                 }
-                int tmpXIndex = -1;
-                std::istringstream(temp) >> tmpXIndex;
-                y[tmpXIndex]->setSymmOutput(counter - outputNum_ckt1);
-                g[counter - outputNum_ckt1]->setSymmInput(tmpXIndex);
-                std::istringstream(temp2) >> tmpXIndex;
-                y[tmpXIndex]->setSymmOutput(counter - outputNum_ckt1);
-                g[counter - outputNum_ckt1]->setSymmInput(tmpXIndex);
+                int tmpXIndex1 = -1, tmpXIndex2 = -1;
+                std::istringstream(temp) >> tmpXIndex1;
+                y[tmpXIndex1]->setSymmOutput(counter - outputNum_ckt1);
+                g[counter - outputNum_ckt1]->setSymmInput(tmpXIndex1);
+                std::istringstream(temp2) >> tmpXIndex2;
+                y[tmpXIndex2]->setSymmOutput(counter - outputNum_ckt1);
+                g[counter - outputNum_ckt1]->setSymmInput(tmpXIndex2);
+                g[counter - outputNum_ckt1]->inputSymmGroupClassification(tmpXIndex1, tmpXIndex2);
+                y[tmpXIndex1]->setInputSymmGroupIndex(g[counter - outputNum_ckt1]->inputSymmGroup()[tmpXIndex1]);
+                y[tmpXIndex2]->setInputSymmGroupIndex(g[counter - outputNum_ckt1]->inputSymmGroup()[tmpXIndex2]);
             }
             else {
                 counter++;
             }
         }
     }
+    // cout << "inputSymmGroup = " << endl;
+    // for(auto i : g[63]->inputSymmGroup())
+    //     cout << i.first << ' ' << i.second << endl;
+    for(size_t i = 0, ni = f.size(); i < ni; ++i){
+        f[i]->inputSymmGroupSize().reserve(f[i]->maxInputSymmGroupIndex());
+        for(size_t j = 0, nj = f[i]->maxInputSymmGroupIndex(); j < nj; ++j)
+            f[i]->inputSymmGroupSize().push_back(0);
+        for(map<size_t, size_t>::iterator it = f[i]->inputSymmGroup().begin(), _end = f[i]->inputSymmGroup().end(); it != _end; ++it){
+            ++f[i]->inputSymmGroupSize()[(*it).second];
+        }
+    }
+    for(size_t i = 0, ni = g.size(); i < ni; ++i){
+        g[i]->inputSymmGroupSize().reserve(g[i]->maxInputSymmGroupIndex());
+        for(size_t j = 0, nj = g[i]->maxInputSymmGroupIndex(); j < nj; ++j)
+            g[i]->inputSymmGroupSize().push_back(0);
+        for(map<size_t, size_t>::iterator it = g[i]->inputSymmGroup().begin(), _end = g[i]->inputSymmGroup().end(); it != _end; ++it){
+            ++g[i]->inputSymmGroupSize()[(*it).second];
+        }
+    }
+    // cout << "size = " << endl;
+    // for(auto i : g[63]->inputSymmGroupSize())
+    //     cout << i << endl;
     cout << "x = " << endl;
     // size_t symmGroups_counter = -1;
-    // symmOutputs* symm0 = new symmOutputs(outputNum_ckt1, 0); // used to check if a symmOutputs is 0 or not
-    vector<symmOutputs*> tmp;
+    // symmObj* symm0 = new symmObj(outputNum_ckt1, 0); // used to check if a symmObj is 0 or not
+    vector<symmObj*> tmp;
     // vector<variable*> symmGroup;
     for(size_t i = 0, n = x.size(); i < n; ++i){
         tmp.push_back(x[i]->symmOutput());
@@ -740,7 +788,7 @@ void CirMgr::readSymmetric() {
 
     // symmGroups_counter = 0;
     // delete symm0;
-    // symm0 = new symmOutputs(outputNum_ckt2, 0);
+    // symm0 = new symmObj(outputNum_ckt2, 0);
     tmp.clear();
     for(size_t i = 0, n = y.size(); i < n; ++i){
         tmp.push_back(y[i]->symmOutput());
@@ -765,10 +813,14 @@ void CirMgr::readSymmetric() {
         cout << "\n ------- end Group -------- \n";
     }
     tmp.clear();
-    // for(size_t i = 0, ni = g.size(); i < ni; ++i){
-    //     g[i]->symmInput()->countNumberOfInputs();
-    //     cout << setw(3) <<i << " : "<<g[i]->symmInput()->numOfInputs() << endl;
-    // }
+    for(size_t i = 0, ni = f.size(); i < ni; ++i){
+        f[i]->symmInput()->countNumberOfInputs();
+        // cout << setw(3) <<i << " : "<<g[i]->symmInput()->numOfInputs() << endl;
+    }
+    for(size_t i = 0, ni = g.size(); i < ni; ++i){
+        g[i]->symmInput()->countNumberOfInputs();
+        // cout << setw(3) <<i << " : "<<g[i]->symmInput()->numOfInputs() << endl;
+    }
     return;
 }
 
@@ -803,6 +855,10 @@ void CirMgr::outputGrouping(){  // |f| = |g|
         for(vector<variable *>::iterator j = g_groups[i].begin(); j != g_groups[i].end(); j++)
             (*j)->setOutputGroupingNum(i);
     // exit(0);
+}
+void CirMgr::symmSign(){
+    _symmSign(1);
+    _symmSign(0);
 }
 bool CirMgr::_outputsorting(variable* a, variable* b)
 {
@@ -905,9 +961,9 @@ void CirMgr::_busInputSupportUnion(bool _isCkt1){
     return;
 }
 
-void CirMgr::_symmGrouping(bool _isCkt1, vector<symmOutputs*>& sortedSymmInputs){
+void CirMgr::_symmGrouping(bool _isCkt1, vector<symmObj*>& sortedSymmInputs){
     size_t symmGroups_counter = -1, outputNum = _isCkt1 ? outputNum_ckt1 : outputNum_ckt2;
-    symmOutputs* symm0 = new symmOutputs(outputNum, 0); // used to check if a symmOutputs is 0 or not
+    symmObj* symm0 = new symmObj(outputNum, 0); // used to check if a symmObj is 0 or not
     vector<variable*> symmGroup, &inputs = _isCkt1 ? x : y;
     vector<vector<variable*>> &symmGroups = _isCkt1 ? symmGroups_x : symmGroups_y;
     sortedSymmInputs.push_back(symm0);
@@ -938,20 +994,31 @@ void CirMgr::_symmGrouping(bool _isCkt1, vector<symmOutputs*>& sortedSymmInputs)
     sortedSymmInputs.pop_back();
 }
 void CirMgr::_symmSign(bool _isCkt1){
-    /*vector<variable*>& inputs = _isCkt1 ? x : y, outputs = _isCkt1 ? f : g;
+    vector<variable*>& inputs = _isCkt1 ? x : y, &outputs = _isCkt1 ? f : g;
     for(size_t i = 0, ni = inputs.size(); i < ni; ++i){
         for(size_t j = 0, nj = inputs[i]->symmOutput()->getSymmOutput().size(); j < nj; ++j){
-            unsigned long long x = inputs[i]->symmOutput()->getSymmOutput()[j];
-            size_t counter = 0 + j * sizeof(unsigned long long) * 8;
-            for(size_t k = 0, nk = sizeof(unsigned long long) * 8; k < nk; ++k, ++counter){
-	        if(x & 1ULL){
-		    inputs[i]->
-		}
-	    }
-
+            unsigned long long symm_j = inputs[i]->symmOutput()->getSymmOutput()[j];
+            size_t counter = j * sizeof(unsigned long long) * 8;
+            // cout << bitset<64>(symm_j) << endl;
+            while(symm_j){
+                if(symm_j & 1ULL){
+                    inputs[i]->symmSign().insert(pair<size_t, size_t>(counter, outputs[counter]->inputSymmGroupSize().at(outputs[counter]->inputSymmGroup().at(i))));
+                }
+                symm_j = symm_j >> 1;
+                ++counter;
+            }   
+            // for(size_t k = 0, nk = sizeof(unsigned long long) * 8, counter = j * sizeof(unsigned long long) * 8; k < nk && symm_j != 0; ++k, ++counter){
+            //     if(symm_j & 1ULL){
+            //         inputs[i]->symmSign().push_back(pair<size_t, size_t>(counter, outputs[counter]->symmInput()->numOfInputs()));
+		    //     }
+            //     symm_j = symm_j >> 1;
+	        // }
         }
-
-    }*/
+        for(auto kk : inputs[i]->symmSign()){
+            cout << setw(3) << i << " : " << "( "<<kk.first << " , " << kk.second << " ) ; ";
+        }
+        cout << endl;
+    }
 
 }
 void CirMgr::feasibleBusMatching(){

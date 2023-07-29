@@ -81,6 +81,7 @@ class SatMgr
         void addCandidateBusConstraint(SatSolver& s);
         void addBusValidConstraint(SatSolver& s); // close MIbus_valid, MObus_valid according to |cir1BusSize| <= |cir2BusSize|, also close MIbus_Var, MObus_Var according to MIbus_valid, MObus_valid. Bind control of each MIbus_Var/MObus_Var entry to MI_valid_var/MO_valid_var matching(only true(valid bus match) entry will add port matching clause to solver).
         void addOutput0Constraint(); // close the MO of those output whose = 0 after fraig with other outputs
+        void addSymmSignConstraint();   // symmSign constraint in << two-step >>
 
         // only bind input
         // use int _port1, int _port2 to check if _port1 < 0 and if _port2 < 0
@@ -185,7 +186,7 @@ class SatMgr
                     vector<variable*>& symmGroups_thisX = cirmgr.symmGroups_x[x[_i / 2]->symmGroupIndex()];
                     for(size_t i = 0, ni = symmGroups_thisX.size(); i < ni; ++i){
                         if(symmGroups_thisX[i]->getSub1() - 1 != (_i / 2) && symmGroups_thisX[i]->_funcSupp.size() == x[_i / 2]->_funcSupp.size() && _i % 2 == 1){
-                            cout<< "closeMatching_cnt = " << closeMatching_cnt++ << endl;
+                            // cout<< "closeMatching_cnt = " << closeMatching_cnt++ << endl;
                             //if(_i % 2 == 1)
                             lits.push(~Lit(cirmgr.MI[(symmGroups_thisX[i]->getSub1() - 1) * 2 + 1][_j]->getVar()));
                             /*else
@@ -199,7 +200,7 @@ class SatMgr
                     vector<variable*>& symmGroups_thisY = cirmgr.symmGroups_y[y[_j]->symmGroupIndex()];
                     for(size_t i = 0, ni = symmGroups_thisY.size(); i < ni; ++i){
                         if(symmGroups_thisY[i]->getSub1() - 1 != _j && symmGroups_thisY[i]->_funcSupp_PI.size() == y[_j]->_funcSupp_PI.size() && _i % 2 == 1){
-                            cout<< "closeMatching_cnt = " << closeMatching_cnt++ << endl;
+                            // cout<< "closeMatching_cnt = " << closeMatching_cnt++ << endl;
                             lits.push(~Lit(cirmgr.MI[_i][(symmGroups_thisY[i]->getSub1() - 1)]->getVar()));
                             solver.addClause(lits);
                             lits.clear();

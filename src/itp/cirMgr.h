@@ -4,6 +4,7 @@
 #include "sat.h"
 #include <string>
 #include <unordered_map>
+#include <map>
 #include <unordered_set>
 #include <vector>
 #include <algorithm>
@@ -15,9 +16,9 @@ enum preprocess
     outputUnateness,
     inputUnateness
 };
-class symmOutputs{
+class symmObj{
     public:
-        symmOutputs(size_t _outputNum, size_t _i): _arrayLength(_outputNum / (sizeof(unsigned long long) * 8) + 1), _index(_i), _numOfinputs(0){
+        symmObj(size_t _outputNum, size_t _i): _arrayLength(_outputNum / (sizeof(unsigned long long) * 8) + 1), _index(_i), _numOfinputs(0){
             // if(_outputNum / (sizeof(unsigned long long) * 8) == 0)
             //     _symmOutput = new unsigned long long(0);
             // else{
@@ -27,7 +28,7 @@ class symmOutputs{
                     _symmOutput.push_back(0);
             // }
         }
-        ~symmOutputs(){}
+        ~symmObj(){}
         void                        setSymmOutput(const unsigned long long _s){_symmOutput[(_s / (sizeof(unsigned long long) * 8))] = (_symmOutput[_s / ((sizeof(unsigned long long) * 8))] |
                                          ((unsigned long long)1 << (_s % ((sizeof(unsigned long long) * 8)))));
                                          return;}
@@ -35,7 +36,7 @@ class symmOutputs{
         size_t                      arrayLength(){return _arrayLength;}
         size_t                      numOfInputs(){return _numOfinputs;}
         size_t                      index(){return _index;}
-        bool                        isEqual(symmOutputs* _s){
+        bool                        isEqual(symmObj* _s){
                                         for(size_t i = 0; i < _arrayLength; ++i)
                                             if(_s->getSymmOutput()[i] != _symmOutput[i])
                                                 return 0;
@@ -63,7 +64,7 @@ class variable
 {
     public:
         variable(char type, Var sub1, Var sub2)
-            : _isInSymmGroup(0), _type(type), _sub1(sub1), _sub2(sub2), _busIndex(-1), _busSize(0),_suppSize(0), _inputUnateNum_p(0),_inputUnateNum_n(0),_outputUnateNum(0), _outputGroupingNum(0), _inputUnates(""), _symmGroupIndex(-2){
+            : _inputSymmGroupIndex(-1),_maxInputSymmGroupIndex(0), _isInSymmGroup(0), _type(type), _sub1(sub1), _sub2(sub2), _busIndex(-1), _busSize(0),_suppSize(0), _inputUnateNum_p(0),_inputUnateNum_n(0),_outputUnateNum(0), _outputGroupingNum(0), _inputUnates(""), _symmGroupIndex(-2){
         }
         ~variable() {delete _symmOutput;}
 
@@ -74,6 +75,7 @@ class variable
 
         char                                gettype() const { return _type; }
         bool                                isInSymmGroup()const{ return _isInSymmGroup;}
+        bool                                checkSymmSign(map<size_t, size_t>& _s, size_t _p, size_t _q);
         string                              getname() const { return _name; }
         Var                                 getSub2() const { return _sub2; }
         Var                                 getVar() const { return _var; }
@@ -82,13 +84,17 @@ class variable
         Var                                 getVar3() const { return _var3; }
         int                                 busIndex() { return _busIndex; }
         int                                 symmGroupIndex(){return _symmGroupIndex;}
+        int                                 inputSymmGroupIndex(){return _inputSymmGroupIndex;}
         size_t                              busSize() { return _busSize; }
         size_t                              suppSize() { return _suppSize; }
+        size_t                              maxInputSymmGroupIndex(){return _maxInputSymmGroupIndex;}
         unordered_map<size_t, size_t>&      suppBus() { return _suppBus;}
         vector<pair<size_t, size_t>>*&      suppBus_distribution(){return _suppBus_distribution;}
-        symmOutputs*                        symmOutput(){return _symmOutput;}
-        symmOutputs*                        symmInput(){return _symmInput;}
-        vector<pair<size_t, size_t>>        symmSign(){return _symmSign;}
+        vector<size_t>&                     inputSymmGroupSize(){return _inputSymmGroupSize;}
+        symmObj*                            symmOutput(){return _symmOutput;}
+        symmObj*                            symmInput(){return _symmInput;}
+        map<size_t, size_t>&                symmSign(){return _symmSign;}
+        map<size_t, size_t>&                inputSymmGroup(){return _inputSymmGroup;}
         size_t                              outputUnateNum() { return _outputUnateNum; }
         string                              inputUnates() { return _inputUnates; }
         size_t                              inputUnateNum_p() { return _inputUnateNum_p; }
@@ -110,13 +116,15 @@ class variable
         void                                setOutputUnateNum(const size_t _s) { _outputUnateNum = _s; }
         void                                setOutputGroupingNum(const size_t _s) { _outputGroupingNum = _s; }
         void                                setSymmGroupIndex(const int _s){_symmGroupIndex = _s;}
+        void                                setInputSymmGroupIndex(const int _s){_inputSymmGroupIndex = _s;}
         void                                setInputUnates(const string _s) { _inputUnates = _s; }
         void                                setSymmOutput(const unsigned long long _s){_symmOutput->setSymmOutput(_s);}
         void                                setSymmInput(const unsigned long long _s){_symmInput->setSymmOutput(_s);}
-        void                                newSymmOutput(const size_t _s, const size_t _i){_symmOutput = new symmOutputs(_s, _i);}
-        void                                newSymmInput(const size_t _s, const size_t _i){_symmInput = new symmOutputs(_s, _i);}
+        void                                newSymmOutput(const size_t _s, const size_t _i){_symmOutput = new symmObj(_s, _i);}
+        void                                newSymmInput(const size_t _s, const size_t _i){_symmInput = new symmObj(_s, _i);}
         void                                addInputUnateNum_p() { ++_inputUnateNum_p; }
         void                                addInputUnateNum_n() { ++_inputUnateNum_n; }
+        void                                inputSymmGroupClassification(size_t _input1, size_t _input2);
 
     private:
         char    _type;
@@ -130,22 +138,26 @@ class variable
         int     _busIndex; // bus_index denotes the position of the bus it
                           // belongs to in bus vector
         int    _symmGroupIndex; // the postiion in symmGroup
+        int    _inputSymmGroupIndex; // the position in _inputSymmGroup (for symmSign)
         size_t _busSize;  // bus_size denotes the number of the elements in the
                           // bus it belongs to
         size_t _suppSize; // currently : functional support
+        size_t _maxInputSymmGroupIndex; // record the current symm group index
         // size_t _inputUnateNum;  // how many outputs are unate w.r.t this PI 
         size_t _inputUnateNum_p;  // how many outputs are positive unate w.r.t this PI 
         size_t _inputUnateNum_n;  // how many outputs are negative unate w.r.t this PI 
         size_t _outputUnateNum; // the number of output unate variables(i.e., the number of input that makes this output unate)
         string _inputUnates; // the detail input unate of this output
         size_t _outputGroupingNum; // index of the output grouping
-        symmOutputs* _symmOutput; // record the outputs that this input variable is positive symmetric to
-        symmOutputs* _symmInput; // record the inputs that is positive symmetric to this output variable
+        symmObj* _symmOutput; // record the outputs that this input variable is positive symmetric to
+        symmObj* _symmInput; // record the inputs that is positive symmetric to this output variable
         // collect those buses that this output's support inputs lie in
         //_SuppBus[i].first = the bus index; .second = number of inputs in that bus
         unordered_map<size_t, size_t> _suppBus;
         vector<pair<size_t, size_t>>*  _suppBus_distribution;  // the sorted ( non-increasing order )distribution of each bus in _suppBus
-        vector<pair<size_t, size_t>> _symmSign; // the symmetry signature of each inputs; vector[i].first == the output port index in f / g, vector[i].second == the number of inputs in the symm group
+        map<size_t, size_t>  _symmSign; // the symmetry signature of each inputs; map[i].first == the output port index in f / g, map[i].second == the number of inputs in the symm group w.r.t f[map[i].first] / g[map[i].first]
+        map<size_t, size_t> _inputSymmGroup; // to classify each input symmetry group of this output variable; map[i].first = the input port index in x / y, map[i]->second = the group index 
+        vector<size_t> _inputSymmGroupSize; // the vector of input symmGroup size, the index is identical to the one in the map.second
         // unsigned long long _suppBus; 
         // Var _aigVar; do we need this??
 };
@@ -310,9 +322,9 @@ class CirMgr
         void _busInputUnateness(bool _isCkt1); // collect the union output unateness of input bus
         void _busSupportUnion(bool _isCkt1); // collect the union support size of output bus
         void _busInputSupportUnion(bool _isCkt1); // collect the union support size of input bus
-        void _symmGrouping(bool _isCkt1, vector<symmOutputs*>& tmp); // to collect those inputs with same positive symmtric outputs
+        void _symmGrouping(bool _isCkt1, vector<symmObj*>& tmp); // to collect those inputs with same positive symmtric outputs
         static bool _outputsorting(variable* a, variable* b);
-        static bool _increasing(symmOutputs* a, symmOutputs* b){
+        static bool _increasing(symmObj* a, symmObj* b){
             vector<unsigned long long>& asymm = a->getSymmOutput(), & bsymm = b->getSymmOutput();
             for(int i = a->arrayLength() - 1; i >= 0; --i){
                 if(asymm[i] < bsymm[i])
