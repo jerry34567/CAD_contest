@@ -170,8 +170,8 @@ CirMgr::readMAP() {
     }
 }
 void
-CirMgr::readCNF(SatSolver& s_miter,
-                SatSolver& s_verifier) { // read cnf file: top1.cnf, top2.cnf
+CirMgr::readCNF(SatSolver& s_miter, SatSolver& s_cir1, SatSolver& s_cir2, SatSolver& s_verifier) {
+    // read cnf file: top1.cnf, top2.cnf
     // read CNF into miter solver to constraint functionality
     // correctness
     ifstream fcnf1, fcnf2;
@@ -191,7 +191,7 @@ CirMgr::readCNF(SatSolver& s_miter,
             fcnf1 >> cnf >> varnum >> clsnum;
             // cout<<"CC: " << cnf << " " << varnum  << " " << clsnum <<
             // endl;
-            vec<Lit> lits, lits_veri;
+            vec<Lit> lits, lits1, lits_veri;
 
             vector<Var> test; // test addClause
 
@@ -204,19 +204,24 @@ CirMgr::readCNF(SatSolver& s_miter,
                         umapNum_ckt1[abs(litTmp)] =
                             "n" + to_string(abs(litTmp));
                         Var nV                         = s_miter.newVar();
+                        Var nV1                        = s_cir1.newVar();
                         Var nV_veri                    = s_verifier.newVar();
                         umapInterVar_ckt1[abs(litTmp)] = nV;
+                        mapInterVar_cir1[abs(litTmp)] = nV1;
                         umapInterVar_ckt1_veri[abs(litTmp)] = nV_veri;
-                        Lit li, li_veri;
+                        Lit li, li1, li_veri;
                         if (litTmp > 0) {
                             li      = Lit(nV);
+                            li1     = Lit(nV1);
                             li_veri = Lit(nV_veri);
                         } else {
                             li      = ~Lit(nV);
+                            li1     = ~Lit(nV1);
                             li_veri = ~Lit(nV_veri);
                         }
 
                         lits.push(li);
+                        lits1.push(li1);
                         lits_veri.push(li_veri);
                         test.push_back(nV);
                     } else {
@@ -226,55 +231,66 @@ CirMgr::readCNF(SatSolver& s_miter,
                         // add clause to s_miter according to i/o and
                         // num. ex: i0 --->  x[0]->getVar2()
                         if (portNumTmp[0] == 'i') { // those var in x
-                            Lit li, li_veri;
+                            Lit li, li1, li_veri;
                             if (litTmp > 0) {
                                 li = Lit(
                                     x[stoi(portNumTmp.substr(1))]->getVar2());
+                                li1 = Lit(x[stoi(portNumTmp.substr(1))]->getVar4());
                                 li_veri = Lit(
                                     x[stoi(portNumTmp.substr(1))]->getVar3());
 
                             } else {
                                 li = ~Lit(
                                     x[stoi(portNumTmp.substr(1))]->getVar2());
+                                li1 = ~Lit(x[stoi(portNumTmp.substr(1))]->getVar4());
                                 li_veri = ~Lit(
                                     x[stoi(portNumTmp.substr(1))]->getVar3());
                             }
                             lits.push(li);
+                            lits1.push(li1);
                             lits_veri.push(li_veri);
                             test.push_back(
                                 x[stoi(portNumTmp.substr(1))]->getVar2());
                         } else if (portNumTmp[0] == 'o') { // o
-                            Lit li, li_veri;
+                            Lit li, li1, li_veri;
                             if (litTmp > 0) {
                                 li = Lit(
                                     f[stoi(portNumTmp.substr(1))]->getVar2());
+                                li1 = Lit(
+                                    f[stoi(portNumTmp.substr(1))]->getVar4());
                                 li_veri = Lit(
                                     f[stoi(portNumTmp.substr(1))]->getVar3());
 
                             } else {
                                 li = ~Lit(
                                     f[stoi(portNumTmp.substr(1))]->getVar2());
+                                li1 = ~Lit(
+                                    f[stoi(portNumTmp.substr(1))]->getVar4());
                                 li_veri = ~Lit(
                                     f[stoi(portNumTmp.substr(1))]->getVar3());
                             }
                             lits.push(li);
+                            lits1.push(li1);
                             lits_veri.push(li_veri);
                             test.push_back(
                                 f[stoi(portNumTmp.substr(1))]->getVar2());
                         } else { // n (intervariable)
-                            Lit li, li_veri;
+                            Lit li, li1, li_veri;
                             if (litTmp > 0) {
                                 li = Lit(umapInterVar_ckt1[abs(litTmp)]);
+                                li1 = Lit(mapInterVar_cir1[abs(litTmp)]);
                                 li_veri =
                                     Lit(umapInterVar_ckt1_veri[abs(litTmp)]);
 
                             } else {
                                 li = ~Lit(umapInterVar_ckt1[abs(litTmp)]);
+                                li1 = ~Lit(mapInterVar_cir1[abs(litTmp)]);
                                 li_veri =
                                     ~Lit(umapInterVar_ckt1_veri[abs(litTmp)]);
                             }
 
                             lits.push(li);
+                            lits1.push(li1);
                             lits_veri.push(li_veri);
                             test.push_back(umapInterVar_ckt1[abs(litTmp)]);
                         }
@@ -283,8 +299,10 @@ CirMgr::readCNF(SatSolver& s_miter,
                     ++ct1;
                     // cout << lits_veri.size() << endl;
                     s_miter.addClause(lits);
+                    s_cir1.addClause(lits1);
                     s_verifier.addClause(lits_veri);
                     lits.clear();
+                    lits1.clear();
                     lits_veri.clear();
                     // for(int i=0;i<test.size();i++){
                     //    cout << test[i] << " ";
@@ -304,7 +322,7 @@ CirMgr::readCNF(SatSolver& s_miter,
             fcnf2 >> cnf >> varnum >> clsnum;
             // cout<<"CC: " << cnf << " " << varnum  << " " << clsnum <<
             // endl;
-            vec<Lit> lits, lits_veri;
+            vec<Lit> lits, lits2, lits_veri;
             while (fcnf2 >> litTmp) {
 
                 // cout << "LL: " << litTmp << endl;
@@ -314,19 +332,24 @@ CirMgr::readCNF(SatSolver& s_miter,
                         umapNum_ckt2[abs(litTmp)] =
                             "n" + to_string(abs(litTmp));
                         Var nV                         = s_miter.newVar();
+                        Var nV2                        = s_cir2.newVar();
                         Var nV_veri                    = s_verifier.newVar();
                         umapInterVar_ckt2[abs(litTmp)] = nV;
+                        mapInterVar_cir2[abs(litTmp)] = nV2;
                         umapInterVar_ckt2_veri[abs(litTmp)] = nV_veri;
-                        Lit li, li_veri;
+                        Lit li, li2, li_veri;
                         if (litTmp > 0) {
                             li      = Lit(nV);
+                            li2     = Lit(nV2);
                             li_veri = Lit(nV_veri);
                         } else {
                             li      = ~Lit(nV);
+                            li2     = ~Lit(nV2);
                             li_veri = ~Lit(nV_veri);
                         }
 
                         lits.push(li);
+                        lits2.push(li2);
                         lits_veri.push(li_veri);
                     } else {
                         string portNumTmp =
@@ -335,61 +358,76 @@ CirMgr::readCNF(SatSolver& s_miter,
                         // add clause to s_miter according to i/o and
                         // num. ex: i0 --->  x[0]->getVar2()
                         if (portNumTmp[0] == 'i') {
-                            Lit li, li_veri;
+                            Lit li, li2, li_veri;
                             if (litTmp > 0) {
                                 li = Lit(
                                     y[stoi(portNumTmp.substr(1))]->getVar2());
+                                li2 = Lit(
+                                    y[stoi(portNumTmp.substr(1))]->getVar4());
                                 li_veri = Lit(
                                     y[stoi(portNumTmp.substr(1))]->getVar3());
 
                             } else {
                                 li = ~Lit(
                                     y[stoi(portNumTmp.substr(1))]->getVar2());
+                                li2 = ~Lit(
+                                    y[stoi(portNumTmp.substr(1))]->getVar4());
                                 li_veri = ~Lit(
                                     y[stoi(portNumTmp.substr(1))]->getVar3());
                             }
 
                             lits.push(li);
+                            lits2.push(li2);
                             lits_veri.push(li_veri);
                         } else if (portNumTmp[0] == 'o') { // o
-                            Lit li, li_veri;
+                            Lit li, li2, li_veri;
                             if (litTmp > 0) {
                                 li = Lit(
                                     g[stoi(portNumTmp.substr(1))]->getVar2());
+                                li2 = Lit(
+                                    g[stoi(portNumTmp.substr(1))]->getVar4());
                                 li_veri = Lit(
                                     g[stoi(portNumTmp.substr(1))]->getVar3());
 
                             } else {
                                 li = ~Lit(
                                     g[stoi(portNumTmp.substr(1))]->getVar2());
+                                li2 = ~Lit(
+                                    g[stoi(portNumTmp.substr(1))]->getVar4());
                                 li_veri = ~Lit(
                                     g[stoi(portNumTmp.substr(1))]->getVar3());
                             }
 
                             lits.push(li);
+                            lits2.push(li2);
                             lits_veri.push(li_veri);
                         } else { // n (intervariable)
-                            Lit li, li_veri;
+                            Lit li, li2, li_veri;
                             if (litTmp > 0) {
                                 li = Lit(umapInterVar_ckt2[abs(litTmp)]);
+                                li2 = Lit(mapInterVar_cir2[abs(litTmp)]);
                                 li_veri =
                                     Lit(umapInterVar_ckt2_veri[abs(litTmp)]);
 
                             } else {
                                 li = ~Lit(umapInterVar_ckt2[abs(litTmp)]);
+                                li2 = ~Lit(mapInterVar_cir2[abs(litTmp)]);
                                 li_veri =
                                     ~Lit(umapInterVar_ckt2_veri[abs(litTmp)]);
                             }
 
                             lits.push(li);
+                            lits2.push(li2);
                             lits_veri.push(li_veri);
                         }
                     }
                 } else {
                     ++ct2;
                     s_miter.addClause(lits);
+                    s_cir2.addClause(lits2);
                     s_verifier.addClause(lits_veri);
                     lits.clear();
+                    lits2.clear();
                     lits_veri.clear();
                 }
             }
@@ -726,7 +764,7 @@ void CirMgr::readSymmetric() {
             f[i]->inputSymmGroupSize().push_back(0);
         for(map<size_t, size_t>::iterator it = f[i]->inputSymmGroup().begin(), _end = f[i]->inputSymmGroup().end(); it != _end; ++it){
             ++f[i]->inputSymmGroupSize()[(*it).second];
-        }
+}
     }
     for(size_t i = 0, ni = g.size(); i < ni; ++i){
         g[i]->inputSymmGroupSize().reserve(g[i]->maxInputSymmGroupIndex());
@@ -771,20 +809,6 @@ void CirMgr::readSymmetric() {
     //     symmGroup.push_back(x[tmp[i]->index()]);
     // }
     _symmGrouping(1, tmp);
-    for(auto i : tmp){
-        for(auto j = i->getSymmOutput().rbegin(), nj = i->getSymmOutput().rend(); j != nj; ++j)
-            cout << setw(3) <<i->index() << " : "<<std::bitset<64>((*j)) << " | ";
-        cout << " " << (x[i->index()]->isInSymmGroup() ? "true" : "false") << " end" << endl;
-    }
-    cout << "\nsymmGroups_x = \n";
-    for(auto i : symmGroups_x){
-        for(auto j : i){
-            for(auto k = j->symmOutput()->getSymmOutput().rbegin(), nk = j->symmOutput()->getSymmOutput().rend(); k != nk; ++k)
-                cout << setw(3) << j->getSub1() - 1 << " : "<<std::bitset<64>((*k)) << " | ";
-            cout << " " << (j->isInSymmGroup() ? "true" : "false" )<<" "<<j->symmGroupIndex() <<" end" << endl;
-        }
-        cout << "\n ------- end Group -------- \n";
-    }
 
     // symmGroups_counter = 0;
     // delete symm0;
@@ -795,23 +819,7 @@ void CirMgr::readSymmetric() {
     }
     sort(tmp.begin(), tmp.end(), _increasing);
     // sort(tmp.begin(), tmp.end(), _increasing); // don't know why have to run ::sort twice to get the correct answer
-    cout << "\ny = " << endl;
     _symmGrouping(0, tmp);
-    for(auto i : tmp){
-        for(int j = i->arrayLength() - 1; j >= 0; --j)
-        // for(auto j = i->getSymmOutput().rbegin(), nj = i->getSymmOutput().rend(); j != nj; ++j)
-            cout << setw(3) <<i->index() << " : "<<std::bitset<64>(i->getSymmOutput()[j]) << " | ";
-        cout << " " << (y[i->index()]->isInSymmGroup() ? "true" : "false") << " end" << endl;
-    }
-    cout << "\nsymmGroups_y = \n";
-    for(auto i : symmGroups_y){
-        for(auto j : i){
-            for(auto k = j->symmOutput()->getSymmOutput().rbegin(), nk = j->symmOutput()->getSymmOutput().rend(); k != nk; ++k)
-                cout << setw(3) << j->getSub1() - 1 << " : "<<std::bitset<64>((*k)) << " | ";
-            cout << " " << (j->isInSymmGroup() ? "true" : "false" )<<" "<<j->symmGroupIndex() <<" end" << endl;
-        }
-        cout << "\n ------- end Group -------- \n";
-    }
     tmp.clear();
     for(size_t i = 0, ni = f.size(); i < ni; ++i){
         f[i]->symmInput()->countNumberOfInputs();
@@ -965,7 +973,7 @@ void CirMgr::_symmGrouping(bool _isCkt1, vector<symmObj*>& sortedSymmInputs){
     size_t symmGroups_counter = -1, outputNum = _isCkt1 ? outputNum_ckt1 : outputNum_ckt2;
     symmObj* symm0 = new symmObj(outputNum, 0); // used to check if a symmObj is 0 or not
     vector<variable*> symmGroup, &inputs = _isCkt1 ? x : y;
-    vector<vector<variable*>> &symmGroups = _isCkt1 ? symmGroups_x : symmGroups_y;
+    vector<vector<variable*> > &symmGroups = _isCkt1 ? symmGroups_x : symmGroups_y;
     sortedSymmInputs.push_back(symm0);
     symmGroup.push_back(inputs[sortedSymmInputs[0]->index()]);
     inputs[sortedSymmInputs[0]->index()]->setSymmGroupIndex(symmGroups_counter);
@@ -1003,23 +1011,12 @@ void CirMgr::_symmSign(bool _isCkt1){
             while(symm_j){
                 if(symm_j & 1ULL){
                     inputs[i]->symmSign().insert(pair<size_t, size_t>(counter, outputs[counter]->inputSymmGroupSize().at(outputs[counter]->inputSymmGroup().at(i))));
-                }
+		        }
                 symm_j = symm_j >> 1;
                 ++counter;
-            }   
-            // for(size_t k = 0, nk = sizeof(unsigned long long) * 8, counter = j * sizeof(unsigned long long) * 8; k < nk && symm_j != 0; ++k, ++counter){
-            //     if(symm_j & 1ULL){
-            //         inputs[i]->symmSign().push_back(pair<size_t, size_t>(counter, outputs[counter]->symmInput()->numOfInputs()));
-		    //     }
-            //     symm_j = symm_j >> 1;
-	        // }
+	        }
         }
-        for(auto kk : inputs[i]->symmSign()){
-            cout << setw(3) << i << " : " << "( "<<kk.first << " , " << kk.second << " ) ; ";
-        }
-        cout << endl;
     }
-
 }
 void CirMgr::feasibleBusMatching(){
     valid_busMatch_ckt2_input = permute(bus_ckt2_input);

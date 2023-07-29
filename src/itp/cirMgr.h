@@ -5,6 +5,7 @@
 #include <string>
 #include <unordered_map>
 #include <map>
+#include <set>
 #include <unordered_set>
 #include <vector>
 #include <algorithm>
@@ -72,6 +73,7 @@ class variable
         vector<variable*> _funcSupp;    // record the functional support of PO
         vector<string>    candidates;   // record valid match candidate (you can use u_name_index_ckt1, u_name_index_ckt2 and x, y, f, g to get its variable)
         vector<unordered_set<int>> symmetric_set; // record the symmetric set (only in output variable)
+        set<variable*> partial;
 
         char                                gettype() const { return _type; }
         bool                                isInSymmGroup()const{ return _isInSymmGroup;}
@@ -82,14 +84,15 @@ class variable
         Var                                 getSub1() const { return _sub1; }  
         Var                                 getVar2() const { return _var2; }
         Var                                 getVar3() const { return _var3; }
+        Var                                 getVar4() const { return _var4; }
         int                                 busIndex() { return _busIndex; }
         int                                 symmGroupIndex(){return _symmGroupIndex;}
         int                                 inputSymmGroupIndex(){return _inputSymmGroupIndex;}
         size_t                              busSize() { return _busSize; }
         size_t                              suppSize() { return _suppSize; }
         size_t                              maxInputSymmGroupIndex(){return _maxInputSymmGroupIndex;}
-        unordered_map<size_t, size_t>&      suppBus() { return _suppBus;}
-        vector<pair<size_t, size_t>>*&      suppBus_distribution(){return _suppBus_distribution;}
+        map<size_t, size_t>&      suppBus() { return _suppBus;}
+        vector<pair<size_t, size_t> >*&      suppBus_distribution(){return _suppBus_distribution;}
         vector<size_t>&                     inputSymmGroupSize(){return _inputSymmGroupSize;}
         symmObj*                            symmOutput(){return _symmOutput;}
         symmObj*                            symmInput(){return _symmInput;}
@@ -108,6 +111,7 @@ class variable
         void                                setVar(const Var& v) { _var = v; }
         void                                setVar2(const Var& v) { _var2 = v; }
         void                                setVar3(const Var& v) { _var3 = v; }
+        void                                setVar4(const Var& v) { _var4 = v; }
         void                                setBusIndex(const int _i) { _busIndex = _i; }
         void                                setBusSize(const size_t _s) { _busSize = _s; }
         void                                setSuppSize(const size_t _s) { _suppSize = _s; }
@@ -135,6 +139,7 @@ class variable
         Var     _var;      // for solver1
         Var     _var2;     // for miter solver
         Var     _var3;     // for verification solver
+        Var     _var4;     // for circuit solver
         int     _busIndex; // bus_index denotes the position of the bus it
                           // belongs to in bus vector
         int    _symmGroupIndex; // the postiion in symmGroup
@@ -151,9 +156,9 @@ class variable
         size_t _outputGroupingNum; // index of the output grouping
         symmObj* _symmOutput; // record the outputs that this input variable is positive symmetric to
         symmObj* _symmInput; // record the inputs that is positive symmetric to this output variable
-        // collect those buses that this output's support inputs lie in
+        // collect those buses that this output's support inputs lie in    
         //_SuppBus[i].first = the bus index; .second = number of inputs in that bus
-        unordered_map<size_t, size_t> _suppBus;
+        map<size_t, size_t> _suppBus;
         vector<pair<size_t, size_t>>*  _suppBus_distribution;  // the sorted ( non-increasing order )distribution of each bus in _suppBus
         map<size_t, size_t>  _symmSign; // the symmetry signature of each inputs; map[i].first == the output port index in f / g, map[i].second == the number of inputs in the symm group w.r.t f[map[i].first] / g[map[i].first]
         map<size_t, size_t> _inputSymmGroup; // to classify each input symmetry group of this output variable; map[i].first = the input port index in x / y, map[i]->second = the group index 
@@ -248,7 +253,7 @@ class CirMgr
         void reset();
         void readAAG();
         void readMAP();
-        void readCNF(SatSolver& s_miter, SatSolver& s_verifier);
+        void readCNF(SatSolver& s_miter, SatSolver& s_cir1, SatSolver& s_cir2, SatSolver& s_verifier);
         // void readBus(string &);
         void readPreporcess(preprocess _p);
         void recordPIsupportPO(); // record those POs affected by each PI, record in each PI's _funcSupp_PI
@@ -288,7 +293,7 @@ class CirMgr
         vector<vector<Var>>       MIbus_Var, MObus_Var;       // record bus match Var, bus_ckt1_input * bus_ckt2_input
         vector<vector<bool>>      MIbus_valid, MObus_valid;   // record bus valid
         vector<size_t>            output0;  // record those output that equals to constant 0 after fraig 
-        vector<vector<variable*>> symmGroups_x, symmGroups_y; // record the symmGroups of x & y respectively
+        vector<vector<variable*> > symmGroups_x, symmGroups_y; // record the symmGroups of x & y respectively
         bool* exist_x;
         bool* exist_y;
         bool* exist_f;
@@ -303,7 +308,7 @@ class CirMgr
         // umapInterVar_ckti_veri is for verifySolver
         unordered_map<int, string> umapNum_ckt1, umapName_ckt1, umapNum_ckt2,
             umapName_ckt2;
-        unordered_map<int, Var> umapInterVar_ckt1, umapInterVar_ckt1_veri,
+        unordered_map<int, Var> umapInterVar_ckt1, umapInterVar_ckt1_veri, mapInterVar_cir1, mapInterVar_cir2,
             umapInterVar_ckt2, umapInterVar_ckt2_veri;
         vector<Cmdr*> Cmdr_level;
 

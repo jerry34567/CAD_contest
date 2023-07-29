@@ -861,9 +861,8 @@ void SatMgr::addSuppConstraint_input()
     for (size_t i = 0, ni = x.size(); i < ni; ++i) {
         
         for (size_t j = 0, nj = y.size(); j < nj; ++j) {
-            cout << "FUPI size()" << i << " " << j << " " << x[i]->_funcSupp_PI.size() << " " << y[j]->_funcSupp_PI.size() << endl;
-            if (x[i]->_funcSupp_PI.size() != y[j]->_funcSupp_PI.size()) { // disable constant matching, case04 can be done in 13 seconds, should add into close_constant_assump..
-            // if (x[i]->_funcSupp_PI.size() > y[j]->_funcSupp_PI.size()) { // enable constant matching, case04 can't be done
+            // if (x[i]->_funcSupp_PI.size() != y[j]->_funcSupp_PI.size()) { // disable constant matching, case04 can be done in 13 seconds, should add into close_constant_assump..
+            if (x[i]->_funcSupp_PI.size() > y[j]->_funcSupp_PI.size()) { // enable constant matching, case04 can't be done
                 closeMatching(lits, i * 2, j, 1);    //close output positve matching
                 closeMatching(lits, i * 2 + 1, j, 1);    //close output negative matching
                 // lits.push(~Lit(cirmgr.MO[i * 2][j]->getVar()));
@@ -884,7 +883,7 @@ void SatMgr::addUnateConstraint(bool _isInput)// |Uo1| <= |Uo2| ; |Ui1| <= |Ui2|
     vector<variable*>&x = cirmgr.x, &y = cirmgr.y, &f = cirmgr.f, &g = cirmgr.g;
     int cnt = 0;
     vec<Lit> lits;
-    if(_isInput){
+            if(_isInput){
         for(size_t i = 0, ni = x.size(); i < ni; ++i){
             for(size_t j = 0, nj = y.size(); j < nj; ++j){
                 size_t x_unateNum_p = x[i]->inputUnateNum_p(), x_unateNum_n = x[i]->inputUnateNum_n(),
@@ -902,44 +901,19 @@ void SatMgr::addUnateConstraint(bool _isInput)// |Uo1| <= |Uo2| ; |Ui1| <= |Ui2|
                 //     cirmgr.MO_valid[i][j] = false;
             }
         }
-    }
-    else{
+            }
+            else{
         for (size_t i = 0, ni = f.size(); i < ni; ++i) {
             for (size_t j = 0, nj = g.size(); j < nj; ++j) {
                 size_t f_unateNum = f[i]->outputUnateNum(), g_unateNum = g[j]->outputUnateNum();
-                        if (f_unateNum > g_unateNum) {
-                            closeMatching(lits, i * 2, j, 0);    //close output positve matching
-                            closeMatching(lits, i * 2 + 1, j, 0);    //close output negative matching
+                if (f_unateNum > g_unateNum) {
+                    closeMatching(lits, i * 2, j, 0);    //close output positve matching
+                    closeMatching(lits, i * 2 + 1, j, 0);    //close output negative matching
                             // cirmgr.MO_valid[i][j] = false;
-                        }
+                }
             }
-        }    
+        }
     }
-    // for (size_t i = 0, ni = f.size(); i < ni; ++i) {
-    //     for (size_t j = 0, nj = g.size(); j < nj; ++j) {
-    //         if(_isInput == 1){
-    //             size_t f_unateNum_p = f[i]->inputUnateNum_p(), f_unateNum_n = f[i]->inputUnateNum_n(),
-    //                    g_unateNum_p = g[j]->inputUnateNum_p(), g_unateNum_n = g[j]->inputUnateNum_n();
-    //             int mo_valid = 0;
-    //             if(f_unateNum_p >= g_unateNum_p && f_unateNum_n > g_unateNum_n || f_unateNum_p > g_unateNum_p && f_unateNum_n >= g_unateNum_n){
-    //                 closeMatching(lits, i * 2, j, 1);   //close input positve matching
-    //                 ++mo_valid;
-    //             }
-    //             if(f_unateNum_n >= g_unateNum_p && f_unateNum_p > g_unateNum_n || f_unateNum_n > g_unateNum_p && f_unateNum_p >= g_unateNum_n){
-    //                 closeMatching(lits, i * 2 + 1, j, 1);   //close input negative matching
-    //                 ++mo_valid;
-    //             }
-    //             if(mo_valid == 2)
-    //                 cirmgr.MO_valid[i][j] = false;
-    //         }
-    //         else{
-                // size_t f_unateNum = f[i]->outputUnateNum(), g_unateNum = g[j]->outputUnateNum();
-                // if (f_unateNum > g_unateNum) {
-                //     closeMatching(lits, i * 2, j, 0);    //close output positve matching
-                //     closeMatching(lits, i * 2 + 1, j, 0);    //close output negative matching
-                //     cirmgr.MO_valid[i][j] = false;
-                // }
-            // }
             // size_t _isInput ? f[i]->inputUnateNum() : f[i]->outputUnateNum(),
             //        g_unateNum = _isInput ? g[j]->inputUnateNum() : g[j]->outputUnateNum();
             // if (f_unateNum > g_unateNum) {
@@ -970,6 +944,7 @@ void SatMgr::addOutput0Constraint(){
     return;
 
 }
+
 void SatMgr::addSymmConstraint(SatSolver& s)
 {
     vector<variable*>&f = cirmgr.f, &g = cirmgr.g;
@@ -1040,22 +1015,13 @@ void SatMgr::addSameSuppSizeConstraint(SatSolver& s)
                         f_temp.insert(cirmgr.u_name_index_ckt1[f[i]->_funcSupp[a]->getname()]);
                     }
                     for (int b = 0, n3 = g[j]->_funcSupp.size(); b < n3; b++) {
-                        for (int c = 0, n4 = cirmgr.inputNum_ckt1; c < n4; c++) {
+                        for (int c = 0, n4 = cirmgr.inputNum_ckt1 + 1; c < n4; c++) {
                             vec<Lit> v;
                             v.push(~Lit(cirmgr.MO_valid_Var[i][j]));
                             if (!f_temp.count(c)) {
                                 v.push(~Lit(cirmgr.MI_valid_Var[c][cirmgr.u_name_index_ckt2[g[j]->_funcSupp[b]->getname()]]));
-                                // cout << "MO: " << i << " " << j << " MI: " << c << " " << cirmgr.u_name_index_ckt2[g[j]->_funcSupp[b]->getname()] << endl;
                                 s.addClause(v);
                                 v.clear();
-                            }
-                            else {
-                                vector<Var> Var_list;
-                                for (unordered_set<int>::iterator d = g_temp.begin(); d != g_temp.end(); d++){
-                                    Var_list.push_back(cirmgr.MI_valid_Var[c][*d]);
-                                    // cout << "has MO: " << i << " " << j << " MI: " << c << " " << *d << endl;
-                                }
-                                // constraint_Cmdr_control(s,cirmgr.MO_valid_Var[i][j],Var_list);
                             }
                         }
                     }
@@ -1138,8 +1104,6 @@ void SatMgr::addBusConstraint_outputSupportSize(){
     cout << "cnt = " << cnt << endl;
 
 }
-
-
 void SatMgr::addBusConstraint_inputSupportSize(){
     vector<Bus*>& bus_ckt1_input = cirmgr.bus_ckt1_input, &bus_ckt2_input = cirmgr.bus_ckt2_input;
     vec<Lit> lits;
@@ -1239,8 +1203,7 @@ void SatMgr::addSymmSignConstraint(){
 }
 
 void
-SatMgr::initCircuit(SatSolver& s, SatSolver& s_miter,
-                    SatSolver& s_verifier) { // create 2D array ETs
+SatMgr::initCircuit(SatSolver& s, SatSolver& s_miter, SatSolver& s_cir1, SatSolver& s_cir2, SatSolver& s_verifier) { // create 2D array ETs
     vector<variable*>&x = cirmgr.x, &y = cirmgr.y, &f = cirmgr.f, &g = cirmgr.g;
     // construct x, y
     for (int i = 1; i <= cirmgr.inputNum_ckt1; i++) {
@@ -1251,6 +1214,7 @@ SatMgr::initCircuit(SatSolver& s, SatSolver& s_miter,
         tmpX->setVar(s.newVar());
         tmpX->setVar2(s_miter.newVar());
         tmpX->setVar3(s_verifier.newVar());
+        tmpX->setVar4(s_cir1.newVar());
         x.push_back(tmpX);
     }
     for (int i = 1; i <= cirmgr.inputNum_ckt2; i++) {
@@ -1261,6 +1225,7 @@ SatMgr::initCircuit(SatSolver& s, SatSolver& s_miter,
         tmpY->setVar(s.newVar());
         tmpY->setVar2(s_miter.newVar());
         tmpY->setVar3(s_verifier.newVar());
+        tmpY->setVar4(s_cir2.newVar());
         y.push_back(tmpY);
     }
 
@@ -1273,6 +1238,7 @@ SatMgr::initCircuit(SatSolver& s, SatSolver& s_miter,
         tmpF->setVar(s.newVar());
         tmpF->setVar2(s_miter.newVar());
         tmpF->setVar3(s_verifier.newVar());
+        tmpF->setVar4(s_cir1.newVar());
         f.push_back(tmpF);
     }
     for (int i = 1; i <= cirmgr.outputNum_ckt2; i++) {
@@ -1283,6 +1249,7 @@ SatMgr::initCircuit(SatSolver& s, SatSolver& s_miter,
         tmpG->setVar(s.newVar());
         tmpG->setVar2(s_miter.newVar());
         tmpG->setVar3(s_verifier.newVar());
+        tmpG->setVar4(s_cir2.newVar());
         g.push_back(tmpG);
     }
 
@@ -1717,8 +1684,161 @@ SatMgr::readCNF(SatSolver& s_miter,
 //     cout << "ct1 = " << ct1 << ", ct2 = " << ct2 << endl;
 // }*/
 void
-SatMgr::AddLearnedClause(SatSolver& s,
-                         SatSolver& s_miter) { // probably wrong
+SatMgr::AddLearnedClause(SatSolver& s, SatSolver& s_cir1, SatSolver& s_cir2, SatSolver& s_miter) {
+    vec<Lit>                  lits, lits_e; // ex: lits_e:  (not e + not c11)...
+    // vec<Lit>                  temp_lits;
+    vector<vector<variable*> >&MI = cirmgr.MI, &MO = cirmgr.MO;
+    vector<variable*>&x = cirmgr.x, &y = cirmgr.y, &f = cirmgr.f, &g = cirmgr.g;
+    for (int i = 0; i < f.size(); i++) {
+        f[i]->partial.clear();
+        vec<Lit> cir1_lits;
+        Var output = f[i]->getVar4();
+        cir1_lits.push(s_miter.getValue(f[i]->getVar2()) ? ~Lit(output) : Lit(output)); // negate output
+        for (vector<variable*>::iterator it = f[i]->_funcSupp.begin(); it != f[i]->_funcSupp.end(); it++) {
+            f[i]->partial.insert((*it));
+        }
+
+        for (int k = 0; k < f[i]->_funcSupp.size(); k++) {
+            vec<Lit> temp_lits;
+            cir1_lits.copyTo(temp_lits);
+            for (int j = 0; j < f[i]->_funcSupp.size(); j++) {
+                if (j == k) continue;
+                else {
+                    if (!f[i]->partial.count(f[i]->_funcSupp[j])) continue;
+                    else {
+                        temp_lits.push(s_miter.getValue(f[i]->_funcSupp[j]->getVar2()) ? Lit(f[i]->_funcSupp[j]->getVar4()) : ~Lit(f[i]->_funcSupp[j]->getVar4()));
+                    }
+                }
+            }
+            bool result = s_cir1.assumpSolve(temp_lits);
+            if (!result) {
+                f[i]->partial.erase(f[i]->_funcSupp[k]);
+            }
+            temp_lits.clear();
+        }
+        cir1_lits.clear();
+    }
+
+    for (int i = 0; i < g.size(); i++) {
+        g[i]->partial.clear();
+        vec<Lit> cir2_lits;
+        Var output = g[i]->getVar4();
+        cir2_lits.push(s_miter.getValue(g[i]->getVar2()) ? ~Lit(output) : Lit(output)); // negate output
+        for (vector<variable*>::iterator it = g[i]->_funcSupp.begin(); it != g[i]->_funcSupp.end(); it++) {
+            g[i]->partial.insert((*it));
+        }
+
+        for (int k = 0; k < g[i]->_funcSupp.size(); k++) {
+            vec<Lit> temp_lits;
+            cir2_lits.copyTo(temp_lits);
+            for (int j = 0; j < g[i]->_funcSupp.size(); j++) {
+                if (j == k) continue;
+                else {
+                    if (!g[i]->partial.count(g[i]->_funcSupp[j])) continue;
+                    else {
+                        temp_lits.push(s_miter.getValue(g[i]->_funcSupp[j]->getVar2()) ? Lit(g[i]->_funcSupp[j]->getVar4()) : ~Lit(g[i]->_funcSupp[j]->getVar4()));
+                    }
+                }
+            }
+            bool result = s_cir2.assumpSolve(temp_lits);
+            if (!result) {
+                g[i]->partial.erase(g[i]->_funcSupp[k]);
+            }
+            temp_lits.clear();
+        }
+        cir2_lits.clear();
+    }
+
+    for (int i = 0; i < f.size(); i++) {
+        for (int j = 0; j < g.size(); j++) {
+            if (s_miter.getValue(f[i]->getVar2()) == s_miter.getValue(g[j]->getVar2())) {
+                Var dV = MO[2 * i + 1][j]->getVar();
+                lits.push(~Lit(dV)); // ex: f2 == g5 -> not d2,5 f2@f[1];
+                                          // g5@g[4]; d2,5@MI[9][1]
+            }
+            else {
+                Var cV = MO[2 * i][j]->getVar();
+                lits.push(~Lit(cV)); // ex: f2 != g5 -> not c2,5 f2@x[1];
+                                          // g5@y[4]; c2,5@MI[8][1]
+            }
+            for (set<variable*>::iterator it = f[i]->partial.begin(); it != f[i]->partial.end(); it++) {
+                for (set<variable*>::iterator it2 = g[j]->partial.begin(); it2 != g[j]->partial.end(); it2++) {
+                    
+                    int index1 = cirmgr.u_name_index_ckt1[(*it)->getname()];
+                    int index2 = cirmgr.u_name_index_ckt2[(*it2)->getname()];
+                    // cout << "i: " << (*it)->getname() << " " << index1 << "  j: " << (*it2)->getname() << " " << index2 << endl;
+                    if (s_miter.getValue(x[index1]->getVar2()) == s_miter.getValue(y[index2]->getVar2())) {
+                        lits.push(Lit(MI[2 * index1 + 1][index2]->getVar())); // ex: x2 == y5 -> b2,5 x2@x[1];
+                                                        // y5@y[4]; b2,5@MI[9][1]
+                    }
+                    else {
+                        lits.push(Lit(MI[2 * index1][index2]->getVar())); // ex: x2 != y5 -> a2,5 x2@x[1];
+                                                    // y5@y[4]; b2,5@MI[8][1]
+                    }
+                }
+            }
+
+            for (set<variable*>::iterator it2 = g[j]->partial.begin(); it2 != g[j]->partial.end(); it2++) {
+                int index2 = cirmgr.u_name_index_ckt2[(*it2)->getname()];
+                if (s_miter.getValue(y[index2]->getVar2()) == 1) {
+                    lits.push(Lit(MI[MI.size() - 2][index2]->getVar())); // ex: x2 == y5 -> b2,5 x2@x[1];
+                                                    // y5@y[4]; b2,5@MI[9][1]
+                } else {
+                    lits.push(Lit(MI[MI.size() - 1][index2]->getVar())); // ex: x2 != y5 -> a2,5 x2@x[1];
+                                                    // y5@y[4]; b2,5@MI[8][1]
+                }
+            }
+            s.addClause(lits);
+            lits.clear();
+        }
+    }
+
+
+/*
+    for (int i = 0; i < f.size(); i++) {
+        for (int j = 0; j < g.size(); j++) {
+            if (s_miter.getValue(f[i]->getVar2()) == s_miter.getValue(g[j]->getVar2())) {
+                Var dV = MO[2 * i + 1][j]->getVar();
+                lits.push(~Lit(dV)); // ex: f2 == g5 -> not d2,5 f2@f[1];
+                                          // g5@g[4]; d2,5@MI[9][1]
+            }
+            else {
+                Var cV = MO[2 * i][j]->getVar();
+                lits.push(~Lit(cV)); // ex: f2 != g5 -> not c2,5 f2@x[1];
+                                          // g5@y[4]; c2,5@MI[8][1]
+            }
+            for (vector<variable*>::iterator it = f[i]->_funcSupp.begin(); it != f[i]->_funcSupp.end(); it++) {
+                for (vector<variable*>::iterator it2 = g[j]->_funcSupp.begin(); it2 != g[j]->_funcSupp.end(); it2++) {
+                    int index1 = cirmgr.u_name_index_ckt1[(*it)->getname()];
+                    int index2 = cirmgr.u_name_index_ckt2[(*it2)->getname()];
+                    if (s_miter.getValue(x[index1]->getVar2()) == s_miter.getValue(y[index2]->getVar2())) {
+                        lits.push(Lit(MI[2 * index1 + 1][index2]->getVar())); // ex: x2 == y5 -> b2,5 x2@x[1];
+                                                        // y5@y[4]; b2,5@MI[9][1]
+                    }
+                    else {
+                        lits.push(Lit(MI[2 * index1][index2]->getVar())); // ex: x2 != y5 -> a2,5 x2@x[1];
+                                                    // y5@y[4]; b2,5@MI[8][1]
+                    }
+                }
+            }
+
+            for (vector<variable*>::iterator it2 = g[j]->_funcSupp.begin(); it2 != g[j]->_funcSupp.end(); it2++) {
+                int index2 = cirmgr.u_name_index_ckt2[(*it2)->getname()];
+                if (s_miter.getValue(y[index2]->getVar2()) == 1) {
+                    lits.push(Lit(MI[MI.size() - 2][index2]->getVar())); // ex: x2 == y5 -> b2,5 x2@x[1];
+                                                    // y5@y[4]; b2,5@MI[9][1]
+                } else {
+                    lits.push(Lit(MI[MI.size() - 1][index2]->getVar())); // ex: x2 != y5 -> a2,5 x2@x[1];
+                                                    // y5@y[4]; b2,5@MI[8][1]
+                }
+            }
+            s.addClause(lits);
+            lits.clear();
+        }
+    }
+
+
+    /*
     vec<Lit>                  lits, lits_e; // ex: lits_e:  (not e + not c11)...
     vec<Lit>                  temp_lits;
     vector<vector<variable*>>&MI = cirmgr.MI, &MO = cirmgr.MO;
@@ -1799,6 +1919,7 @@ SatMgr::AddLearnedClause(SatSolver& s,
         }
     }
     // lits.push(e); s.addClause(lits); lits.clear();
+    */
 }
 void
 SatMgr::AddLearnedClause_const(SatSolver& s,
@@ -2188,20 +2309,20 @@ void SatMgr::addBusValidConstraint(SatSolver& s){ // close MIbus_valid, MObus_va
                 close.clear();
             }
              // bus match implies each port in this cir2bus must at least match to one of the port (or constant) in matched cir1bus 
-            else{ // Bind control of each MIbus_Var/MObus_Var entry to MI_valid_var/MO_valid_var matching(only true(valid bus match) entry will add port matching clause to solver)
-                vec<Lit> busMatch;
-                for(int c2 = 0; c2 < cirmgr.bus_ckt2_input[j]->getPortNum(); c2++){
-                    busMatch.push(~Lit(cirmgr.MIbus_Var[i][j]));
-                    for(int c1 = 0; c1 < cirmgr.bus_ckt1_input[i]->getPortNum(); c1++){
-                        busMatch.push(Lit(cirmgr.MI_valid_Var[cirmgr.bus_ckt1_input[i]->indexes[c1]][cirmgr.bus_ckt2_input[j]->indexes[c2]]));
-                    }
-                    busMatch.push(Lit(cirmgr.MI_valid_Var[cirmgr.MI_valid_Var.size()-1][cirmgr.bus_ckt2_input[j]->indexes[c2]])); // cir2 can bind to constant
+            // else{ // Bind control of each MIbus_Var/MObus_Var entry to MI_valid_var/MO_valid_var matching(only true(valid bus match) entry will add port matching clause to solver)
+            //     vec<Lit> busMatch;
+            //     for(int c2 = 0; c2 < cirmgr.bus_ckt2_input[j]->getPortNum(); c2++){
+            //         busMatch.push(~Lit(cirmgr.MIbus_Var[i][j]));
+            //         for(int c1 = 0; c1 < cirmgr.bus_ckt1_input[i]->getPortNum(); c1++){
+            //             busMatch.push(Lit(cirmgr.MI_valid_Var[cirmgr.bus_ckt1_input[i]->indexes[c1]][cirmgr.bus_ckt2_input[j]->indexes[c2]]));
+            //         }
+            //         busMatch.push(Lit(cirmgr.MI_valid_Var[cirmgr.MI_valid_Var.size()-1][cirmgr.bus_ckt2_input[j]->indexes[c2]])); // cir2 can bind to constant
                     
-                    s.addClause(busMatch);
-                    busMatch.clear();
-                }
-            }
-            
+            //         s.addClause(busMatch);
+            //         busMatch.clear();
+            //     }
+            // }
+
         }
         
     }
@@ -2215,6 +2336,8 @@ void SatMgr::addBusValidConstraint(SatSolver& s){ // close MIbus_valid, MObus_va
                 close.clear();
             }
              // bus match implies each port in this cir2bus must at least match to one of the port in matched cir1bus
+            
+            /*
             else{ // Bind control of each MIbus_Var/MObus_Var entry to MI_valid_var/MO_valid_var matching(only true(valid bus match) entry will add port matching clause to solver)
                 vec<Lit> busMatch;
                 for(int c2 = 0; c2 < cirmgr.bus_ckt2_output[j]->getPortNum(); c2++){
@@ -2227,8 +2350,49 @@ void SatMgr::addBusValidConstraint(SatSolver& s){ // close MIbus_valid, MObus_va
                     busMatch.clear();
                 }
             }
-            
+            */
         }
     }
     cout << "out addBusValidConstraint" << endl;
+}
+
+//helper function
+void
+SatMgr::closeMatching(vec<Lit> &lits, size_t _i, size_t _j, bool _isInput){  // _isInput == 1 -> close input matching // positive symmetry only close negative connection(i % 2 == 1)
+    if(_isInput){
+        vector<variable*>&x = cirmgr.x, &y = cirmgr.y;
+        lits.push(~Lit(cirmgr.MI[_i][_j]->getVar()));
+        solver.addClause(lits);
+        lits.clear();
+        if(x[_i / 2]->isInSymmGroup() == true){
+            vector<variable*>& symmGroups_thisX = cirmgr.symmGroups_x[x[_i / 2]->symmGroupIndex()];
+            for(size_t i = 0, ni = symmGroups_thisX.size(); i < ni; ++i){
+                if(symmGroups_thisX[i]->getSub1() - 1 != (_i / 2) && symmGroups_thisX[i]->_funcSupp.size() == x[_i / 2]->_funcSupp.size() && _i % 2 == 1){
+                    cout<< "closeMatching_cnt = " << closeMatching_cnt++ << endl;
+                    //if(_i % 2 == 1)
+                    lits.push(~Lit(cirmgr.MI[(symmGroups_thisX[i]->getSub1() - 1) * 2 + 1][_j]->getVar()));
+                    /*else
+                        lits.push(~Lit(cirmgr.MI[(symmGroups_thisX[i]->getSub1() - 1) * 2 + 1][_j]->getVar()));*/
+                    solver.addClause(lits);
+                    lits.clear();
+                }
+            }
+        }
+        if(y[_j]->isInSymmGroup() == true){
+            vector<variable*>& symmGroups_thisY = cirmgr.symmGroups_y[y[_j]->symmGroupIndex()];
+            for(size_t i = 0, ni = symmGroups_thisY.size(); i < ni; ++i){
+                if(symmGroups_thisY[i]->getSub1() - 1 != _j && symmGroups_thisY[i]->_funcSupp_PI.size() == y[_j]->_funcSupp_PI.size() && _i % 2 == 1){
+                    cout<< "closeMatching_cnt = " << closeMatching_cnt++ << endl;
+                    lits.push(~Lit(cirmgr.MI[_i][(symmGroups_thisY[i]->getSub1() - 1)]->getVar()));
+                    solver.addClause(lits);
+                    lits.clear();
+                }
+            }
+        }
+    }
+    else{
+        lits.push(~Lit(cirmgr.MO[_i][_j]->getVar()));
+        solver.addClause(lits);
+        lits.clear();
+    }
 }

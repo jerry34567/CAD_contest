@@ -46,8 +46,7 @@ class SatMgr
         // void readAAG();
         // void readMAP();
         // void readCNF(SatSolver& s_miter, SatSolver& s_verifier);
-        void initCircuit(SatSolver& s, SatSolver& s_miter,
-                         SatSolver& s_verifier);
+        void initCircuit(SatSolver& s, SatSolver& s_miter, SatSolver& s_cir1, SatSolver& s_cir2, SatSolver& s_verifier);
         void reset();
         // void verification(bool isManualBinded = 0);
         // void solveNP3();
@@ -58,12 +57,12 @@ class SatMgr
         void constraint2(SatSolver& s);
         void constraint_Cmdr(SatSolver& s, vector<vector<variable*>>& M, bool is_MO);
         void constraint_Cmdr_control(SatSolver& s, Var control, vector<Var>& v); // for functional support, if control == 1 -> only one Var in vector<Var> will be 1
-        void constraint_Cmdr_nocontrol(SatSolver& s, vector<Var>& v, bool isAtmostOne); // for functional support, if isAtmostOne == 1 -> at most one Var in vector<Var> will be 1, if isAtmostOne == 0 -> exactly one Var in vector<Var> will be 1
-        void busMatchExactlyOne(SatSolver& s); // bus matrix: at most one 1 in each row and each col
+        void constraint_Cmdr_nocontrol(SatSolver& s, vector<Var>& v, bool isAtmostOne); // for functional support, if control == 1 -> only one Var in vector<Var> will be 1
+        void busMatchExactlyOne(SatSolver& s); // bus matrix: exactly one 1 in a row
         void constraint3(SatSolver& s);
         void constraint4_miter(SatSolver& s);
         void constraint5_miter(SatSolver& s);
-        void AddLearnedClause(SatSolver& s, SatSolver& s_miter);
+        void AddLearnedClause(SatSolver& s, SatSolver& s_cir1, SatSolver& s_cir2, SatSolver& s_miter);
         void AddLearnedClause_const(SatSolver& s, SatSolver& s_miter);
         void addSuppConstraint(); // currently : structral support, |SSo1| <= |SSo2|
         void addSuppConstraint_input(); // currently : structral support, |SSo1| <= |SSo2|, for PI constraint, using _funcSupp_PI.size() 
@@ -145,7 +144,7 @@ class SatMgr
         vector<tuple<bool, Var, Var>>& getOutputMatch() { return outputMatch; }
 
     private:
-        SatSolver solver, miterSolver,
+        SatSolver solver, miterSolver, cir1Solver, cir2Solver,
             verifierSolver; // verifysolver is for verification
         CirMgr cirmgr;
 
@@ -176,44 +175,7 @@ class SatMgr
         size_t closeMatching_cnt;
 
         //helper function
-        void closeMatching(vec<Lit> &lits, size_t _i, size_t _j, bool _isInput){  // _isInput == 1 -> close input matching // positive symmetry only close negative connection(i % 2 == 1)
-            if(_isInput){
-                vector<variable*>&x = cirmgr.x, &y = cirmgr.y;
-                lits.push(~Lit(cirmgr.MI[_i][_j]->getVar()));
-                solver.addClause(lits);
-                lits.clear();
-                if(x[_i / 2]->isInSymmGroup() == true){
-                    vector<variable*>& symmGroups_thisX = cirmgr.symmGroups_x[x[_i / 2]->symmGroupIndex()];
-                    for(size_t i = 0, ni = symmGroups_thisX.size(); i < ni; ++i){
-                        if(symmGroups_thisX[i]->getSub1() - 1 != (_i / 2) && symmGroups_thisX[i]->_funcSupp.size() == x[_i / 2]->_funcSupp.size() && _i % 2 == 1){
-                            // cout<< "closeMatching_cnt = " << closeMatching_cnt++ << endl;
-                            //if(_i % 2 == 1)
-                            lits.push(~Lit(cirmgr.MI[(symmGroups_thisX[i]->getSub1() - 1) * 2 + 1][_j]->getVar()));
-                            /*else
-                                lits.push(~Lit(cirmgr.MI[(symmGroups_thisX[i]->getSub1() - 1) * 2 + 1][_j]->getVar()));*/
-                            solver.addClause(lits);
-                            lits.clear();
-                        }
-                    }
-                }
-                if(y[_j]->isInSymmGroup() == true){
-                    vector<variable*>& symmGroups_thisY = cirmgr.symmGroups_y[y[_j]->symmGroupIndex()];
-                    for(size_t i = 0, ni = symmGroups_thisY.size(); i < ni; ++i){
-                        if(symmGroups_thisY[i]->getSub1() - 1 != _j && symmGroups_thisY[i]->_funcSupp_PI.size() == y[_j]->_funcSupp_PI.size() && _i % 2 == 1){
-                            // cout<< "closeMatching_cnt = " << closeMatching_cnt++ << endl;
-                            lits.push(~Lit(cirmgr.MI[_i][(symmGroups_thisY[i]->getSub1() - 1)]->getVar()));
-                            solver.addClause(lits);
-                            lits.clear();
-                        }
-                    }
-                }
-            }
-            else{
-                lits.push(~Lit(cirmgr.MO[_i][_j]->getVar()));
-                solver.addClause(lits);
-                lits.clear();
-            }
-        }
+        void closeMatching(vec<Lit> &lits, size_t _i, size_t _j, bool _isInput); // _isInput == 1 -> close input matching // positive symmetry only close negative connection(i % 2 == 1)
         void closeMatching_bus(vec<Lit> &lits, size_t _i, size_t _j, bool _isInput){  // _isInput == 1 -> close input matching
             if(_isInput == 1)
                 lits.push(~Lit(cirmgr.MIbus_Var[_i][_j]));

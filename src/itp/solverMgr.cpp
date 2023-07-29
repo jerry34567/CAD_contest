@@ -77,13 +77,14 @@ SolverMgr::solveNP3(string& inputFilename) {
     // SatSolver solver, miterSolver;
     satmgr.solver.initialize();
     satmgr.miterSolver.initialize();
+    satmgr.cir1Solver.initialize();
+    satmgr.cir2Solver.initialize();
     satmgr.verifierSolver.initialize();
 
     satmgr.cirmgr.readAAG();
     satmgr.cirmgr.readMAP();
-    satmgr.initCircuit(satmgr.solver, satmgr.miterSolver,
-                       satmgr.verifierSolver);
-    satmgr.cirmgr.readCNF(satmgr.miterSolver, satmgr.verifierSolver);
+    satmgr.initCircuit(satmgr.solver, satmgr.miterSolver, satmgr.cir1Solver, satmgr.cir2Solver, satmgr.verifierSolver);
+    satmgr.cirmgr.readCNF(satmgr.miterSolver, satmgr.cir1Solver, satmgr.cir2Solver, satmgr.verifierSolver);
     satmgr.cirmgr.readBus_class(satmgr.solver, inputFilename);
     satmgr.busMatchExactlyOne(satmgr.solver);
     // return; //test indexes
@@ -113,7 +114,6 @@ SolverMgr::solveNP3(string& inputFilename) {
     satmgr.addBusConstraint_inputSupportSize();
     satmgr.addBusConstraint_outputSupportSize();
     satmgr.addOutput0Constraint();
-    satmgr.addSymmConstraint(satmgr.solver);
     satmgr.addSymmSignConstraint();
     // size_t bp = 0;
     
@@ -128,12 +128,38 @@ SolverMgr::solveNP3(string& inputFilename) {
     // BusMatchAssump.copyTo(find_input_given_output_assump);
     
     vector<vector<variable*>>&MI = satmgr.cirmgr.MI, &MO = satmgr.cirmgr.MO;
+
+    // cout << "AAAAAAA110" << endl;
+    // for(auto i: satmgr.cirmgr.x){
+    //     cout << i->getname() << ": ";
+    //     for(auto j: i->_funcSupp_PI){
+    //         cout << j->getname() << " ";
+    //     }
+    //     cout << endl;
+    // }
+    // cout << "AAAAAAA117" << endl;
+    // for(auto i: satmgr.cirmgr.y){
+    //     cout << i->getname() << ": ";
+    //     for(auto j: i->_funcSupp_PI){
+    //         cout << j->getname() << " ";
+    //     }
+    //     cout << endl;
+    // }
+    // cout << "AAAAAAA125" << endl;
     satmgr.addSymmConstraint(satmgr.solver);
-    // satmgr.addSameSuppSizeConstraint(satmgr.solver);
-    cout << satmgr.cirmgr.inputNum_ckt1 << satmgr.cirmgr.inputNum_ckt2 << endl;
-    cout << satmgr.cirmgr.outputNum_ckt1 << " " << satmgr.cirmgr.outputNum_ckt2 << endl;
+    satmgr.addSameSuppSizeConstraint(satmgr.solver);
     satmgr.addCandidateBusConstraint(satmgr.solver);
     satmgr.addBusValidConstraint(satmgr.solver);
+
+
+
+    // for (int i = 0, n = satmgr.cirmgr.g[6]->symmetric_set.size(); i < n; i++) {
+    //     for (auto j : satmgr.cirmgr.g[6]->symmetric_set[i]) {
+    //         cout << j << " ";
+    //     }
+    //     cout << endl;
+    // }
+
     // for level sovle (output sould at least some number)
     int level = -1;
     // int level = 2; // start from full match
@@ -290,20 +316,6 @@ SolverMgr::solveNP3(string& inputFilename) {
                     }
                 }
             }
-            for (int i = 0; i < satmgr.cirmgr.MIbus_Var.size(); i++){
-                for(int j = 0; j < satmgr.cirmgr.MIbus_Var[0].size(); j++){
-                    if (satmgr.solver.getValue(satmgr.cirmgr.MIbus_Var[i][j]) == 1){
-                        cout << "MIbus cir1:\t" << i << "\t<->\t" << "MIbus cir2:\t" << j << endl;
-                    }
-                }
-            }
-            for (int i = 0; i < satmgr.cirmgr.MObus_Var.size(); i++){
-                for(int j = 0; j < satmgr.cirmgr.MObus_Var[0].size(); j++){
-                    if (satmgr.solver.getValue(satmgr.cirmgr.MObus_Var[i][j]) == 1){
-                        cout << "MObus cir1:\t" << i << "\t<->\t" << "MObus cir2:\t" << j << endl;
-                    }
-                }
-            }
 
             // assign 0 to inrelevant cir2's input
             for (int i = 0, n = satmgr.cirmgr.y.size(); i < n; i++) {
@@ -376,7 +388,7 @@ SolverMgr::solveNP3(string& inputFilename) {
                 }
             } else {
                 // cout << "ELSE" << endl;
-                satmgr.AddLearnedClause(satmgr.solver, satmgr.miterSolver);
+                satmgr.AddLearnedClause(satmgr.solver, satmgr.cir1Solver, satmgr.cir2Solver, satmgr.miterSolver);
                 // AddLearnedClause_const(solver, miterSolver);
                 // if(finding_output){
                 //     satmgr.funcSuppInputConstraint(MO_no_pos_neg_pair, BusMatchIdx_I, BusMatchIdx_O, find_input_given_output_assump);
