@@ -1315,3 +1315,118 @@ readBus_class(SatSolver& s, string& inputfilename){
     cout << "RB end" << endl;
     */
 }
+
+void CirMgr::sortSuppDiff(){  // initially read in MO_valid and sort Supp Difference for MO_suppdiff, sort MO_suppdiff_row
+    // MO_suppdiff.reserve(MO_valid.size());
+    for(int i = 0; i < MO_valid.size(); i++){
+        vector<Supp_Difference> tmp;
+        // tmp.reserve(MO_valid[0].size());
+        for(int j = 0; j < MO_valid[0].size(); j++){
+            if(!MO_valid[i][j]) tmp.push_back(Supp_Difference(i, j, -1, MO_valid_Var[i][j]));
+            else tmp.push_back(Supp_Difference(i, j, (g[j]->_funcSupp.size()-f[i]->_funcSupp.size()), MO_valid_Var[i][j]));
+        }
+        MO_suppdiff.push_back(tmp);
+    }
+    
+    for(int j = 0; j < MO_valid[0].size(); j++){
+        vector<Supp_Difference> tmp; // store row for sorting
+        for(int i = 0; i < MO_valid.size(); i++){
+            tmp.push_back(MO_suppdiff[i][j]);
+        }
+        sort(tmp.begin(), tmp.end(), _suppdiff_increasing);
+        for(int i = 0; i < MO_valid.size(); i++){
+            MO_suppdiff[i][j] = tmp[i];
+        }
+    }
+
+    for(int j = 0; j < MO_valid[0].size(); j++){
+        Supp_Diff_Row newRow(j, MO_suppdiff[MO_suppdiff.size()-1][j].suppdiff);
+        newRow.suppdiff_cnt_arr.reserve(newRow.max_diff+2);
+        cout << "newRow.suppdiff_cnt_arr.capacity()" << newRow.suppdiff_cnt_arr.capacity() << endl;
+        for(int k = 0; k < newRow.max_diff+2; k++){
+            newRow.suppdiff_cnt_arr.push_back(0);
+        }
+        for(int i = 0; i < MO_valid.size(); i++){
+            ++(newRow.suppdiff_cnt_arr[MO_suppdiff[i][j].suppdiff +1]);
+        }
+        MO_suppdiff_row.push_back(newRow);
+    }
+
+    sort(MO_suppdiff_row.begin(), MO_suppdiff_row.end(), _suppdiff_cnt_arr_decreasing);
+    
+    // MO_suppdiff_chosen_col_idxes.reserve(MO_valid[0].size());
+    for(int i = 0; i < MO_valid[0].size(); i++){
+        MO_suppdiff_chosen_col_idxes.push_back(MO_suppdiff_row[i].suppdiff_cnt_arr[0]);
+    }
+    MO_suppdiff_chosen_row = 0;
+    
+}
+
+void CirMgr::outputHeuristicMatching(vec<Lit>& output_heuristic_assump){ 
+    // output match according to MO_suppdiff_row[MO_suppdiff_chosen_row], MO_suppdiff -> output match -> support input port match (can't match outside)
+    // cout << "outputHeuristicMatching" << endl;
+    output_heuristic_assump.clear();
+    for(int j = 0; j <= MO_suppdiff_chosen_row; j++){
+        int ori_row_index = MO_suppdiff_row[j].original_row_index;
+        int idx1 = MO_suppdiff[MO_suppdiff_chosen_col_idxes[j]][ori_row_index].original_idx1;
+        int idx2 = MO_suppdiff[MO_suppdiff_chosen_col_idxes[j]][ori_row_index].original_idx2;
+        // cout << "ori_row_index: " << ori_row_index << "  idx1: " << idx1 << "  idx2: " << idx2 << endl;
+
+        bool* exist = new bool[MI_valid.size()];
+        for(int i = 0; i < MI_valid.size(); i++) exist[i] = false;
+        for(int i = 0; i < f[idx1]->_funcSupp.size(); i++) exist[u_name_index_ckt1[f[idx1]->_funcSupp[i]->getname()]] = true;
+        exist[MI_valid.size()-1] = true; // enable constant
+        for(int k = 0; k < g[idx2]->_funcSupp.size(); k++){
+            for(int i = 0; i < MI_valid.size(); i++){
+                if(!exist[i]){
+                    output_heuristic_assump.push(~Lit(MI_valid_Var[i][u_name_index_ckt2[g[idx2]->_funcSupp[k]->getname()]]));
+                }
+            }
+        }
+        delete[] exist;
+        
+        for(int i = 0; i < MO_valid.size(); i++){
+            if(i == idx1){
+                output_heuristic_assump.push(Lit(MO_valid_Var[i][idx2]));
+                // cout << "T " << i << " " << idx2 << endl; 
+            }
+            else{
+                output_heuristic_assump.push(~Lit(MO_valid_Var[i][idx2]));
+                // cout << "F " << i << " " << idx2 << endl; 
+            } 
+        }
+    }
+    for(int j = MO_suppdiff_chosen_row+1; j < MO_valid[0].size(); j++){
+        int ori_row_index = MO_suppdiff_row[j].original_row_index;
+        for(int i = 0; i < MO_valid.size(); i++){
+            output_heuristic_assump.push(~Lit(MO_valid_Var[i][ori_row_index]));
+            // cout << "F " << i << " " << ori_row_index << endl;
+        }
+    }
+    
+}
+
+void CirMgr::updateOutputHeuristic_Success(){
+    // cout << "updateOutputHeuristic_Success" << endl;
+    MO_suppdiff_chosen_row++;
+}
+
+bool CirMgr::updateOutputHeuristic_Fail(){
+    // cout << "updateOutputHeuristic_Fail" << endl;
+    
+    if(MO_suppdiff_chosen_col_idxes[MO_suppdiff_chosen_row] == MO_valid.size()-1){
+        MO_suppdiff_chosen_col_idxes[MO_suppdiff_chosen_row] = MO_suppdiff_row[MO_suppdiff_chosen_row].suppdiff_cnt_arr[0];
+        if(MO_suppdiff_chosen_row == 0) return false;
+        else{
+            MO_suppdiff_chosen_row--;
+            // MO_suppdiff_chosen_col_idxes[MO_suppdiff_chosen_row]++;
+            if (updateOutputHeuristic_Fail()) return true;
+            else return false;
+        }
+    }
+    else{
+        MO_suppdiff_chosen_col_idxes[MO_suppdiff_chosen_row]++;
+    }
+    return true;
+    // MO_suppdiff_row[MO_suppdiff_chosen_row].original_row_index
+}

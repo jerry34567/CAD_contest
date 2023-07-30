@@ -17,6 +17,26 @@ enum preprocess
     outputUnateness,
     inputUnateness
 };
+class Supp_Difference{ // Output heuristic pair need to sort support difference, while still able to obtain original idx of f, g (MO_valid_Var) 
+    public:
+        
+        Supp_Difference(int i1, int i2, int sd, Var _v): original_idx1(i1), original_idx2(i2), suppdiff(sd), v(_v) {}
+        Supp_Difference(){}
+        ~Supp_Difference(){}
+        int original_idx1;
+        int original_idx2;
+        int suppdiff; // equal to (g[j]->_funcSupp.size() - f[i]->_funcSupp.size()), if(!MO_valid) -> -1
+        Var v;
+};
+class Supp_Diff_Row{
+    public:
+        Supp_Diff_Row(int _ori_idx, int _max_diff): original_row_index(_ori_idx), max_diff(_max_diff) {}    
+        Supp_Diff_Row() {}    
+        ~Supp_Diff_Row() {}    
+        int original_row_index;
+        int max_diff;
+        vector<int> suppdiff_cnt_arr; // suppdiff_cnt_arr[0]: number of X in a row, suppdiff_cnt_arr[1]: number of 0 in a row. Valid matching choice started from index: suppdiff_cnt_arr[0]
+};
 class symmObj{
     public:
         symmObj(size_t _outputNum, size_t _i): _arrayLength(_outputNum / (sizeof(unsigned long long) * 8) + 1), _index(_i), _numOfinputs(0){
@@ -273,6 +293,10 @@ class CirMgr
         void feasibleBusMatching(); // calculate valid bus match permutation
         void supportBusClassification(); // calculate the bus distribution of each output's inputs
         void symmSign(); // give each input variables a symmsign
+        void sortSuppDiff(); // initially read in MO_valid and sort Supp Difference for MO_suppdiff, sort MO_suppdiff_row
+        void outputHeuristicMatching(vec<Lit>& output_heuristic_assump); // output match according to MO_suppdiff_row[MO_suppdiff_chosen_row], MO_suppdiff -> output match -> support input port match (can't match outside)
+        void updateOutputHeuristic_Success(); // if Match Found -> call this to     MO_suppdiff_chosen_row++, update chosen output matching
+        bool updateOutputHeuristic_Fail();    //return false if really NO MATCH!!!   if Match Not Found -> call this to chosen col idx++, if idx == MO_valid.size()-1 -> MO_suppdiff_chosen_row--, update chosen output matching. IF impossible(real No match) -> return false.
     private:
         int inputNum_ckt1, outputNum_ckt1, inputNum_ckt2, outputNum_ckt2;
         // portnum: i0, i1.., o0, o1..
@@ -290,6 +314,12 @@ class CirMgr
         vector<variable*>         x, y, f, g; // sub2 = -1
         vector<vector<bool>>      MI_valid, MO_valid; // record valid match (without +-)(true: can match, false: invalid match) (matrix version of candidates) (including constant)
         vector<vector<Var>>       MI_valid_Var, MO_valid_Var; // record valid match (without +-)(true: can match, false: invalid match) (matrix version of candidates) (including constant)
+        
+        vector<vector<Supp_Difference>> MO_suppdiff; //     (sort in row)       record row-sorted according to support difference 
+        vector<Supp_Diff_Row>           MO_suppdiff_row; // (sort between rows) record each row's suppdiff count of each number for sorting: most X at top -> if same: most 0 at top...  this is to increase output matching success rate (heuristic)
+        vector<int>                     MO_suppdiff_chosen_col_idxes; // store each row's currently chosen output heuristic matching column index
+        int                             MO_suppdiff_chosen_row; // currently chosen output heuristic row
+
         vector<vector<Var>>       MIbus_Var, MObus_Var;       // record bus match Var, bus_ckt1_input * bus_ckt2_input
         vector<vector<bool>>      MIbus_valid, MObus_valid;   // record bus valid
         vector<size_t>            output0;  // record those output that equals to constant 0 after fraig 
@@ -338,6 +368,13 @@ class CirMgr
                     return 0;
             }
             return 0;
+        }
+        static bool _suppdiff_increasing(Supp_Difference a, Supp_Difference b){return a.suppdiff < b.suppdiff;}
+        static bool _suppdiff_cnt_arr_decreasing(Supp_Diff_Row a, Supp_Diff_Row b){
+            for(int i = 0; i < (a.suppdiff_cnt_arr.size() < b.suppdiff_cnt_arr.size() ? a.suppdiff_cnt_arr.size() : b.suppdiff_cnt_arr.size()); i++){
+                if(a.suppdiff_cnt_arr[i] != b.suppdiff_cnt_arr[i]) return a.suppdiff_cnt_arr[i] > b.suppdiff_cnt_arr[i];
+            }
+            return a.suppdiff_cnt_arr.size() > b.suppdiff_cnt_arr.size();
         }
         void _symmSign(bool _isCkt1); // give each input variables a symmsign
         // void _readSupp(
@@ -422,6 +459,88 @@ class CirMgr
                 cout << endl;
             }
         }
+        void print_ori_MO_suppDiff(){
+            cout << "\nMO_suppDiff " << endl;
+            // for (int i = 0; i < f.size(); i++){
+            //     cout << f[i]->getname() << "\t";
+            // }
+            cout << endl;
+            for (int j = 0; j < MO_valid[0].size(); j++){
+                cout << g[j]->getname() << "\t";
+                for (int i = 0; i < MO_valid.size(); i++){
+                    // cout << MO_valid[i][j];
+                    if(!MO_valid[i][j]) cout << "X\t";
+                    else{
+                        cout << g[j]->_funcSupp.size() - f[i]->_funcSupp.size() << "\t";
+                    }
+                }
+                cout << endl;
+            }
+        }
+        void print_ori_MO_suppDiff_notab(){
+            cout << "\nMO_suppDiff " << endl;
+            // for (int i = 0; i < f.size(); i++){
+            //     cout << f[i]->getname() << "\t";
+            // }
+            cout << endl;
+            for (int j = 0; j < MO_valid[0].size(); j++){
+                cout << g[j]->getname() << "\t";
+                for (int i = 0; i < MO_valid.size(); i++){
+                    // cout << MO_valid[i][j];
+                    if(!MO_valid[i][j]) cout << "X";
+                    else{
+                        cout << g[j]->_funcSupp.size() - f[i]->_funcSupp.size();
+                    }
+                }
+                cout << endl;
+            }
+        }
+        void printMO_suppDiff_notab(){
+            cout << "\nsorted MO_suppDiff " << endl;
+            for(int j = 0; j < MO_suppdiff[0].size(); j++){
+                for(int i = 0; i < MO_suppdiff.size(); i++){
+                    if(MO_suppdiff[i][j].suppdiff == -1)
+                        cout << "X";
+                    else
+                        cout << MO_suppdiff[i][j].suppdiff; 
+                }
+                cout << endl;
+            }
+            cout << "original_idx1" << endl;
+            for(int j = 0; j < MO_suppdiff[0].size(); j++){
+                for(int i = 0; i < MO_suppdiff.size(); i++){
+                    cout << MO_suppdiff[i][j].original_idx1; 
+                }
+                cout << endl;
+            }
+            cout << "original_idx2" << endl;
+            for(int j = 0; j < MO_suppdiff[0].size(); j++){
+                for(int i = 0; i < MO_suppdiff.size(); i++){
+                    cout << MO_suppdiff[i][j].original_idx2; 
+                }
+                cout << endl;
+            }
+        }
+        void print_suppdiff_cnt_arr(){
+            cout << "MO_suppdiff_row suppdiff_cnt_arr " << MO_suppdiff_row.size() << endl;
+            for(int i = 0; i < MO_suppdiff_row.size(); i++){
+                cout << MO_suppdiff_row[i].original_row_index << "\t";
+                for(int j = 0; j < MO_suppdiff_row[i].suppdiff_cnt_arr.size(); j++){
+                    cout << MO_suppdiff_row[i].suppdiff_cnt_arr[j];
+                }
+                cout << endl;
+            }
+            for(int j = 0; j < MO_suppdiff[0].size(); j++){
+                for(int i = 0; i < MO_suppdiff.size(); i++){
+                    if(MO_suppdiff[i][MO_suppdiff_row[j].original_row_index].suppdiff == -1)
+                        cout << "X";
+                    else
+                        cout << MO_suppdiff[i][MO_suppdiff_row[j].original_row_index].suppdiff; 
+                }
+                cout << endl;
+            }
+        }
+
         void printBusIndexes(){
                         //test cirmgr.bus_ckt1_output[i]->indexes
             for(int i = 0; i < bus_ckt1_input.size(); i++){
@@ -453,6 +572,40 @@ class CirMgr
                 cout << endl;
             }
 
+        }
+        void printSupp(){
+            cout << "cir1 PI" << endl;
+            for(int i = 0; i < x.size(); i++){
+                cout << x[i]->getname() << "\t: " << x[i]->_funcSupp_PI.size() << "\t: ";
+                for(int j = 0; j < x[i]->_funcSupp_PI.size(); j++){
+                    cout << x[i]->_funcSupp_PI[j]->getname() << " ";
+                }
+                cout << endl;
+            }
+            cout << "cir2 PI" << endl;
+            for(int i = 0; i < y.size(); i++){
+                cout << y[i]->getname() << "\t: " << y[i]->_funcSupp_PI.size() << "\t: ";
+                for(int j = 0; j < y[i]->_funcSupp_PI.size(); j++){
+                    cout << y[i]->_funcSupp_PI[j]->getname() << " ";
+                }
+                cout << endl;
+            }
+            cout << "cir1 PO" << endl;
+            for(int i = 0; i < f.size(); i++){
+                cout << f[i]->getname() << "\t: " << f[i]->_funcSupp.size() << "\t: ";
+                for(int j = 0; j < f[i]->_funcSupp.size(); j++){
+                    cout << f[i]->_funcSupp[j]->getname() << " ";
+                }
+                cout << endl;
+            }
+            cout << "cir2 PO" << endl;
+            for(int i = 0; i < g.size(); i++){
+                cout << g[i]->getname() << "\t: " << g[i]->_funcSupp.size() << "\t: ";
+                for(int j = 0; j < g[i]->_funcSupp.size(); j++){
+                    cout << g[i]->_funcSupp[j]->getname() << " ";
+                }
+                cout << endl;
+            }
         }
 };
 

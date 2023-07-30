@@ -2309,19 +2309,19 @@ void SatMgr::addBusValidConstraint(SatSolver& s){ // close MIbus_valid, MObus_va
                 close.clear();
             }
              // bus match implies each port in this cir2bus must at least match to one of the port (or constant) in matched cir1bus 
-            // else{ // Bind control of each MIbus_Var/MObus_Var entry to MI_valid_var/MO_valid_var matching(only true(valid bus match) entry will add port matching clause to solver)
-            //     vec<Lit> busMatch;
-            //     for(int c2 = 0; c2 < cirmgr.bus_ckt2_input[j]->getPortNum(); c2++){
-            //         busMatch.push(~Lit(cirmgr.MIbus_Var[i][j]));
-            //         for(int c1 = 0; c1 < cirmgr.bus_ckt1_input[i]->getPortNum(); c1++){
-            //             busMatch.push(Lit(cirmgr.MI_valid_Var[cirmgr.bus_ckt1_input[i]->indexes[c1]][cirmgr.bus_ckt2_input[j]->indexes[c2]]));
-            //         }
-            //         busMatch.push(Lit(cirmgr.MI_valid_Var[cirmgr.MI_valid_Var.size()-1][cirmgr.bus_ckt2_input[j]->indexes[c2]])); // cir2 can bind to constant
+            // // else{ // Bind control of each MIbus_Var/MObus_Var entry to MI_valid_var/MO_valid_var matching(only true(valid bus match) entry will add port matching clause to solver)
+            // //     vec<Lit> busMatch;
+            // //     for(int c2 = 0; c2 < cirmgr.bus_ckt2_input[j]->getPortNum(); c2++){
+            // //         busMatch.push(~Lit(cirmgr.MIbus_Var[i][j]));
+            // //         for(int c1 = 0; c1 < cirmgr.bus_ckt1_input[i]->getPortNum(); c1++){
+            // //             busMatch.push(Lit(cirmgr.MI_valid_Var[cirmgr.bus_ckt1_input[i]->indexes[c1]][cirmgr.bus_ckt2_input[j]->indexes[c2]]));
+            // //         }
+            // //         busMatch.push(Lit(cirmgr.MI_valid_Var[cirmgr.MI_valid_Var.size()-1][cirmgr.bus_ckt2_input[j]->indexes[c2]])); // cir2 can bind to constant
                     
-            //         s.addClause(busMatch);
-            //         busMatch.clear();
-            //     }
-            // }
+            // //         s.addClause(busMatch);
+            // //         busMatch.clear();
+            // //     }
+            // // }
 
         }
         
