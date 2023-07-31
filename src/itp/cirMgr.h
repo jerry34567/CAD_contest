@@ -85,7 +85,7 @@ class variable
 {
     public:
         variable(char type, Var sub1, Var sub2)
-            : _inputSymmGroupIndex(-1),_maxInputSymmGroupIndex(0), _isInSymmGroup(0), _type(type), _sub1(sub1), _sub2(sub2), _busIndex(-1), _busSize(0),_suppSize(0), _inputUnateNum_p(0),_inputUnateNum_n(0),_outputUnateNum(0), _outputGroupingNum(0), _inputUnates(""), _symmGroupIndex(-2){
+            : _outputBinateNum(0),_inputSymmGroupIndex(-1),_maxInputSymmGroupIndex(0), _isInSymmGroup(0), _type(type), _sub1(sub1), _sub2(sub2), _busIndex(-1), _busSize(0),_suppSize(0), _inputUnateNum_p(0),_inputUnateNum_n(0),_outputUnateNum(0), _outputGroupingNum(0), _inputUnates(""), _symmGroupIndex(-2){
         }
         ~variable() {delete _symmOutput;}
 
@@ -119,6 +119,7 @@ class variable
         map<size_t, size_t>&                symmSign(){return _symmSign;}
         map<size_t, size_t>&                inputSymmGroup(){return _inputSymmGroup;}
         size_t                              outputUnateNum() { return _outputUnateNum; }
+        size_t                              outputBinateNum() { return _outputBinateNum; }
         string                              inputUnates() { return _inputUnates; }
         size_t                              inputUnateNum_p() { return _inputUnateNum_p; }
         size_t                              inputUnateNum_n() { return _inputUnateNum_n; }
@@ -138,6 +139,7 @@ class variable
         void                                setInputUnateNum_p(const size_t _s) { _inputUnateNum_p = _s; }
         void                                setInputUnateNum_n(const size_t _s) { _inputUnateNum_n = _s; }
         void                                setOutputUnateNum(const size_t _s) { _outputUnateNum = _s; }
+        void                                setOutputBinateNum(const size_t _s) { _outputBinateNum = _s; }
         void                                setOutputGroupingNum(const size_t _s) { _outputGroupingNum = _s; }
         void                                setSymmGroupIndex(const int _s){_symmGroupIndex = _s;}
         void                                setInputSymmGroupIndex(const int _s){_inputSymmGroupIndex = _s;}
@@ -148,6 +150,7 @@ class variable
         void                                newSymmInput(const size_t _s, const size_t _i){_symmInput = new symmObj(_s, _i);}
         void                                addInputUnateNum_p() { ++_inputUnateNum_p; }
         void                                addInputUnateNum_n() { ++_inputUnateNum_n; }
+        void                                addOutputBinateNum() { ++_outputBinateNum; }
         void                                inputSymmGroupClassification(size_t _input1, size_t _input2);
 
     private:
@@ -168,7 +171,8 @@ class variable
                           // bus it belongs to
         size_t _suppSize; // currently : functional support
         size_t _maxInputSymmGroupIndex; // record the current symm group index
-        // size_t _inputUnateNum;  // how many outputs are unate w.r.t this PI 
+        // size_t _inputUnateNum;  // how many outputs are unate w.r.t this PI
+        size_t _outputBinateNum; // how many binate PIs w.r.t this output 
         size_t _inputUnateNum_p;  // how many outputs are positive unate w.r.t this PI 
         size_t _inputUnateNum_n;  // how many outputs are negative unate w.r.t this PI 
         size_t _outputUnateNum; // the number of output unate variables(i.e., the number of input that makes this output unate)

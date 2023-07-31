@@ -91,7 +91,7 @@ SolverMgr::solveNP3(string& inputFilename) {
     // satmgr.cirmgr.readPreporcess(outputUnateness);
     satmgr.cirmgr.readPreporcess(support);
     satmgr.cirmgr.recordPIsupportPO();
-    // satmgr.cirmgr.readInputUnateness();
+    satmgr.cirmgr.readInputUnateness();
     satmgr.cirmgr.readSymmetric();
     satmgr.cirmgr.outputGrouping();
     satmgr.cirmgr.busSupportUnion();
@@ -118,6 +118,9 @@ SolverMgr::solveNP3(string& inputFilename) {
     satmgr.addBusConstraint_outputSupportSize();
     satmgr.addOutput0Constraint();
     satmgr.addSymmSignConstraint();
+    satmgr.addSupportConstraint_whenInputMatch();
+    satmgr.addSupportConstraint_whenOutputMatch();
+    satmgr.addBinateConstraint();
     // size_t bp = 0;
     
     // size_t BusMatchIdx_I = 0, BusMatchIdx_O = 0;

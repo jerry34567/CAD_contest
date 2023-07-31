@@ -1139,6 +1139,7 @@ void SatMgr::addOutputConstraint_inputBusNum(){
                 cout << "_close" << endl;cnt++;
                 closeMatching(lits, i * 2, j, 0);    //close output positve matching
                 closeMatching(lits, i * 2 + 1, j, 0);    //close output negative matching
+                cirmgr.MO_valid[i][j] = false;
             }
         }
     }
@@ -1171,10 +1172,10 @@ void SatMgr::addSymmSignConstraint(){
     vector<variable*>&x = cirmgr.x, &y = cirmgr.y, &f = cirmgr.f, &g = cirmgr.g;
     for(size_t i = 0, ni = f.size(); i < ni; ++i){
         for(size_t j = 0, nj = g.size(); j < nj; ++j){
-            if(f[i]->_funcSupp.size() == g[j]->_funcSupp.size()){
+            if(f[i]->_funcSupp.size() == g[j]->_funcSupp.size() && cirmgr.MO_valid[i][j] == true){
                 for(size_t k = 0, nk = x.size(); k < nk; ++k){
                     for(size_t l = 0, nl = y.size(); l < nl; ++l){
-                        if(x[k]->checkSymmSign(y[l]->symmSign(), i, j) == false){
+                        if(x[k]->checkSymmSign(y[l]->symmSign(), i, j) == false && cirmgr.MI_valid[k][l] == true){
                             cout << "f" << i << " <-> " << "g" << j << " ; " << "( " << k << " ," << l << " )" << endl;
                             vec<Lit> lits;
                             lits.push(~Lit(cirmgr.MO[i * 2][j]->getVar()));
@@ -1197,6 +1198,96 @@ void SatMgr::addSymmSignConstraint(){
                         }
                     }
                 }
+            }
+        }
+    }
+}
+
+void SatMgr::addSupportConstraint_whenInputMatch(){
+    vector<variable*>&x = cirmgr.x, &y = cirmgr.y, &f = cirmgr.f, &g = cirmgr.g;
+    for(size_t k = 0, nk = x.size(); k < nk; ++k){
+        for(size_t l = 0, nl = y.size(); l < nl; ++l){
+            if(cirmgr.MI_valid[k][l] == true){
+                for(size_t i = 0, ni = f.size(); i < ni; ++i){
+                    for(size_t j = 0, nj = g.size(); j < nj; ++j){
+                        bool cond1 = std::find(x[k]->_funcSupp_PI.begin(), x[k]->_funcSupp_PI.end(), f[i]) == x[k]->_funcSupp_PI.end(); // == true -> not found; == false -> found
+                        bool cond2 = std::find(y[l]->_funcSupp_PI.begin(), y[l]->_funcSupp_PI.end(), g[j]) == y[l]->_funcSupp_PI.end(); // == true -> not found; == false -> found
+                        if((!cond1 && cond2) || (cond1 && !cond2)){
+                            vec<Lit> lits;
+                            lits.push(~Lit(cirmgr.MI[k * 2][l]->getVar()));
+                            lits.push(~Lit(cirmgr.MO[i * 2][j]->getVar()));
+                            solver.addClause(lits);
+                            lits.clear();
+
+                            lits.push(~Lit(cirmgr.MI[k * 2][l]->getVar()));
+                            lits.push(~Lit(cirmgr.MO[i * 2 + 1][j]->getVar()));
+                            solver.addClause(lits);
+                            lits.clear();
+
+                            lits.push(~Lit(cirmgr.MI[k * 2 + 1][l]->getVar()));
+                            lits.push(~Lit(cirmgr.MO[i * 2][j]->getVar()));
+                            solver.addClause(lits);
+                            lits.clear();
+
+                            lits.push(~Lit(cirmgr.MI[k * 2 + 1][l]->getVar()));
+                            lits.push(~Lit(cirmgr.MO[i * 2 + 1][j]->getVar()));
+                            solver.addClause(lits);
+                            lits.clear();
+
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+void SatMgr::addSupportConstraint_whenOutputMatch(){
+    vector<variable*>&x = cirmgr.x, &y = cirmgr.y, &f = cirmgr.f, &g = cirmgr.g;
+    for(size_t i = 0, ni = f.size(); i < ni; ++i){
+        for(size_t j = 0, nj = g.size(); j < nj; ++j){
+            if(cirmgr.MO_valid[i][j] == true){
+                for(size_t k = 0, nk = x.size(); k < nk; ++k){
+                    for(size_t l = 0, nl = y.size(); l < nl; ++l){
+                        bool cond1 = std::find(f[i]->_funcSupp.begin(), f[i]->_funcSupp.end(), x[k]) == f[i]->_funcSupp.end(); // == true -> not found; == false -> found
+                        bool cond2 = std::find(g[j]->_funcSupp.begin(), g[j]->_funcSupp.end(), y[l]) == g[j]->_funcSupp.end(); // == true -> not found; == false -> found
+                        if((!cond1 && cond2) || (cond1 && !cond2)){
+                            vec<Lit> lits;
+                            lits.push(~Lit(cirmgr.MI[k * 2][l]->getVar()));
+                            lits.push(~Lit(cirmgr.MO[i * 2][j]->getVar()));
+                            solver.addClause(lits);
+                            lits.clear();
+
+                            lits.push(~Lit(cirmgr.MI[k * 2][l]->getVar()));
+                            lits.push(~Lit(cirmgr.MO[i * 2 + 1][j]->getVar()));
+                            solver.addClause(lits);
+                            lits.clear();
+
+                            lits.push(~Lit(cirmgr.MI[k * 2 + 1][l]->getVar()));
+                            lits.push(~Lit(cirmgr.MO[i * 2][j]->getVar()));
+                            solver.addClause(lits);
+                            lits.clear();
+
+                            lits.push(~Lit(cirmgr.MI[k * 2 + 1][l]->getVar()));
+                            lits.push(~Lit(cirmgr.MO[i * 2 + 1][j]->getVar()));
+                            solver.addClause(lits);
+                            lits.clear();
+
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+void SatMgr::addBinateConstraint(){
+    vector<variable*>&f = cirmgr.f, &g = cirmgr.g;
+    for(size_t i = 0, ni = f.size(); i < ni; ++i){
+        for(size_t j = 0, nj = g.size(); j < nj; ++j){
+            if(f[i]->outputBinateNum() < g[j]->outputBinateNum()){
+                vec<Lit> lits;
+                closeMatching(lits, i * 2, j, 0);
+                closeMatching(lits, i * 2 + 1, j, 0);
+                cirmgr.MO_valid[i][j] = false;
             }
         }
     }

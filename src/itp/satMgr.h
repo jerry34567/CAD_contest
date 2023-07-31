@@ -81,7 +81,9 @@ class SatMgr
         void addBusValidConstraint(SatSolver& s); // close MIbus_valid, MObus_valid according to |cir1BusSize| <= |cir2BusSize|, also close MIbus_Var, MObus_Var according to MIbus_valid, MObus_valid. Bind control of each MIbus_Var/MObus_Var entry to MI_valid_var/MO_valid_var matching(only true(valid bus match) entry will add port matching clause to solver).
         void addOutput0Constraint(); // close the MO of those output whose = 0 after fraig with other outputs
         void addSymmSignConstraint();   // symmSign constraint in << two-step >>
-
+        void addSupportConstraint_whenInputMatch(); // if ith input & jth input matched, their support's output can't match with those outside of the support
+        void addSupportConstraint_whenOutputMatch(); // if ith output & jth output matched, their support's input can't match with those outside of the support
+        void addBinateConstraint(); // base on the concept that bind to constant only turn binate into unate(not true for opisite direction ==> if f's binate < g's binate -> cannot match
         // only bind input
         // use int _port1, int _port2 to check if _port1 < 0 and if _port2 < 0
         // _p1, _p2 is for command to bind two port with their mnemonics

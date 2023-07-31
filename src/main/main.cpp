@@ -181,8 +181,8 @@ main(int argc, char** argv) {
     gvCmdMgr->execOneCmd(cmd);
 
 
-    // cmd = "abccmd print_unate -v";
-    // gvCmdMgr->execOneCmd(cmd);
+    cmd = "abccmd print_unate -v";
+    gvCmdMgr->execOneCmd(cmd);
 
 
     cmd = "abccmd write_aiger -s top1.aig";
@@ -216,8 +216,8 @@ main(int argc, char** argv) {
 
     // return 0;
 
-    // cmd = "abccmd print_unate -v";
-    // gvCmdMgr->execOneCmd(cmd);
+    cmd = "abccmd print_unate -v";
+    gvCmdMgr->execOneCmd(cmd);
 
     cmd = "abccmd write_aiger -s top2.aig";
     gvCmdMgr->execOneCmd(cmd);

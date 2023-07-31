@@ -586,23 +586,27 @@ CirMgr::_readInputUnateness(ifstream& fInputUnateness, bool _isCkt1) {
     {
         fInputUnateness >> resultingOutputs;
         outputVariables[i]->setInputUnates(resultingOutputs);
-        for(size_t j = 0, nj = resultingOutputs.length(); j < nj; ++j)
-            if(resultingOutputs[j] == 'p')
-            {
-                vector<variable*>& vecVar  = _isCkt1 ? x : y;
-                vecVar[j]->addInputUnateNum_p();
+        for(size_t j = 0, nj = resultingOutputs.length(); j < nj; ++j){
+            if(resultingOutputs[j] == '.'){
+                outputVariables[i]->addOutputBinateNum();
             }
-            else if(resultingOutputs[j] == 'n')
-            {
-                vector<variable*>& vecVar  = _isCkt1 ? x : y;
-                vecVar[j]->addInputUnateNum_n();
-            }
+        }
+            // if(resultingOutputs[j] == 'p')
+            // {
+            //     vector<variable*>& vecVar  = _isCkt1 ? x : y;
+            //     vecVar[j]->addInputUnateNum_p();
+            // }
+            // else if(resultingOutputs[j] == 'n')
+            // {
+            //     vector<variable*>& vecVar  = _isCkt1 ? x : y;
+            //     vecVar[j]->addInputUnateNum_n();
+            // }
     }
+    // return;
+    for(auto i : outputVariables)
+        cout << "( "<<i->outputBinateNum()  << " ) ; ";
+    cout << endl;
     return;
-    // vector<variable*>& vecVar  = _isCkt1 ? x : y;
-    // for(auto i : vecVar)
-    //     cout << "( "<<i->inputUnateNum_p() << " , " << i->inputUnateNum_n() << " ) ; ";
-    // cout << endl;
 }
 // void
 // CirMgr::readBus(string& inputFileName) {
