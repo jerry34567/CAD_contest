@@ -86,7 +86,7 @@ SolverMgr::solveNP3(string& inputFilename) {
     satmgr.initCircuit(satmgr.solver, satmgr.miterSolver, satmgr.cir1Solver, satmgr.cir2Solver, satmgr.verifierSolver);
     satmgr.cirmgr.readCNF(satmgr.miterSolver, satmgr.cir1Solver, satmgr.cir2Solver, satmgr.verifierSolver);
     satmgr.cirmgr.readBus_class(satmgr.solver, inputFilename);
-    satmgr.busMatchExactlyOne(satmgr.solver);
+    // satmgr.busMatchExactlyOne(satmgr.solver);
     // return; //test indexes
     // satmgr.cirmgr.readPreporcess(outputUnateness);
     satmgr.cirmgr.readPreporcess(support);
@@ -118,9 +118,9 @@ SolverMgr::solveNP3(string& inputFilename) {
     satmgr.addBusConstraint_outputSupportSize();
     satmgr.addOutput0Constraint();
     satmgr.addSymmSignConstraint();
-    satmgr.addSupportConstraint_whenInputMatch();
-    satmgr.addSupportConstraint_whenOutputMatch();
-    satmgr.addBinateConstraint();
+    // // satmgr.addSupportConstraint_whenInputMatch();
+    // // satmgr.addSupportConstraint_whenOutputMatch();
+    // // satmgr.addBinateConstraint();
     // size_t bp = 0;
     
     // size_t BusMatchIdx_I = 0, BusMatchIdx_O = 0;
@@ -153,14 +153,17 @@ SolverMgr::solveNP3(string& inputFilename) {
     // }
     // cout << "AAAAAAA125" << endl;
     satmgr.addSymmConstraint(satmgr.solver);
+    cout << "AA158" << endl;
     // satmgr.addSameSuppSizeConstraint(satmgr.solver);
-    satmgr.addCandidateBusConstraint(satmgr.solver);
+    // satmgr.addCandidateBusConstraint(satmgr.solver);
     satmgr.addBusValidConstraint(satmgr.solver);
     // satmgr.cirmgr.printMIMO_valid_notab();
+    cout << "AA162" << endl;
     satmgr.cirmgr.sortSuppDiff();
     satmgr.cirmgr.printMO_suppDiff_notab();
     satmgr.cirmgr.print_suppdiff_cnt_arr();
     // satmgr.cirmgr.printSupp();
+    cout << "AA167" << endl;
 
 
 
@@ -189,6 +192,7 @@ SolverMgr::solveNP3(string& inputFilename) {
     // }
     vec<Lit> output_heuristic_assump;
     bool updateOutputMatching = true;
+    int consecutiveLearn = 0;
 
     while (satmgr.point != (satmgr.cirmgr.outputNum_ckt1 + satmgr.cirmgr.outputNum_ckt2) && time < 3570) {
         // if (level == 0 && next_level){
@@ -234,6 +238,7 @@ SolverMgr::solveNP3(string& inputFilename) {
         if(updateOutputMatching){
             satmgr.cirmgr.outputHeuristicMatching(output_heuristic_assump);
             updateOutputMatching = false;
+            consecutiveLearn = 0;
         }
         SAT1_result = satmgr.solver.assumpSolve(output_heuristic_assump);
         /*
@@ -287,11 +292,11 @@ SolverMgr::solveNP3(string& inputFilename) {
                         // cout << "MI i: " << i << "\tj: " << j << " val: "
                         //      << satmgr.solver.getValue(MI[i][j]->getVar())
                         //      << endl;
-                        cout << "MI i:\t" << i << "\t" <<  ((i%2 == 0 || i >= MI.size() - 2) ? "" : "!") << ((i == MI.size() - 2) ? "0" : (i == MI.size() - 1) ? "1" : satmgr.cirmgr.x[i/2]->getname())
-                             << "\tin bus:\t" << ((i < MI.size() - 2) ? to_string(satmgr.cirmgr.u_name_busIndex_input_ckt1[satmgr.cirmgr.x[i/2]->getname()]) : "")                    
-                             << "\tj:\t"   << j << "\t" <<                             satmgr.cirmgr.y[j]->getname()
-                             << "\tin bus:\t" << satmgr.cirmgr.u_name_busIndex_input_ckt2[satmgr.cirmgr.y[j]->getname()]                    
-                             << endl;
+                        // cout << "MI i:\t" << i << "\t" <<  ((i%2 == 0 || i >= MI.size() - 2) ? "" : "!") << ((i == MI.size() - 2) ? "0" : (i == MI.size() - 1) ? "1" : satmgr.cirmgr.x[i/2]->getname())
+                        //      << "\tin bus:\t" << ((i < MI.size() - 2) ? to_string(satmgr.cirmgr.u_name_busIndex_input_ckt1[satmgr.cirmgr.x[i/2]->getname()]) : "")                    
+                        //      << "\tj:\t"   << j << "\t" <<                             satmgr.cirmgr.y[j]->getname()
+                        //      << "\tin bus:\t" << satmgr.cirmgr.u_name_busIndex_input_ckt2[satmgr.cirmgr.y[j]->getname()]                    
+                        //      << endl;
                     }
                     else if (satmgr.solver.getValue(MI[i][j]->getVar()) ==0) {
                         Lit v = ~Lit(MI[i][j]->getVar2());
@@ -320,11 +325,11 @@ SolverMgr::solveNP3(string& inputFilename) {
                         // cout << "MO i: " << i << " j: " << j << " val: "
                         //      << satmgr.solver.getValue(MO[i][j]->getVar())
                         //      << endl;
-                        cout << "MO i:\t" << i << "\t" <<  ((i%2 == 0) ? "" : "!") << satmgr.cirmgr.f[i/2]->getname()
-                             << "\tin bus:\t" << satmgr.cirmgr.u_name_busIndex_output_ckt1[satmgr.cirmgr.f[i/2]->getname()]                    
-                             << "\tj:\t"   << j << "\t" <<                             satmgr.cirmgr.g[j]->getname()
-                             << "\tin bus:\t" << satmgr.cirmgr.u_name_busIndex_output_ckt2[satmgr.cirmgr.g[j]->getname()]                    
-                             << endl;
+                        // cout << "MO i:\t" << i << "\t" <<  ((i%2 == 0) ? "" : "!") << satmgr.cirmgr.f[i/2]->getname()
+                        //      << "\tin bus:\t" << satmgr.cirmgr.u_name_busIndex_output_ckt1[satmgr.cirmgr.f[i/2]->getname()]                    
+                        //      << "\tj:\t"   << j << "\t" <<                             satmgr.cirmgr.g[j]->getname()
+                        //      << "\tin bus:\t" << satmgr.cirmgr.u_name_busIndex_output_ckt2[satmgr.cirmgr.g[j]->getname()]                    
+                        //      << endl;
                         // collect matched outputs' function support
                         for (int k = 0, n = satmgr.cirmgr.g[j]->_funcSupp.size(); k < n; k++) {
                             circuit2_func_supp_union.insert(satmgr.cirmgr.g[j]->_funcSupp[k]);
@@ -367,7 +372,7 @@ SolverMgr::solveNP3(string& inputFilename) {
 
             satmgr.solver.addClause(be_searched);
             be_searched.clear();
-            cout << endl;
+            // cout << endl;
 
             SAT2_result = satmgr.miterSolver.assumpSolve(assump);
             stop = clock();
@@ -429,6 +434,7 @@ SolverMgr::solveNP3(string& inputFilename) {
             } else {
                 // cout << "ELSE" << endl;
                 satmgr.AddLearnedClause(satmgr.solver, satmgr.cir1Solver, satmgr.cir2Solver, satmgr.miterSolver);
+                // cout << "consecutiveLearn: " << consecutiveLearn++ << endl;
                 // AddLearnedClause_const(solver, miterSolver);
                 // if(finding_output){
                 //     satmgr.funcSuppInputConstraint(MO_no_pos_neg_pair, BusMatchIdx_I, BusMatchIdx_O, find_input_given_output_assump);

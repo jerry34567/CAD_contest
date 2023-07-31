@@ -503,10 +503,11 @@ class CirMgr
             cout << "\nsorted MO_suppDiff " << endl;
             for(int j = 0; j < MO_suppdiff[0].size(); j++){
                 for(int i = 0; i < MO_suppdiff.size(); i++){
-                    if(MO_suppdiff[i][j].suppdiff == -1)
-                        cout << "X";
-                    else
-                        cout << MO_suppdiff[i][j].suppdiff; 
+                    // if(MO_suppdiff[i][j].suppdiff == -1)
+                    //     cout << "X";
+                    // else
+                    //     cout << MO_suppdiff[i][j].suppdiff; 
+                    cout << int(g[j]->_funcSupp.size()) - int(f[i]->_funcSupp.size()) << "\t";
                 }
                 cout << endl;
             }
