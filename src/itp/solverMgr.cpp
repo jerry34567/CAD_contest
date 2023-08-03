@@ -155,7 +155,7 @@ SolverMgr::solveNP3(string& inputFilename) {
     satmgr.addSymmConstraint(satmgr.solver);
     cout << "AA158" << endl;
     // satmgr.addSameSuppSizeConstraint(satmgr.solver);
-    // satmgr.addCandidateBusConstraint(satmgr.solver);
+    satmgr.addCandidateBusConstraint(satmgr.solver);
     satmgr.addBusValidConstraint(satmgr.solver);
     // satmgr.cirmgr.printMIMO_valid_notab();
     cout << "AA162" << endl;

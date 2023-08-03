@@ -1015,7 +1015,7 @@ void SatMgr::addSameSuppSizeConstraint(SatSolver& s)
                         f_temp.insert(cirmgr.u_name_index_ckt1[f[i]->_funcSupp[a]->getname()]);
                     }
                     for (int b = 0, n3 = g[j]->_funcSupp.size(); b < n3; b++) {
-                        for (int c = 0, n4 = cirmgr.inputNum_ckt1 + 1; c < n4; c++) {
+                        for (int c = 0, n4 = cirmgr.inputNum_ckt1; c < n4; c++) {
                             vec<Lit> v;
                             v.push(~Lit(cirmgr.MO_valid_Var[i][j]));
                             if (!f_temp.count(c)) {

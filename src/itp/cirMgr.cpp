@@ -1228,7 +1228,7 @@ readBus_class(SatSolver& s, string& inputfilename){
                     if(!exist[gidx]){
                         vec<Lit> invalid_match;
                         invalid_match.push(~Lit(v));
-                        invalid_match.push(~Lit(MI_valid_Var[bus_ckt1_output[i]->indexes[i1]][gidx]));
+                        invalid_match.push(~Lit(MO_valid_Var[bus_ckt1_output[i]->indexes[i1]][gidx]));
                         s.addClause(invalid_match);
                         invalid_match.clear();
                     }
