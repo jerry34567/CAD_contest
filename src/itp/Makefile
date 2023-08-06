@@ -1,5 +1,5 @@
 PKGFLAG   =
-EXTHDRS   = gvSatCmd.h sat.h VarOrder.h cirMgr.h satMgr.h solverMgr.h
+EXTHDRS   = gvSatCmd.h sat.h cirMgr.h satMgr.h solverMgr.h
 
 
 include ../Makefile.in

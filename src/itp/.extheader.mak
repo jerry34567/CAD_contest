@@ -1,13 +1,10 @@
-itp.d: ../../include/gvSatCmd.h ../../include/sat.h ../../include/VarOrder.h ../../include/cirMgr.h ../../include/satMgr.h ../../include/solverMgr.h 
+itp.d: ../../include/gvSatCmd.h ../../include/sat.h ../../include/cirMgr.h ../../include/satMgr.h ../../include/solverMgr.h 
 ../../include/gvSatCmd.h: gvSatCmd.h
 	@rm -f ../../include/gvSatCmd.h
 	@ln -fs ../src/itp/gvSatCmd.h ../../include/gvSatCmd.h
 ../../include/sat.h: sat.h
 	@rm -f ../../include/sat.h
 	@ln -fs ../src/itp/sat.h ../../include/sat.h
-../../include/VarOrder.h: VarOrder.h
-	@rm -f ../../include/VarOrder.h
-	@ln -fs ../src/itp/VarOrder.h ../../include/VarOrder.h
 ../../include/cirMgr.h: cirMgr.h
 	@rm -f ../../include/cirMgr.h
 	@ln -fs ../src/itp/cirMgr.h ../../include/cirMgr.h

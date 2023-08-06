@@ -69,6 +69,26 @@ SolverMgr::verification(bool isManualBinded) {
 
 void
 SolverMgr::solveNP3(string& inputFilename) {
+    //Cadical solver playground
+    // satmgr.solver.initialize();
+    // Var a = satmgr.solver.newVar();
+    // Var b = satmgr.solver.newVar();
+    // vec<Lit> l;
+    // Lit la = Lit(a);
+    // Lit lb = ~Lit(b);
+    // l.push(la);
+    // l.push(lb);
+    // // l.push(Lit(a));
+    // // l.push(~Lit(b));
+    // satmgr.solver.addClause(l);
+    // l.clear();
+    // cout << "\n---------------------------------------------\n";
+    // cout << (satmgr.solver.solve() ? "sat" : "unsat") << endl;
+    // cout << satmgr.solver.getValue(a) << endl;
+    // cout << satmgr.solver.getValue(b) << endl;
+    // cout << "\n---------------------------------------------\n";
+    // return;
+    // end
     double time;
     clock_t start, stop;
     start = clock();
@@ -388,6 +408,8 @@ SolverMgr::solveNP3(string& inputFilename) {
                 for (int i = 0, n = MO.size(); i < n; i = i + 2){
                     bool temp_bool = false;
                     for (int j = 0, u = MO[i].size(); j < u; j++){
+                        cout << "415 solver : " << satmgr.solver.status() << endl;
+                        cout << "416 mitersolver : " << satmgr.miterSolver.status() << endl;
                         if ((satmgr.solver.getValue(MO[i][j]->getVar()) +
                              satmgr.solver.getValue(MO[i + 1][j]->getVar())) == 1) {
                             temp_bool = true;

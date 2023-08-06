@@ -17,6 +17,7 @@ ENGPKGS	 += lgl
 ENGPKGS	 += btor2parser
 #ENGPKGS	 += minisat
 ENGPKGS	 += abcc
+ENGPKGS	 += cadical
 # ENGPKGS	 += yosys
 
 ENGSSRC	 = eng

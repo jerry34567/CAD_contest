@@ -11,6 +11,7 @@
 #include <algorithm>
 // #include "satMgr.h"
 
+using namespace std;
 enum preprocess
 {
     support,
