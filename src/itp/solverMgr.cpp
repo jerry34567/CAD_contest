@@ -118,6 +118,8 @@ SolverMgr::solveNP3(string& inputFilename) {
     satmgr.addBusConstraint_outputSupportSize();
     satmgr.addOutput0Constraint();
     satmgr.addSymmSignConstraint();
+
+    satmgr.fAtMostOneMatch(satmgr.solver); // test at most one 1 in MO_valid_var column
     // // satmgr.addSupportConstraint_whenInputMatch();
     // // satmgr.addSupportConstraint_whenOutputMatch();
     // // satmgr.addBinateConstraint();
@@ -428,6 +430,7 @@ SolverMgr::solveNP3(string& inputFilename) {
                         satmgr.record_output.push_back(temp);
                     }
                     satmgr.reportResult(satmgr.solver);
+                    cout << "MO_suppdiff_chosen_row: " << satmgr.cirmgr.MO_suppdiff_chosen_row << endl;
                     cout << inputFilename << endl;
                     cout << "point : " << float(satmgr.point) / float(satmgr.cirmgr.outputNum_ckt1 + satmgr.cirmgr.outputNum_ckt2) << endl;
                 }

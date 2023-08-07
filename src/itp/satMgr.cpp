@@ -363,7 +363,7 @@ SatMgr::generateResult() {
     if (!constGroup.empty()) {
         fout << "CONSTGROUP" << endl;
         for (unordered_map<string, bool>::iterator i = constGroup.begin(); i != constGroup.end(); i++)
-            fout << ((*i).second ? "+ " : "- ") << (*i).first << endl;
+            fout << ((*i).second ? "- " : "+ ") << (*i).first << endl;
         fout << "END" << endl;
     }
     fout.close();
@@ -558,10 +558,10 @@ void SatMgr::busMatchExactlyOne(SatSolver& s){
         constraint_Cmdr_nocontrol(s, tmp, true);
         tmp.clear();
     }
-    for(int j = 0; j < cirmgr.MO_valid_Var[0].size(); j++){
+    for(int j = 0; j < cirmgr.MObus_Var[0].size(); j++){
         vector<Var> tmp;
-        for(int i = 0; i < cirmgr.MO_valid_Var.size(); i++){
-            tmp.push_back(cirmgr.MO_valid_Var[i][j]);
+        for(int i = 0; i < cirmgr.MObus_Var.size(); i++){
+            tmp.push_back(cirmgr.MObus_Var[i][j]);
         }
         constraint_Cmdr_nocontrol(s, tmp, true);
         tmp.clear();
@@ -1776,6 +1776,7 @@ SatMgr::readCNF(SatSolver& s_miter,
 // }*/
 void
 SatMgr::AddLearnedClause(SatSolver& s, SatSolver& s_cir1, SatSolver& s_cir2, SatSolver& s_miter) {
+    // cout << "AddLearnedClause start" << endl;
     vec<Lit>                  lits, lits_e; // ex: lits_e:  (not e + not c11)...
     // vec<Lit>                  temp_lits;
     vector<vector<variable*> >&MI = cirmgr.MI, &MO = cirmgr.MO;
@@ -1883,6 +1884,7 @@ SatMgr::AddLearnedClause(SatSolver& s, SatSolver& s_cir1, SatSolver& s_cir2, Sat
             lits.clear();
         }
     }
+    // cout << "AddLearnedClause end" << endl;
 
 
 /*
@@ -2485,5 +2487,10 @@ SatMgr::closeMatching(vec<Lit> &lits, size_t _i, size_t _j, bool _isInput){  // 
         lits.push(~Lit(cirmgr.MO[_i][_j]->getVar()));
         solver.addClause(lits);
         lits.clear();
+    }
+}
+void SatMgr::fAtMostOneMatch(SatSolver& s){
+    for(int i = 0; i < cirmgr.MO_valid.size(); i++){
+        constraint_Cmdr_nocontrol(s, cirmgr.MO_valid_Var[i], true);
     }
 }
