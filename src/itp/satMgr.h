@@ -84,6 +84,7 @@ class SatMgr
         void addSupportConstraint_whenInputMatch(); // if ith input & jth input matched, their support's output can't match with those outside of the support
         void addSupportConstraint_whenOutputMatch(); // if ith output & jth output matched, their support's input can't match with those outside of the support
         void addBinateConstraint(); // base on the concept that bind to constant only turn binate into unate(not true for opisite direction ==> if f's binate < g's binate -> cannot match
+        void fAtMostOneMatch(SatSolver& s);
         // only bind input
         // use int _port1, int _port2 to check if _port1 < 0 and if _port2 < 0
         // _p1, _p2 is for command to bind two port with their mnemonics

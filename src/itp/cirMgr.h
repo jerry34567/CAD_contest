@@ -9,6 +9,7 @@
 #include <unordered_set>
 #include <vector>
 #include <algorithm>
+#include <cmath>
 // #include "satMgr.h"
 
 using namespace std;
@@ -18,16 +19,22 @@ enum preprocess
     outputUnateness,
     inputUnateness
 };
+class variable;
+
 class Supp_Difference{ // Output heuristic pair need to sort support difference, while still able to obtain original idx of f, g (MO_valid_Var) 
     public:
         
-        Supp_Difference(int i1, int i2, int sd, Var _v): original_idx1(i1), original_idx2(i2), suppdiff(sd), v(_v) {}
+        Supp_Difference(int i1, int i2, int sd, Var _v, variable* _f, variable* _g): original_idx1(i1), original_idx2(i2), suppdiff(sd), v(_v), f_var(_f), g_var(_g) {}
         Supp_Difference(){}
+        Supp_Difference(const Supp_Difference &t): original_idx1(t.original_idx1), original_idx2(t.original_idx2), suppdiff(t.suppdiff), v(t.v), weight_sort(t.weight_sort) {}
         ~Supp_Difference(){}
         int original_idx1;
         int original_idx2;
         int suppdiff; // equal to (g[j]->_funcSupp.size() - f[i]->_funcSupp.size()), if(!MO_valid) -> -1
         Var v;
+        double weight_sort; // suppdiff ^ 2 + f[original_idx1]->selected_times ^ 2, can add some weighted. To sort in row.
+        variable* f_var;
+        variable* g_var;
 };
 class Supp_Diff_Row{
     public:
@@ -125,6 +132,7 @@ class variable
         size_t                              inputUnateNum_p() { return _inputUnateNum_p; }
         size_t                              inputUnateNum_n() { return _inputUnateNum_n; }
         size_t                              outputGroupingNum() { return _outputGroupingNum; }
+        int                                 getSelected_times() {return selected_times;}
         void                                settype(const char& v) { _type = v; }
         void                                setIsInSymmGroup(const bool _b){_isInSymmGroup = _b;}
         void                                setname(const string& name) { _name = name; }
@@ -153,6 +161,7 @@ class variable
         void                                addInputUnateNum_n() { ++_inputUnateNum_n; }
         void                                addOutputBinateNum() { ++_outputBinateNum; }
         void                                inputSymmGroupClassification(size_t _input1, size_t _input2);
+        void                                setSelected_times(int _s) {selected_times = _s;}
 
     private:
         char    _type;
@@ -190,6 +199,7 @@ class variable
         vector<size_t> _inputSymmGroupSize; // the vector of input symmGroup size, the index is identical to the one in the map.second
         // unsigned long long _suppBus; 
         // Var _aigVar; do we need this??
+        int     selected_times; // record selected times in output heuristic pair (only for f variables)
 };
 
 class Cmdr // commander variable encoding for constraint 2 and 3
@@ -302,6 +312,7 @@ class CirMgr
         void outputHeuristicMatching(vec<Lit>& output_heuristic_assump); // output match according to MO_suppdiff_row[MO_suppdiff_chosen_row], MO_suppdiff -> output match -> support input port match (can't match outside)
         void updateOutputHeuristic_Success(); // if Match Found -> call this to     MO_suppdiff_chosen_row++, update chosen output matching
         bool updateOutputHeuristic_Fail();    //return false if really NO MATCH!!!   if Match Not Found -> call this to chosen col idx++, if idx == MO_valid.size()-1 -> MO_suppdiff_chosen_row--, update chosen output matching. IF impossible(real No match) -> return false.
+        void throwToLastRow(int row);  // throw MO_suppdiff_chosen_row row to last
     private:
         int inputNum_ckt1, outputNum_ckt1, inputNum_ckt2, outputNum_ckt2;
         // portnum: i0, i1.., o0, o1..
@@ -320,10 +331,14 @@ class CirMgr
         vector<vector<bool>>      MI_valid, MO_valid; // record valid match (without +-)(true: can match, false: invalid match) (matrix version of candidates) (including constant)
         vector<vector<Var>>       MI_valid_Var, MO_valid_Var; // record valid match (without +-)(true: can match, false: invalid match) (matrix version of candidates) (including constant)
         
-        vector<vector<Supp_Difference>> MO_suppdiff; //     (sort in row)       record row-sorted according to support difference 
+        vector<vector<Supp_Difference* >> MO_suppdiff; //     (sort in row)       record row-sorted according to support difference 
         vector<Supp_Diff_Row>           MO_suppdiff_row; // (sort between rows) record each row's suppdiff count of each number for sorting: most X at top -> if same: most 0 at top...  this is to increase output matching success rate (heuristic)
         vector<int>                     MO_suppdiff_chosen_col_idxes; // store each row's currently chosen output heuristic matching column index
         int                             MO_suppdiff_chosen_row; // currently chosen output heuristic row
+        // vector<int>                     MO_suppdiff_omit_rows; // store those
+        int                             MO_suppdiff_omit_row; // store those
+        // int                             MO_suppdiff_success_count; 
+        // int                             MO_suppdiff_fail_count; 
 
         vector<vector<Var>>       MIbus_Var, MObus_Var;       // record bus match Var, bus_ckt1_input * bus_ckt2_input
         vector<vector<bool>>      MIbus_valid, MObus_valid;   // record bus valid
@@ -374,13 +389,14 @@ class CirMgr
             }
             return 0;
         }
-        static bool _suppdiff_increasing(Supp_Difference a, Supp_Difference b){return a.suppdiff < b.suppdiff;}
+        static bool _suppdiff_increasing(Supp_Difference* a, Supp_Difference* b){return a->suppdiff < b->suppdiff;}
         static bool _suppdiff_cnt_arr_decreasing(Supp_Diff_Row a, Supp_Diff_Row b){
             for(int i = 0; i < (a.suppdiff_cnt_arr.size() < b.suppdiff_cnt_arr.size() ? a.suppdiff_cnt_arr.size() : b.suppdiff_cnt_arr.size()); i++){
                 if(a.suppdiff_cnt_arr[i] != b.suppdiff_cnt_arr[i]) return a.suppdiff_cnt_arr[i] > b.suppdiff_cnt_arr[i];
             }
             return a.suppdiff_cnt_arr.size() > b.suppdiff_cnt_arr.size();
         }
+        static bool _suppdiff_weight_sort(Supp_Difference* a, Supp_Difference* b){return a->weight_sort < b->weight_sort;}
         void _symmSign(bool _isCkt1); // give each input variables a symmsign
         // void _readSupp(
         //     ifstream& fbus,
@@ -515,14 +531,14 @@ class CirMgr
             cout << "original_idx1" << endl;
             for(int j = 0; j < MO_suppdiff[0].size(); j++){
                 for(int i = 0; i < MO_suppdiff.size(); i++){
-                    cout << MO_suppdiff[i][j].original_idx1; 
+                    cout << MO_suppdiff[i][j]->original_idx1; 
                 }
                 cout << endl;
             }
             cout << "original_idx2" << endl;
             for(int j = 0; j < MO_suppdiff[0].size(); j++){
                 for(int i = 0; i < MO_suppdiff.size(); i++){
-                    cout << MO_suppdiff[i][j].original_idx2; 
+                    cout << MO_suppdiff[i][j]->original_idx2; 
                 }
                 cout << endl;
             }
@@ -538,10 +554,10 @@ class CirMgr
             }
             for(int j = 0; j < MO_suppdiff[0].size(); j++){
                 for(int i = 0; i < MO_suppdiff.size(); i++){
-                    if(MO_suppdiff[i][MO_suppdiff_row[j].original_row_index].suppdiff == -1)
+                    if(MO_suppdiff[i][MO_suppdiff_row[j].original_row_index]->suppdiff == -1)
                         cout << "X";
                     else
-                        cout << MO_suppdiff[i][MO_suppdiff_row[j].original_row_index].suppdiff; 
+                        cout << MO_suppdiff[i][MO_suppdiff_row[j].original_row_index]->suppdiff; 
                 }
                 cout << endl;
             }
@@ -611,6 +627,14 @@ class CirMgr
                     cout << g[i]->_funcSupp[j]->getname() << " ";
                 }
                 cout << endl;
+            }
+        }
+        void print_f_selected_times(){
+            cout << "print_f_selected_times" << endl;
+            for(int i = 0; i < f.size(); i++){
+                if(f[i]->getSelected_times() != 0){
+                    cout << f[i]->getname() << " " << f[i]->getSelected_times() << endl;
+                }
             }
         }
 };
