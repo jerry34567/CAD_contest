@@ -345,25 +345,25 @@ SatMgr::generateResult() {
     if (!inputGroup.empty()) {
         for (unordered_map<string, Group>::iterator i = inputGroup.begin(); i != inputGroup.end(); i++) {
             fout << "INGROUP" << endl;
-            fout << "1 + " << (*i).first << endl;
+            fout << "1 + <" << (*i).first << ">"<< endl;
             for (vector<std::pair<std::string, bool>>::iterator j = (*i).second.group().begin(); j != (*i).second.group().end(); j++)
-                fout << "2" << ((*j).second ? " + " : " - ") << (*j).first << endl;
+                fout << "2" << ((*j).second ? " + <" : " - <") << (*j).first  << ">"<< endl;
             fout << "END" << endl;
         }
     }
     if (!outputGroup.empty()) {
         for (unordered_map<string, Group>::iterator i = outputGroup.begin(); i != outputGroup.end(); i++) {
             fout << "OUTGROUP" << endl;
-            fout << "1 + " << (*i).first << endl;
+            fout << "1 + <" << (*i).first << ">"<<  endl;
             for (vector<std::pair<std::string, bool>>::iterator j = (*i).second.group().begin(); j != (*i).second.group().end(); j++)
-                fout << "2" << ((*j).second ? " + " : " - ") << (*j).first << endl;
+                fout << "2" << ((*j).second ? " + <" : " - <") << (*j).first<< ">" << endl;
             fout << "END" << endl;
         }
     }
     if (!constGroup.empty()) {
         fout << "CONSTGROUP" << endl;
         for (unordered_map<string, bool>::iterator i = constGroup.begin(); i != constGroup.end(); i++)
-            fout << ((*i).second ? "- " : "+ ") << (*i).first << endl;
+            fout << ((*i).second ? "- <" : "+ <") << (*i).first << ">" << endl;
         fout << "END" << endl;
     }
     fout.close();
@@ -1451,7 +1451,14 @@ SatMgr::initCircuit(SatSolver& s, SatSolver& s_miter, SatSolver& s_cir1, SatSolv
         cirmgr.MO_valid_Var.push_back(tmp_var);
     }
 
-
+    for(size_t i = 0, ni = cirmgr.MI_valid_Var.size(); i < ni - 1; ++i){
+        vec<Lit> lits;
+        for(size_t j = 0, nj = cirmgr.MI_valid_Var[0].size(); j < nj; ++j){
+            lits.push(Lit(cirmgr.MI_valid_Var[i][j]));
+        }
+        solver.addClause(lits);
+        lits.clear();
+    }
     // test cmdr
     //  constraint2(s);
     constraint_Cmdr(s, cirmgr.MO, true); // commander version of constraint 2
