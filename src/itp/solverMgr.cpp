@@ -298,7 +298,7 @@ SolverMgr::solveNP3(string& inputFilename) {
             
         }
         else {
-            unordered_set<variable*>  circuit2_func_supp_union;
+            // set<variable*>            circuit1_func_supp_union;
             vec<Lit>                  assump;
             vec<Lit>                  be_searched;
             vector<vector<variable*>>&MI = satmgr.cirmgr.MI,
@@ -352,11 +352,12 @@ SolverMgr::solveNP3(string& inputFilename) {
                         //      << "\tj:\t"   << j << "\t" <<                             satmgr.cirmgr.g[j]->getname()
                         //      << "\tin bus:\t" << satmgr.cirmgr.u_name_busIndex_output_ckt2[satmgr.cirmgr.g[j]->getname()]                    
                         //      << endl;
+
                         // collect matched outputs' function support
-                        for (int k = 0, n = satmgr.cirmgr.g[j]->_funcSupp.size(); k < n; k++) {
-                            circuit2_func_supp_union.insert(satmgr.cirmgr.g[j]->_funcSupp[k]);
-                            // cout << "cir2: " << satmgr.cirmgr.g[j]->_funcSupp[k]->getname() << endl;
-                        }
+                        // for (int k = 0, n = satmgr.cirmgr.f[i / 2]->_funcSupp.size(); k < n; k++) {
+                        //     circuit1_func_supp_union.insert(satmgr.cirmgr.f[i / 2]->_funcSupp[k]);
+                        //     // cout << "cir2: " << satmgr.cirmgr.g[j]->_funcSupp[k]->getname() << endl;
+                        // }
                     
                     } else if (satmgr.solver.getValue(MO[i][j]->getVar()) == 0) {
                         Lit v1 = Lit(MO[i][j]->getVar());
@@ -382,14 +383,19 @@ SolverMgr::solveNP3(string& inputFilename) {
             //     }
             // }
 
-            // assign 0 to inrelevant cir2's input
-            for (int i = 0, n = satmgr.cirmgr.y.size(); i < n; i++) {
-                if (!circuit2_func_supp_union.count(satmgr.cirmgr.y[i])){
-                    Lit v = ~Lit(satmgr.cirmgr.y[i]->getVar2());
-                    // cout << satmgr.cirmgr.y[i]->getname() << endl;
-                    // cout << satmgr.cirmgr.y[i]->getname() << endl;
-                    assump.push(v);
-                }
+            // assign 0 to irrelevant cir1's input
+            // for (int i = 0, n = satmgr.cirmgr.x.size(); i < n; i++) {
+            //     if (!circuit1_func_supp_union.count(satmgr.cirmgr.x[i])){
+            //         // satmgr.miterSolver.assumeProperty(satmgr.cirmgr.y[i]->getVar2(), 0);
+            //         Lit v = ~Lit(satmgr.cirmgr.x[i]->getVar2());
+            //         // cout << satmgr.cirmgr.y[i]->getname() << endl;
+            //         // cout << satmgr.cirmgr.y[i]->getname() << endl;
+            //         assump.push(v);
+            //     }
+            // }
+            for(std::set<variable*>::iterator it = satmgr.cirmgr.circuit1_func_supp_union.begin(), n1 = satmgr.cirmgr.circuit1_func_supp_union.end(); it != n1; ++it){
+                Lit v = ~Lit((*it)->getVar2());
+                assump.push(v);
             }
 
             satmgr.solver.addClause(be_searched);
@@ -410,8 +416,6 @@ SolverMgr::solveNP3(string& inputFilename) {
                 for (int i = 0, n = MO.size(); i < n; i = i + 2){
                     bool temp_bool = false;
                     for (int j = 0, u = MO[i].size(); j < u; j++){
-                        cout << "415 solver : " << satmgr.solver.status() << endl;
-                        cout << "416 mitersolver : " << satmgr.miterSolver.status() << endl;
                         if ((satmgr.solver.getValue(MO[i][j]->getVar()) +
                              satmgr.solver.getValue(MO[i + 1][j]->getVar())) == 1) {
                             temp_bool = true;

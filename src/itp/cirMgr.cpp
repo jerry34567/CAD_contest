@@ -6,6 +6,7 @@
 #include <bitset>
 #include <sstream>
 #include <iomanip>
+#include <set>
 
 bool variable::checkSymmSign(map<size_t, size_t>& _ss, size_t _p, size_t _q){   //_ss is the symmSign of y[l], _p is fp, _q is gq
     bool tmp1 = _ss.find(_q) == _ss.end(), tmp2 = _symmSign.find(_p) == _symmSign.end();
@@ -1378,6 +1379,11 @@ void CirMgr::outputHeuristicMatching(vec<Lit>& output_heuristic_assump){
     // output match according to MO_suppdiff_row[MO_suppdiff_chosen_row], MO_suppdiff -> output match -> support input port match (can't match outside)
     // cout << "outputHeuristicMatching" << endl;
     output_heuristic_assump.clear();
+    
+    // assign 0 to irrelevant input
+    circuit1_func_supp_union.clear();
+    circuit2_func_supp_union.clear();  
+
     for(int j = 0; j <= MO_suppdiff_chosen_row; j++){
         int ori_row_index = MO_suppdiff_row[j].original_row_index;
         int idx1 = MO_suppdiff[MO_suppdiff_chosen_col_idxes[j]][ori_row_index]->original_idx1;
@@ -1386,9 +1392,13 @@ void CirMgr::outputHeuristicMatching(vec<Lit>& output_heuristic_assump){
 
         bool* exist = new bool[MI_valid.size()];
         for(int i = 0; i < MI_valid.size(); i++) exist[i] = false;
-        for(int i = 0; i < f[idx1]->_funcSupp.size(); i++) exist[u_name_index_ckt1[f[idx1]->_funcSupp[i]->getname()]] = true;
+        for(int i = 0; i < f[idx1]->_funcSupp.size(); i++){
+            circuit1_func_supp_union.insert(f[idx1]->_funcSupp[i]);
+            exist[u_name_index_ckt1[f[idx1]->_funcSupp[i]->getname()]] = true;
+        } 
         exist[MI_valid.size()-1] = true; // enable constant
         for(int k = 0; k < g[idx2]->_funcSupp.size(); k++){
+            circuit2_func_supp_union.insert(g[idx2]->_funcSupp[k]); // assign 0 to irrelevant input
             for(int i = 0; i < MI_valid.size(); i++){
                 if(!exist[i]){
                     output_heuristic_assump.push(~Lit(MI_valid_Var[i][u_name_index_ckt2[g[idx2]->_funcSupp[k]->getname()]]));
@@ -1415,7 +1425,23 @@ void CirMgr::outputHeuristicMatching(vec<Lit>& output_heuristic_assump){
             // cout << "F " << i << " " << ori_row_index << endl;
         }
     }
-    
+    assert(circuit1_func_supp_union <= circuit2_func_supp_union);   //      如果circuit1_func_supp_union > circuit2_func_supp_union -> 一定要跳掉！！！！不然每個直航一定要有1的constraint會沒辦法達成
+    for(std::set<variable*>::iterator it1 = circuit1_func_supp_union.begin(), n1 = circuit1_func_supp_union.end(), it2 = circuit2_func_supp_union.begin(), n2 = circuit2_func_supp_union.end();; ++it1, ++it2){
+        if(it1 == n1){
+            if(it2 != n2){
+                for(std::set<variable*>::iterator it3 = it2, n3 = n2; it3 != n3; ++it3){
+                    output_heuristic_assump.push(Lit(MI[((*circuit1_func_supp_union.begin())->getSub1() - 1) * 2][(*it3)->getSub1() - 1]->getVar()));
+                }
+            }
+            break;
+        }
+        output_heuristic_assump.push(Lit(MI[((*it1)->getSub1() - 1) * 2][(*it2)->getSub1() - 1]->getVar()));
+    }
+    for(size_t j = 0, n = y.size(); j < n; ++j){
+        if(!circuit2_func_supp_union.count(y[j])){
+            output_heuristic_assump.push(Lit(MI[MI.size() - 1][j]->getVar()));
+        }
+    }
 }
 
 void CirMgr::updateOutputHeuristic_Success(){

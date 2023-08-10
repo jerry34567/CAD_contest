@@ -1450,7 +1450,8 @@ SatMgr::initCircuit(SatSolver& s, SatSolver& s_miter, SatSolver& s_cir1, SatSolv
         cirmgr.MO_valid.push_back(tmp);
         cirmgr.MO_valid_Var.push_back(tmp_var);
     }
-
+    
+    // each column of MI must have at least one 1
     for(size_t i = 0, ni = cirmgr.MI_valid_Var.size(); i < ni - 1; ++i){
         vec<Lit> lits;
         for(size_t j = 0, nj = cirmgr.MI_valid_Var[0].size(); j < nj; ++j){

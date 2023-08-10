@@ -365,6 +365,7 @@ class CirMgr
         unordered_map<string, int> u_name_index_ckt1, u_name_index_ckt2; // index can be used for x, y, f, g immediately
         unordered_map<string, bool> u_name_isInput_ckt1, u_name_isInput_ckt2;
         unordered_map<string, int> u_name_busIndex_input_ckt1, u_name_busIndex_output_ckt1, u_name_busIndex_input_ckt2, u_name_busIndex_output_ckt2; // index for bus_ckt1_input, bus_ckt2_input
+        set<variable*>  circuit1_func_supp_union, circuit2_func_supp_union;  // assign 0 to irrelevant input
 
         // helper function
 

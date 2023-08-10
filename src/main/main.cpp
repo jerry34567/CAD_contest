@@ -12,7 +12,7 @@
 #include "gvCmdMgr.h"
 #include "gvMsg.h"
 #include "gvUsage.h"
-#include "kernel/yosys.h"
+// #include "kernel/yosys.h"
 #include "util.h"
 #include <stdio.h>
 using namespace std;
