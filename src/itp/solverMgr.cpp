@@ -100,7 +100,7 @@ SolverMgr::solveNP3(string& inputFilename) {
     // satmgr.cirmgr.busInputUnateness();
     // satmgr.cirmgr.busOutputUnateness();
     // satmgr.cirmgr.busInputUnateness();
-    satmgr.cirmgr.supportBusClassification();
+    // satmgr.cirmgr.supportBusClassification();
     satmgr.cirmgr.symmSign();
     
     satmgr.addSuppConstraint();  
@@ -110,14 +110,15 @@ SolverMgr::solveNP3(string& inputFilename) {
     // satmgr.addOutputGroupingConstraint();
     satmgr.cirmgr.printMIMO_valid();
     // for(int i = 0; i < 1; i++) Var t = satmgr.solver.newVar(); // test var
-    satmgr.addOutputConstraint_inputBusNum();  
+    // satmgr.addOutputConstraint_inputBusNum();  
     // satmgr.addBusConstraint_inputUnateness();   
     // satmgr.addBusConstraint_outputUnateness();   
     // satmgr.addBusConstraint_outputUnateness();   
-    satmgr.addBusConstraint_inputSupportSize();
-    satmgr.addBusConstraint_outputSupportSize();
+    // satmgr.addBusConstraint_inputSupportSize();
+    // satmgr.addBusConstraint_outputSupportSize();
     satmgr.addOutput0Constraint();
     satmgr.addSymmSignConstraint();
+    satmgr.fAtMostOneMatch(satmgr.solver);
     // // satmgr.addSupportConstraint_whenInputMatch();
     // // satmgr.addSupportConstraint_whenOutputMatch();
     // // satmgr.addBinateConstraint();
@@ -155,8 +156,8 @@ SolverMgr::solveNP3(string& inputFilename) {
     satmgr.addSymmConstraint(satmgr.solver);
     cout << "AA158" << endl;
     // satmgr.addSameSuppSizeConstraint(satmgr.solver);
-    satmgr.addCandidateBusConstraint(satmgr.solver);
-    satmgr.addBusValidConstraint(satmgr.solver);
+    // satmgr.addCandidateBusConstraint(satmgr.solver);
+    // satmgr.addBusValidConstraint(satmgr.solver);
     // satmgr.cirmgr.printMIMO_valid_notab();
     cout << "AA162" << endl;
     satmgr.cirmgr.sortSuppDiff();

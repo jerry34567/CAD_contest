@@ -1411,17 +1411,18 @@ void CirMgr::outputHeuristicMatching(vec<Lit>& output_heuristic_assump){
 }
 
 void CirMgr::updateOutputHeuristic_Success(){
-    // cout << "updateOutputHeuristic_Success row: " << MO_suppdiff_chosen_row << endl;
+    cout << "updateOutputHeuristic_Success row: " << MO_suppdiff_chosen_row << endl;
     MO_suppdiff_chosen_row++;
 }
 
 bool CirMgr::updateOutputHeuristic_Fail(){
-    // cout << "updateOutputHeuristic_Fail row: " << MO_suppdiff_chosen_row << " col: " << MO_suppdiff_chosen_col_idxes[MO_suppdiff_chosen_row] << endl;
+    cout << "updateOutputHeuristic_Fail row: " << MO_suppdiff_chosen_row << " col: " << MO_suppdiff_chosen_col_idxes[MO_suppdiff_chosen_row] << endl;
     
     if(MO_suppdiff_chosen_col_idxes[MO_suppdiff_chosen_row] == MO_valid.size()-1){
         MO_suppdiff_chosen_col_idxes[MO_suppdiff_chosen_row] = MO_suppdiff_row[MO_suppdiff_chosen_row].suppdiff_cnt_arr[0];
         if(MO_suppdiff_chosen_row == 0) return false;
         else{
+            throwToLastRow(MO_suppdiff_chosen_row);
             MO_suppdiff_chosen_row--;
             // MO_suppdiff_chosen_col_idxes[MO_suppdiff_chosen_row]++;
             if (updateOutputHeuristic_Fail()) return true;
@@ -1433,4 +1434,13 @@ bool CirMgr::updateOutputHeuristic_Fail(){
     }
     return true;
     // MO_suppdiff_row[MO_suppdiff_chosen_row].original_row_index
+}
+void CirMgr::throwToLastRow(int row){
+    int tmp = MO_suppdiff_chosen_col_idxes[row];
+    MO_suppdiff_chosen_col_idxes.erase(MO_suppdiff_chosen_col_idxes.begin() + row);
+    MO_suppdiff_chosen_col_idxes.push_back(tmp);
+
+    Supp_Diff_Row t = MO_suppdiff_row[row];
+    MO_suppdiff_row.erase(MO_suppdiff_row.begin() + row);
+    MO_suppdiff_row.push_back(t);
 }

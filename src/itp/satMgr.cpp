@@ -1450,7 +1450,14 @@ SatMgr::initCircuit(SatSolver& s, SatSolver& s_miter, SatSolver& s_cir1, SatSolv
         cirmgr.MO_valid.push_back(tmp);
         cirmgr.MO_valid_Var.push_back(tmp_var);
     }
-
+    for(size_t i = 0, ni = cirmgr.MI_valid_Var.size(); i < ni - 1; ++i){
+        vec<Lit> lits;
+        for(size_t j = 0, nj = cirmgr.MI_valid_Var[0].size(); j < nj; ++j){
+            lits.push(Lit(cirmgr.MI_valid_Var[i][j]));
+        }
+        solver.addClause(lits);
+        lits.clear();
+    }
 
     // test cmdr
     //  constraint2(s);
@@ -2485,5 +2492,10 @@ SatMgr::closeMatching(vec<Lit> &lits, size_t _i, size_t _j, bool _isInput){  // 
         lits.push(~Lit(cirmgr.MO[_i][_j]->getVar()));
         solver.addClause(lits);
         lits.clear();
+    }
+}
+void SatMgr::fAtMostOneMatch(SatSolver& s){
+    for(int i = 0; i < cirmgr.MO_valid.size(); i++){
+        constraint_Cmdr_nocontrol(s, cirmgr.MO_valid_Var[i], true);
     }
 }
