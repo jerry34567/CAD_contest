@@ -94,8 +94,8 @@ SolverMgr::solveNP3(string& inputFilename) {
     satmgr.cirmgr.readInputUnateness();
     satmgr.cirmgr.readSymmetric();
     satmgr.cirmgr.outputGrouping();
-    satmgr.cirmgr.busSupportUnion();
-    satmgr.cirmgr.busInputSupportUnion();
+    // satmgr.cirmgr.busSupportUnion();
+    // satmgr.cirmgr.busInputSupportUnion();
     // satmgr.cirmgr.busOutputUnateness();
     // satmgr.cirmgr.busInputUnateness();
     // satmgr.cirmgr.busOutputUnateness();
@@ -363,13 +363,15 @@ SolverMgr::solveNP3(string& inputFilename) {
 
             // assign 0 to inrelevant cir2's input
             for (int i = 0, n = satmgr.cirmgr.y.size(); i < n; i++) {
-                if (!circuit2_func_supp_union.count(satmgr.cirmgr.y[i])){
+                if (satmgr.cirmgr.cir2_not_func_supp_union.count(satmgr.cirmgr.y[i])){
+                    // cout << "367 " << satmgr.cirmgr.y[i]->getname() << endl;
                     Lit v = ~Lit(satmgr.cirmgr.y[i]->getVar2());
                     // cout << satmgr.cirmgr.y[i]->getname() << endl;
                     // cout << satmgr.cirmgr.y[i]->getname() << endl;
                     assump.push(v);
                 }
             }
+            // cout << endl;
 
             satmgr.solver.addClause(be_searched);
             be_searched.clear();

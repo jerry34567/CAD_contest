@@ -363,7 +363,7 @@ SatMgr::generateResult() {
     if (!constGroup.empty()) {
         fout << "CONSTGROUP" << endl;
         for (unordered_map<string, bool>::iterator i = constGroup.begin(); i != constGroup.end(); i++)
-            fout << ((*i).second ? "+ " : "- ") << (*i).first << endl;
+            fout << ((*i).second ? "- " : "+ ") << (*i).first << endl;
         fout << "END" << endl;
     }
     fout.close();
@@ -1783,6 +1783,7 @@ SatMgr::readCNF(SatSolver& s_miter,
 // }*/
 void
 SatMgr::AddLearnedClause(SatSolver& s, SatSolver& s_cir1, SatSolver& s_cir2, SatSolver& s_miter) {
+    cout << "AddLearnedClause begin" << endl;
     vec<Lit>                  lits, lits_e; // ex: lits_e:  (not e + not c11)...
     // vec<Lit>                  temp_lits;
     vector<vector<variable*> >&MI = cirmgr.MI, &MO = cirmgr.MO;
@@ -1891,6 +1892,7 @@ SatMgr::AddLearnedClause(SatSolver& s, SatSolver& s_cir1, SatSolver& s_cir2, Sat
         }
     }
 
+    cout << "AddLearnedClause end" << endl;
 
 /*
     for (int i = 0; i < f.size(); i++) {

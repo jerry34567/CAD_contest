@@ -1367,9 +1367,20 @@ void CirMgr::sortSuppDiff(){  // initially read in MO_valid and sort Supp Differ
 }
 
 void CirMgr::outputHeuristicMatching(vec<Lit>& output_heuristic_assump){ 
+    while(!_inside_outputHeuristicMatching(output_heuristic_assump)){
+        updateOutputHeuristic_Fail();
+    }
+}
+bool CirMgr::_inside_outputHeuristicMatching(vec<Lit>& output_heuristic_assump){ // output match according to MO_suppdiff_row[MO_suppdiff_chosen_row], MO_suppdiff -> output match -> support input port match (can't match outside)
+
     // output match according to MO_suppdiff_row[MO_suppdiff_chosen_row], MO_suppdiff -> output match -> support input port match (can't match outside)
     // cout << "outputHeuristicMatching" << endl;
     output_heuristic_assump.clear();
+    cir1_func_supp_union.clear();
+    cir2_func_supp_union.clear();
+    cir1_not_func_supp_union.clear();
+    cir2_not_func_supp_union.clear();
+
     for(int j = 0; j <= MO_suppdiff_chosen_row; j++){
         int ori_row_index = MO_suppdiff_row[j].original_row_index;
         int idx1 = MO_suppdiff[MO_suppdiff_chosen_col_idxes[j]][ori_row_index].original_idx1;
@@ -1378,9 +1389,14 @@ void CirMgr::outputHeuristicMatching(vec<Lit>& output_heuristic_assump){
 
         bool* exist = new bool[MI_valid.size()];
         for(int i = 0; i < MI_valid.size(); i++) exist[i] = false;
-        for(int i = 0; i < f[idx1]->_funcSupp.size(); i++) exist[u_name_index_ckt1[f[idx1]->_funcSupp[i]->getname()]] = true;
+        for(int i = 0; i < f[idx1]->_funcSupp.size(); i++){
+            exist[u_name_index_ckt1[f[idx1]->_funcSupp[i]->getname()]] = true;
+            cir1_func_supp_union.insert(f[idx1]->_funcSupp[i]);
+        }
         exist[MI_valid.size()-1] = true; // enable constant
+
         for(int k = 0; k < g[idx2]->_funcSupp.size(); k++){
+            cir2_func_supp_union.insert(g[idx2]->_funcSupp[k]);
             for(int i = 0; i < MI_valid.size(); i++){
                 if(!exist[i]){
                     output_heuristic_assump.push(~Lit(MI_valid_Var[i][u_name_index_ckt2[g[idx2]->_funcSupp[k]->getname()]]));
@@ -1407,7 +1423,39 @@ void CirMgr::outputHeuristicMatching(vec<Lit>& output_heuristic_assump){
             // cout << "F " << i << " " << ori_row_index << endl;
         }
     }
+    for(int i = 0; i < x.size(); i++){
+        if(!cir1_func_supp_union.count(x[i])){
+            cir1_not_func_supp_union.insert(x[i]);
+        }
+    }
+    for(int i = 0; i < y.size(); i++){
+        if(!cir2_func_supp_union.count(y[i])){
+            cir2_not_func_supp_union.insert(y[i]);
+        }
+    }
+    if(cir1_func_supp_union.size() > cir2_func_supp_union.size() || cir1_not_func_supp_union.size() > cir2_not_func_supp_union.size()) return false;
     
+    for(set<variable*>::iterator it = cir2_not_func_supp_union.begin(); it != cir2_not_func_supp_union.end(); ++it){
+        output_heuristic_assump.push(~Lit(MI[MI.size()-1][(*it)->getSub1()-1]->getVar()));
+    }
+    // for(set<variable*>::iterator it1 = cir1_not_func_supp_union.begin(), it2 = cir2_not_func_supp_union.begin(), n1 = cir1_not_func_supp_union.end(), n2 = cir2_not_func_supp_union.end(); ; ++it1, ++it2){
+    //     if(it1 == n1){
+    //         set<variable*>::iterator i0 = cir1_not_func_supp_union.begin();
+    //         for(set<variable*>::iterator it3 = it2; it3 != n2; ++it3){
+    //             output_heuristic_assump.push(Lit(MI_valid_Var[(*i0)->getSub1()-1][(*it3)->getSub1()-1]));
+    //             output_heuristic_assump.push(Lit(MI[((*i0)->getSub1()-1)*2][(*it3)->getSub1()-1]->getVar()));
+    //             output_heuristic_assump.push(~Lit(MI[((*i0)->getSub1()-1)*2+1][(*it3)->getSub1()-1]->getVar()));
+    //         }
+    //         break;
+    //     }
+    //     else{
+    //         output_heuristic_assump.push(Lit(MI_valid_Var[(*it1)->getSub1()-1][(*it2)->getSub1()-1]));
+    //         output_heuristic_assump.push(Lit(MI[((*it1)->getSub1()-1)*2][(*it2)->getSub1()-1]->getVar()));
+    //         output_heuristic_assump.push(~Lit(MI[((*it1)->getSub1()-1)*2+1][(*it2)->getSub1()-1]->getVar()));
+    //     }
+    // }
+
+    return true;
 }
 
 void CirMgr::updateOutputHeuristic_Success(){
