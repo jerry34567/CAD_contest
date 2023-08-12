@@ -160,7 +160,7 @@ GVCmdExecStatus
 NP3SolveCmd::exec(const string& option) {
     vector<string> options;
     GVCmdExec::lexOptions(option, options);
-    solvermgr.solveNP3(options[0]);
+    solvermgr.solveNP3(options[0], options[1]);
     return GV_CMD_EXEC_DONE;
 }
 

@@ -1376,13 +1376,19 @@ void CirMgr::sortSuppDiff(){  // initially read in MO_valid and sort Supp Differ
 }
 
 void CirMgr::outputHeuristicMatching(vec<Lit>& output_heuristic_assump){ 
+    while(!_inside_outputHeuristicMatching(output_heuristic_assump)){
+        updateOutputHeuristic_Fail();
+    }
+}
+bool CirMgr::_inside_outputHeuristicMatching(vec<Lit>& output_heuristic_assump){ // output match according to MO_suppdiff_row[MO_suppdiff_chosen_row], MO_suppdiff -> output match -> support input port match (can't match outside)
+
     // output match according to MO_suppdiff_row[MO_suppdiff_chosen_row], MO_suppdiff -> output match -> support input port match (can't match outside)
     // cout << "outputHeuristicMatching" << endl;
     output_heuristic_assump.clear();
-    
-    // assign 0 to irrelevant input
-    circuit1_func_supp_union.clear();
-    circuit2_func_supp_union.clear();  
+    cir1_func_supp_union.clear();
+    cir2_func_supp_union.clear();
+    cir1_not_func_supp_union.clear();
+    cir2_not_func_supp_union.clear();
 
     for(int j = 0; j <= MO_suppdiff_chosen_row; j++){
         int ori_row_index = MO_suppdiff_row[j].original_row_index;
@@ -1393,12 +1399,13 @@ void CirMgr::outputHeuristicMatching(vec<Lit>& output_heuristic_assump){
         bool* exist = new bool[MI_valid.size()];
         for(int i = 0; i < MI_valid.size(); i++) exist[i] = false;
         for(int i = 0; i < f[idx1]->_funcSupp.size(); i++){
-            circuit1_func_supp_union.insert(f[idx1]->_funcSupp[i]);
             exist[u_name_index_ckt1[f[idx1]->_funcSupp[i]->getname()]] = true;
+            cir1_func_supp_union.insert(f[idx1]->_funcSupp[i]);
         } 
         exist[MI_valid.size()-1] = true; // enable constant
+
         for(int k = 0; k < g[idx2]->_funcSupp.size(); k++){
-            circuit2_func_supp_union.insert(g[idx2]->_funcSupp[k]); // assign 0 to irrelevant input
+            cir2_func_supp_union.insert(g[idx2]->_funcSupp[k]);
             for(int i = 0; i < MI_valid.size(); i++){
                 if(!exist[i]){
                     output_heuristic_assump.push(~Lit(MI_valid_Var[i][u_name_index_ckt2[g[idx2]->_funcSupp[k]->getname()]]));
@@ -1425,104 +1432,55 @@ void CirMgr::outputHeuristicMatching(vec<Lit>& output_heuristic_assump){
             // cout << "F " << i << " " << ori_row_index << endl;
         }
     }
-    assert(circuit1_func_supp_union <= circuit2_func_supp_union);   //      如果circuit1_func_supp_union > circuit2_func_supp_union -> 一定要跳掉！！！！不然每個直航一定要有1的constraint會沒辦法達成
-    for(std::set<variable*>::iterator it1 = circuit1_func_supp_union.begin(), n1 = circuit1_func_supp_union.end(), it2 = circuit2_func_supp_union.begin(), n2 = circuit2_func_supp_union.end();; ++it1, ++it2){
-        if(it1 == n1){
-            if(it2 != n2){
-                for(std::set<variable*>::iterator it3 = it2, n3 = n2; it3 != n3; ++it3){
-                    output_heuristic_assump.push(Lit(MI[((*circuit1_func_supp_union.begin())->getSub1() - 1) * 2][(*it3)->getSub1() - 1]->getVar()));
-                }
-            }
-            break;
-        }
-        output_heuristic_assump.push(Lit(MI[((*it1)->getSub1() - 1) * 2][(*it2)->getSub1() - 1]->getVar()));
-    }
-    for(size_t j = 0, n = y.size(); j < n; ++j){
-        if(!circuit2_func_supp_union.count(y[j])){
-            output_heuristic_assump.push(Lit(MI[MI.size() - 1][j]->getVar()));
+    for(int i = 0; i < x.size(); i++){
+        if(!cir1_func_supp_union.count(x[i])){
+            cir1_not_func_supp_union.insert(x[i]);
         }
     }
+    for(int i = 0; i < y.size(); i++){
+        if(!cir2_func_supp_union.count(y[i])){
+            cir2_not_func_supp_union.insert(y[i]);
+        }
+    }
+    if(cir1_func_supp_union.size() > cir2_func_supp_union.size() || cir1_not_func_supp_union.size() > cir2_not_func_supp_union.size()) return false;
+
+    for(set<variable*>::iterator it = cir2_not_func_supp_union.begin(); it != cir2_not_func_supp_union.end(); ++it){
+        output_heuristic_assump.push(~Lit(MI[MI.size()-1][(*it)->getSub1()-1]->getVar()));
+    }
+    // for(set<variable*>::iterator it1 = cir1_not_func_supp_union.begin(), it2 = cir2_not_func_supp_union.begin(), n1 = cir1_not_func_supp_union.end(), n2 = cir2_not_func_supp_union.end(); ; ++it1, ++it2){
+    //     if(it1 == n1){
+    //         set<variable*>::iterator i0 = cir1_not_func_supp_union.begin();
+    //         for(set<variable*>::iterator it3 = it2; it3 != n2; ++it3){
+    //             output_heuristic_assump.push(Lit(MI_valid_Var[(*i0)->getSub1()-1][(*it3)->getSub1()-1]));
+    //             output_heuristic_assump.push(Lit(MI[((*i0)->getSub1()-1)*2][(*it3)->getSub1()-1]->getVar()));
+    //             output_heuristic_assump.push(~Lit(MI[((*i0)->getSub1()-1)*2+1][(*it3)->getSub1()-1]->getVar()));
+    //         }
+    //         break;
+    //     }
+    //     else{
+    //         output_heuristic_assump.push(Lit(MI_valid_Var[(*it1)->getSub1()-1][(*it2)->getSub1()-1]));
+    //         output_heuristic_assump.push(Lit(MI[((*it1)->getSub1()-1)*2][(*it2)->getSub1()-1]->getVar()));
+    //         output_heuristic_assump.push(~Lit(MI[((*it1)->getSub1()-1)*2+1][(*it2)->getSub1()-1]->getVar()));
+    //     }
+    // }
+        
+    return true;
 }
 
 void CirMgr::updateOutputHeuristic_Success(){
-    // cout << "updateOutputHeuristic_Success row: " << MO_suppdiff_chosen_row << endl;
-    // for(int i = 0; i < f.size(); i++){
-    //     f[i]->setSelected_times(0);
-    // }
-    // for(int j = 0; j <= MO_suppdiff_chosen_row; j++){
-    //     int ori_row_index = MO_suppdiff_row[j].original_row_index;
-    //     variable* f_v = MO_suppdiff[MO_suppdiff_chosen_col_idxes[j]][ori_row_index]->f_var;
-    //     f_v->setSelected_times(f_v->getSelected_times() + 1);
-    //     cout << g[MO_suppdiff_row[j].original_row_index]->getname() << " ";
-    // }
-    // cout << endl;
-
-    
-
+    cout << "updateOutputHeuristic_Success row: " << MO_suppdiff_chosen_row << endl;
     MO_suppdiff_chosen_row++;
-    // MO_suppdiff_success_count++;
-    // cout << "success MO_suppdiff_chosen_row: " << MO_suppdiff_chosen_row << " MO_suppdiff_success_count: " << MO_suppdiff_success_count << endl; 
-    // if(MO_suppdiff_success_count == 2*MO_valid[0].size()){
-    //     int n = MO_suppdiff_chosen_row/2;
-    //     for(int i = 0; i < n; i++){
-    //         throwToLastRow(0);
-    //         MO_suppdiff_chosen_row--;
-    //     }
-    //     MO_suppdiff_success_count = 0;
-    // }
-
-    // // print_f_selected_times();
-    // for(int i = 0; i < MO_suppdiff.size(); i++){
-    //     cout << MO_suppdiff[i][MO_suppdiff_chosen_row]->f_var->getname() << " ";
-    // }
-    // cout << endl;
-
-    // if(MO_suppdiff_chosen_row < MO_valid[0].size()){
-    //     vector<Supp_Difference* > tmp;
-    //     for(int i = 0; i < MO_valid.size(); i++){
-    //         if(MO_suppdiff[i][MO_suppdiff_chosen_row]->suppdiff == -1){
-    //             MO_suppdiff[i][MO_suppdiff_chosen_row]->weight_sort = -1;
-    //         }
-    //         else{
-    //             MO_suppdiff[i][MO_suppdiff_chosen_row]->weight_sort = pow(MO_suppdiff[i][MO_suppdiff_chosen_row]->suppdiff, 2) + 0.01*pow(MO_suppdiff[i][MO_suppdiff_chosen_row]->f_var->getSelected_times(), 2);
-    //             // MO_suppdiff[i][MO_suppdiff_chosen_row]->weight_sort = MO_suppdiff[i][MO_suppdiff_chosen_row]->suppdiff;
-    //         }
-    //         tmp.push_back(MO_suppdiff[i][MO_suppdiff_chosen_row]);
-    //     }
-    //     sort(tmp.begin(), tmp.end(), _suppdiff_weight_sort);
-    //     for(int i = 0; i < MO_valid.size(); i++){
-    //         MO_suppdiff[i][MO_suppdiff_chosen_row] = tmp[i]; 
-    //     }
-    // }
-    // for(int i = 0; i < MO_suppdiff.size(); i++){
-    //     cout << MO_suppdiff[i][MO_suppdiff_chosen_row]->f_var->getname() << " ";
-    // }
-    // cout << endl;
-        
 }
 
 bool CirMgr::updateOutputHeuristic_Fail(){
-    // cout << "updateOutputHeuristic_Fail row: " << MO_suppdiff_chosen_row << " col: " << MO_suppdiff_chosen_col_idxes[MO_suppdiff_chosen_row] << endl;
-    // cout << "fail MO_suppdiff_chosen_row: " << MO_suppdiff_chosen_row << " MO_suppdiff_fail_count: " << MO_suppdiff_fail_count << endl; 
+    cout << "updateOutputHeuristic_Fail row: " << MO_suppdiff_chosen_row << " col: " << MO_suppdiff_chosen_col_idxes[MO_suppdiff_chosen_row] << endl;
 
     if(MO_suppdiff_chosen_col_idxes[MO_suppdiff_chosen_row] == MO_valid.size()-1){
         MO_suppdiff_chosen_col_idxes[MO_suppdiff_chosen_row] = MO_suppdiff_row[MO_suppdiff_chosen_row].suppdiff_cnt_arr[0];
         if(MO_suppdiff_chosen_row == 0) return false;
         else{
-            // if(MO_suppdiff_fail_count >= MO_valid[0].size()/5){
-            //     int n = MO_suppdiff_chosen_row/3;
-            //     for(int i = 0; i < n; i++){
-            //         throwToLastRow(0);
-            //         MO_suppdiff_chosen_row--;
-            //     }
-            //     MO_suppdiff_fail_count = 0;
-            // }
-            // else{
-            //     MO_suppdiff_fail_count++;
             throwToLastRow(MO_suppdiff_chosen_row);
             MO_suppdiff_chosen_row--;
-            // }
-            
             // MO_suppdiff_chosen_col_idxes[MO_suppdiff_chosen_row]++;
             if (updateOutputHeuristic_Fail()) return true;
             else return false;

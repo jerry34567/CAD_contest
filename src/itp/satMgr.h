@@ -96,8 +96,8 @@ class SatMgr
                          int IO);
         void recordResult(const SatSolver&                 s,
                           vector<vector<int>> const& M, int IO);
-        void generateResult();
-        void reportResult(const SatSolver& solver) {
+        void generateResult(const string&);
+        void reportResult(const SatSolver& solver, const string& outputFileName) {
             solver.printStats();
             printMatrix(solver, record_input, 1);
             printMatrix(solver, record_output, 2);
@@ -106,7 +106,7 @@ class SatMgr
             constGroup.clear();
             recordResult(solver, record_input, 1);
             recordResult(solver, record_output, 2);
-            generateResult();
+            generateResult(outputFileName);
                 // for (auto i : inputGroup)
                 //     for (auto j : i.second.group())
                 //         cout << i.first << ' ' << j.second << ' ' << j.first

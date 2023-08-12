@@ -235,7 +235,7 @@ main(int argc, char** argv) {
     // cmd = "set sys vrf";
     // gvCmdMgr->execOneCmd(cmd);
     // gvCmdMgr->setPrompt();
-    cmd = "np3 s " + std::string(argv[1]);
+    cmd = "np3 s " + std::string(argv[1]) + ' ' + std::string(argv[2]);
     gvCmdMgr->execOneCmd(cmd);
     cout << '\a';
     cmd = "usage";

@@ -68,27 +68,7 @@ SolverMgr::verification(bool isManualBinded) {
 }
 
 void
-SolverMgr::solveNP3(string& inputFilename) {
-    //Cadical solver playground
-    // satmgr.solver.initialize();
-    // Var a = satmgr.solver.newVar();
-    // Var b = satmgr.solver.newVar();
-    // vec<Lit> l;
-    // Lit la = Lit(a);
-    // Lit lb = ~Lit(b);
-    // l.push(la);
-    // l.push(lb);
-    // // l.push(Lit(a));
-    // // l.push(~Lit(b));
-    // satmgr.solver.addClause(l);
-    // l.clear();
-    // cout << "\n---------------------------------------------\n";
-    // cout << (satmgr.solver.solve() ? "sat" : "unsat") << endl;
-    // cout << satmgr.solver.getValue(a) << endl;
-    // cout << satmgr.solver.getValue(b) << endl;
-    // cout << "\n---------------------------------------------\n";
-    // return;
-    // end
+SolverMgr::solveNP3(string& inputFilename, string& outputFilename) {
     double time;
     clock_t start, stop;
     start = clock();
@@ -114,13 +94,13 @@ SolverMgr::solveNP3(string& inputFilename) {
     satmgr.cirmgr.readInputUnateness();
     satmgr.cirmgr.readSymmetric();
     satmgr.cirmgr.outputGrouping();
-    satmgr.cirmgr.busSupportUnion();
-    satmgr.cirmgr.busInputSupportUnion();
+    // satmgr.cirmgr.busSupportUnion();
+    // satmgr.cirmgr.busInputSupportUnion();
     // satmgr.cirmgr.busOutputUnateness();
     // satmgr.cirmgr.busInputUnateness();
     // satmgr.cirmgr.busOutputUnateness();
     // satmgr.cirmgr.busInputUnateness();
-    satmgr.cirmgr.supportBusClassification();
+    // satmgr.cirmgr.supportBusClassification();
     satmgr.cirmgr.symmSign();
     
     satmgr.addSuppConstraint();  
@@ -130,16 +110,15 @@ SolverMgr::solveNP3(string& inputFilename) {
     // satmgr.addOutputGroupingConstraint();
     satmgr.cirmgr.printMIMO_valid();
     // for(int i = 0; i < 1; i++) Var t = satmgr.solver.newVar(); // test var
-    satmgr.addOutputConstraint_inputBusNum();  
+    // satmgr.addOutputConstraint_inputBusNum();  
     // satmgr.addBusConstraint_inputUnateness();   
     // satmgr.addBusConstraint_outputUnateness();   
     // satmgr.addBusConstraint_outputUnateness();   
-    satmgr.addBusConstraint_inputSupportSize();
-    satmgr.addBusConstraint_outputSupportSize();
+    // satmgr.addBusConstraint_inputSupportSize();
+    // satmgr.addBusConstraint_outputSupportSize();
     satmgr.addOutput0Constraint();
     satmgr.addSymmSignConstraint();
-
-    satmgr.fAtMostOneMatch(satmgr.solver); // test at most one 1 in MO_valid_var column
+    satmgr.fAtMostOneMatch(satmgr.solver);
     // // satmgr.addSupportConstraint_whenInputMatch();
     // // satmgr.addSupportConstraint_whenOutputMatch();
     // // satmgr.addBinateConstraint();
@@ -177,8 +156,8 @@ SolverMgr::solveNP3(string& inputFilename) {
     satmgr.addSymmConstraint(satmgr.solver);
     cout << "AA158" << endl;
     // satmgr.addSameSuppSizeConstraint(satmgr.solver);
-    satmgr.addCandidateBusConstraint(satmgr.solver);
-    satmgr.addBusValidConstraint(satmgr.solver);
+    // satmgr.addCandidateBusConstraint(satmgr.solver);
+    // satmgr.addBusValidConstraint(satmgr.solver);
     // satmgr.cirmgr.printMIMO_valid_notab();
     cout << "AA162" << endl;
     satmgr.cirmgr.sortSuppDiff();
@@ -298,7 +277,6 @@ SolverMgr::solveNP3(string& inputFilename) {
             
         }
         else {
-            // set<variable*>            circuit1_func_supp_union;
             vec<Lit>                  assump;
             vec<Lit>                  be_searched;
             vector<vector<variable*>>&MI = satmgr.cirmgr.MI,
@@ -354,10 +332,6 @@ SolverMgr::solveNP3(string& inputFilename) {
                         //      << endl;
 
                         // collect matched outputs' function support
-                        // for (int k = 0, n = satmgr.cirmgr.f[i / 2]->_funcSupp.size(); k < n; k++) {
-                        //     circuit1_func_supp_union.insert(satmgr.cirmgr.f[i / 2]->_funcSupp[k]);
-                        //     // cout << "cir2: " << satmgr.cirmgr.g[j]->_funcSupp[k]->getname() << endl;
-                        // }
                     
                     } else if (satmgr.solver.getValue(MO[i][j]->getVar()) == 0) {
                         Lit v1 = Lit(MO[i][j]->getVar());
@@ -383,20 +357,17 @@ SolverMgr::solveNP3(string& inputFilename) {
             //     }
             // }
 
-            // assign 0 to irrelevant cir1's input
-            // for (int i = 0, n = satmgr.cirmgr.x.size(); i < n; i++) {
-            //     if (!circuit1_func_supp_union.count(satmgr.cirmgr.x[i])){
-            //         // satmgr.miterSolver.assumeProperty(satmgr.cirmgr.y[i]->getVar2(), 0);
-            //         Lit v = ~Lit(satmgr.cirmgr.x[i]->getVar2());
-            //         // cout << satmgr.cirmgr.y[i]->getname() << endl;
-            //         // cout << satmgr.cirmgr.y[i]->getname() << endl;
-            //         assump.push(v);
-            //     }
-            // }
-            for(std::set<variable*>::iterator it = satmgr.cirmgr.circuit1_func_supp_union.begin(), n1 = satmgr.cirmgr.circuit1_func_supp_union.end(); it != n1; ++it){
-                Lit v = ~Lit((*it)->getVar2());
-                assump.push(v);
+            // assign 0 to inrelevant cir2's input
+            for (int i = 0, n = satmgr.cirmgr.y.size(); i < n; i++) {
+                if (satmgr.cirmgr.cir2_not_func_supp_union.count(satmgr.cirmgr.y[i])){
+                    // cout << "367 " << satmgr.cirmgr.y[i]->getname() << endl;
+                    Lit v = ~Lit(satmgr.cirmgr.y[i]->getVar2());
+                    // cout << satmgr.cirmgr.y[i]->getname() << endl;
+                    // cout << satmgr.cirmgr.y[i]->getname() << endl;
+                    assump.push(v);
+                }
             }
+            // cout << endl;
 
             satmgr.solver.addClause(be_searched);
             be_searched.clear();
@@ -455,8 +426,7 @@ SolverMgr::solveNP3(string& inputFilename) {
                         }
                         satmgr.record_output.push_back(temp);
                     }
-                    satmgr.reportResult(satmgr.solver);
-                    cout << "MO_suppdiff_chosen_row: " << satmgr.cirmgr.MO_suppdiff_chosen_row << endl;
+                    satmgr.reportResult(satmgr.solver, outputFilename);
                     cout << inputFilename << endl;
                     cout << "point : " << float(satmgr.point) / float(satmgr.cirmgr.outputNum_ckt1 + satmgr.cirmgr.outputNum_ckt2) << endl;
                 }
@@ -473,7 +443,7 @@ SolverMgr::solveNP3(string& inputFilename) {
             assump.clear();
         }
     }
-    satmgr.reportResult(satmgr.solver);
+    satmgr.reportResult(satmgr.solver, outputFilename);
     cout << inputFilename << endl;
     cout << "point : " << float(satmgr.point) / float(satmgr.cirmgr.outputNum_ckt1 + satmgr.cirmgr.outputNum_ckt2) << endl;
 }

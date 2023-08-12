@@ -62,6 +62,6 @@ unateness.txt
 preprocess/*
 abc.tar.gz
 gv
-output.txt
+output
 .nfs*
 .vscode

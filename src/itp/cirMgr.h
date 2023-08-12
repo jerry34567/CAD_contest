@@ -310,6 +310,7 @@ class CirMgr
         void symmSign(); // give each input variables a symmsign
         void sortSuppDiff(); // initially read in MO_valid and sort Supp Difference for MO_suppdiff, sort MO_suppdiff_row
         void outputHeuristicMatching(vec<Lit>& output_heuristic_assump); // output match according to MO_suppdiff_row[MO_suppdiff_chosen_row], MO_suppdiff -> output match -> support input port match (can't match outside)
+        bool _inside_outputHeuristicMatching(vec<Lit>& output_heuristic_assump); // output match according to MO_suppdiff_row[MO_suppdiff_chosen_row], MO_suppdiff -> output match -> support input port match (can't match outside)
         void updateOutputHeuristic_Success(); // if Match Found -> call this to     MO_suppdiff_chosen_row++, update chosen output matching
         bool updateOutputHeuristic_Fail();    //return false if really NO MATCH!!!   if Match Not Found -> call this to chosen col idx++, if idx == MO_valid.size()-1 -> MO_suppdiff_chosen_row--, update chosen output matching. IF impossible(real No match) -> return false.
         void throwToLastRow(int row);  // throw MO_suppdiff_chosen_row row to last
@@ -365,7 +366,8 @@ class CirMgr
         unordered_map<string, int> u_name_index_ckt1, u_name_index_ckt2; // index can be used for x, y, f, g immediately
         unordered_map<string, bool> u_name_isInput_ckt1, u_name_isInput_ckt2;
         unordered_map<string, int> u_name_busIndex_input_ckt1, u_name_busIndex_output_ckt1, u_name_busIndex_input_ckt2, u_name_busIndex_output_ckt2; // index for bus_ckt1_input, bus_ckt2_input
-        set<variable*>  circuit1_func_supp_union, circuit2_func_supp_union;  // assign 0 to irrelevant input
+
+        set<variable* > cir1_func_supp_union, cir2_func_supp_union, cir1_not_func_supp_union, cir2_not_func_supp_union;
 
         // helper function
 
