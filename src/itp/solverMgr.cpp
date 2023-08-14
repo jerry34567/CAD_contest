@@ -309,7 +309,7 @@ SolverMgr::solveNP3(string& inputFilename, string& outputFilename) {
                         //      << "\tin bus:\t" << satmgr.cirmgr.u_name_busIndex_input_ckt2[satmgr.cirmgr.y[j]->getname()]                    
                         //      << endl;
                     }
-                    else if (satmgr.solver.getValue(MI[i][j]->getVar()) ==0) {
+                    else if (satmgr.solver.getValue(MI[i][j]->getVar()) == 0) {
                         Lit v = ~Lit(MI[i][j]->getVar2());
                         assump.push(v);
                     }
@@ -369,10 +369,21 @@ SolverMgr::solveNP3(string& inputFilename, string& outputFilename) {
             // }
 
             // assign 0 to inrelevant cir2's input
-            for (int i = 0, n = satmgr.cirmgr.y.size(); i < n; i++) {
-                if (satmgr.cirmgr.cir2_not_func_supp_union.count(satmgr.cirmgr.y[i])){
+            // for (int i = 0, n = satmgr.cirmgr.y.size(); i < n; i++) {
+            //     if (satmgr.cirmgr.cir2_not_func_supp_union.count(satmgr.cirmgr.y[i])){
+            //         // cout << "367 " << satmgr.cirmgr.y[i]->getname() << endl;
+            //         Lit v = ~Lit(satmgr.cirmgr.y[i]->getVar2());
+            //         // cout << satmgr.cirmgr.y[i]->getname() << endl;
+            //         // cout << satmgr.cirmgr.y[i]->getname() << endl;
+            //         assump.push(v);
+            //     }
+            // }
+
+            // assign 0 to inrelevant cir1's input
+            for (int i = 0, n = satmgr.cirmgr.x.size(); i < n; i++) {
+                if (satmgr.cirmgr.cir1_not_func_supp_union.count(satmgr.cirmgr.x[i])){
                     // cout << "367 " << satmgr.cirmgr.y[i]->getname() << endl;
-                    Lit v = ~Lit(satmgr.cirmgr.y[i]->getVar2());
+                    Lit v = ~Lit(satmgr.cirmgr.x[i]->getVar2());
                     // cout << satmgr.cirmgr.y[i]->getname() << endl;
                     // cout << satmgr.cirmgr.y[i]->getname() << endl;
                     assump.push(v);

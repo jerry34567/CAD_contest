@@ -768,11 +768,37 @@ SatMgr::constraint4_miter(SatSolver& s) { // for mitersolver, intentionally
             Var temp2  = s.newVar(); // ~temp1 and c_ij = temp2
             Var temp3  = s.newVar(); // temp1 and d_ij = temp3
             Var result = s.newVar(); // ~temp2 and ~temp3 = result
-            s.addXorCNF(temp1, f[i / 2]->getVar2(), false, g[j]->getVar2(),
-                        false);
+            s.addXorCNF(temp1, f[i / 2]->getVar2(), false, g[j]->getVar2(), false);
             s.addAigCNF(temp2, temp1, true, MO[i][j]->getVar2(), false);
             s.addAigCNF(temp3, temp1, false, MO[i + 1][j]->getVar2(), false);
             s.addAigCNF(result, temp2, true, temp3, true);
+
+            // Var temp4 = s.newVar(); // cij + dij == temp4
+            // vec<Lit> lit_vec3;
+            // lit_vec3.push(~Lit(temp4));
+            // lit_vec3.push(Lit(MO[i][j]->getVar2()));
+            // lit_vec3.push(Lit(MO[i + 1][j]->getVar2()));
+            // s.addClause(lit_vec3);
+            // lit_vec3.clear();
+            // lit_vec3.push(Lit(temp4));
+            // lit_vec3.push(~Lit(MO[i][j]->getVar2()));
+            // s.addClause(lit_vec3);
+            // lit_vec3.clear();
+            // lit_vec3.push(Lit(temp4));
+            // lit_vec3.push(~Lit(MO[i + 1][j]->getVar2()));
+            // s.addClause(lit_vec3);
+            // lit_vec3.clear();
+
+            // Var enable = s.newVar();
+            // s.addAigCNF(enable, result, false, temp4, false);
+            // lit_vec.push(Lit(enable));
+
+
+
+            // cout << f[i/2]->getVar2() << " " << g[j]->getVar2() << "
+            // " << MO[i][j]->getVar2() << " " << MO[i+1][j]->getVar2()
+            // << endl;
+
             Var enable = s.newVar();
             lit_vec2.push(Lit(result));
             lit_vec2.push(Lit(enable));

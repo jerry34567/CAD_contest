@@ -1425,6 +1425,8 @@ bool CirMgr::_inside_outputHeuristicMatching(vec<Lit>& output_heuristic_assump){
             } 
         }
     }
+
+
     for(int j = MO_suppdiff_chosen_row+1; j < MO_valid[0].size(); j++){
         int ori_row_index = MO_suppdiff_row[j].original_row_index;
         for(int i = 0; i < MO_valid.size(); i++){
@@ -1442,6 +1444,13 @@ bool CirMgr::_inside_outputHeuristicMatching(vec<Lit>& output_heuristic_assump){
             cir2_not_func_supp_union.insert(y[i]);
         }
     }
+
+    for (set<variable*>::iterator it = cir2_not_func_supp_union.begin(); it != cir2_not_func_supp_union.end(); ++it) {
+        for (set<variable*>::iterator it2 = cir1_func_supp_union.begin(); it2 != cir1_func_supp_union.end(); ++it2) {
+            output_heuristic_assump.push(~Lit(MI_valid_Var[(*it2)->getSub1() - 1][(*it)->getSub1() - 1]));
+        }
+    }
+    
     if(cir1_func_supp_union.size() > cir2_func_supp_union.size() || cir1_not_func_supp_union.size() > cir2_not_func_supp_union.size()) return false;
 
     for(set<variable*>::iterator it = cir2_not_func_supp_union.begin(); it != cir2_not_func_supp_union.end(); ++it){
