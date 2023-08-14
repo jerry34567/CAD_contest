@@ -11,22 +11,31 @@ SolverMgr::verification(bool isManualBinded) {
     //     cout << get<0>(i) << ' ' << get<1>(i) << ' ' << get<2>(i)
     //          << endl;
     vec<Lit>                      lits;
-    vector<Var>&                  xorVar         = satmgr.xorVar;
+    vector<vector<Var>>&                  xorVar         = satmgr.xorVar;
     SatSolver&                    verifierSolver = satmgr.verifierSolver;
     vector<tuple<bool, Var, Var>>&inputMatch     = satmgr.inputMatch,
                             &outputMatch         = satmgr.outputMatch;
-    Var f =
-        verifierSolver.newVar(); // f should be 0 for two equilivance circuit
-    lits.push(~Lit(f));
+    verifierSolver.assumeRelease();
+    satmgr._MIcloseto0.clear();
+    // Var f =
+    //     verifierSolver.newVar(); // f should be 0 for two equilivance circuit
+    // verifierSolver.assumeProperty(f, 1);
     int cnt = 0;
     if (!isManualBinded) {
-        for (vector<std::tuple<bool, Var, Var>>::iterator i = inputMatch.begin(); i != inputMatch.end(); i++) {
+        for (vector<std::tuple<bool, int, int>>::iterator i = inputMatch.begin(); i != inputMatch.end(); i++) {
             ++cnt;
             satmgr.addBindClause(get<0>(*i), get<1>(*i), get<2>(*i));
         }
         cout << "input bind " << cnt << "times\n";
         cnt = 0;
-        for (vector<std::tuple<bool, Var, Var>>::iterator i = outputMatch.begin(); i != outputMatch.end(); i++) { // np3v a little bit strange!!!
+        for(int i = 0; i < satmgr.cirmgr.MI.size(); ++i){
+            for(int j = 0; j < satmgr.cirmgr.MI[0].size(); ++j){
+                if(satmgr._MIcloseto0.find(pair<int,int>(i , j)) == satmgr._MIcloseto0.end()){
+                    verifierSolver.assumeProperty(satmgr.cirmgr.MI[i][j]->getVar3(), 0);
+                }
+            }
+        }
+        for (vector<std::tuple<bool, int, int>>::iterator i = outputMatch.begin(); i != outputMatch.end(); i++) { // np3v a little bit strange!!!
             cnt++;
             if (!satmgr.outputBind(get<1>(*i), get<0>(*i), get<2>(*i)))
 
@@ -36,7 +45,9 @@ SolverMgr::verification(bool isManualBinded) {
             //                          get<0>(i), get<2>(i), 0);
         }
         cout << "output bind " << cnt << "times\n";
+        return;
     }
+    /*
     for (size_t i = 0, n = xorVar.size(); i < n; ++i) {
         // cout << xorVar[i] << endl;
         vec<Lit> cls;
@@ -64,7 +75,7 @@ SolverMgr::verification(bool isManualBinded) {
                  << verifierSolver.getValue(get<1>(*i)) << ' '
                  << verifierSolver.getValue(get<2>(*i)) << endl;
     }
-    // assump.clear();
+    // assump.clear();*/
 }
 
 void
@@ -118,7 +129,7 @@ SolverMgr::solveNP3(string& inputFilename, string& outputFilename) {
     // satmgr.addBusConstraint_outputSupportSize();
     satmgr.addOutput0Constraint();
     satmgr.addSymmSignConstraint();
-    satmgr.fAtMostOneMatch(satmgr.solver);
+    // satmgr.fAtMostOneMatch(satmgr.solver);
     // // satmgr.addSupportConstraint_whenInputMatch();
     // // satmgr.addSupportConstraint_whenOutputMatch();
     // // satmgr.addBinateConstraint();
@@ -429,6 +440,7 @@ SolverMgr::solveNP3(string& inputFilename, string& outputFilename) {
                     satmgr.reportResult(satmgr.solver, outputFilename);
                     cout << inputFilename << endl;
                     cout << "point : " << float(satmgr.point) / float(satmgr.cirmgr.outputNum_ckt1 + satmgr.cirmgr.outputNum_ckt2) << endl;
+                    verification(0);
                 }
             } else {
                 // cout << "ELSE" << endl;
@@ -446,4 +458,5 @@ SolverMgr::solveNP3(string& inputFilename, string& outputFilename) {
     satmgr.reportResult(satmgr.solver, outputFilename);
     cout << inputFilename << endl;
     cout << "point : " << float(satmgr.point) / float(satmgr.cirmgr.outputNum_ckt1 + satmgr.cirmgr.outputNum_ckt2) << endl;
+    verification(0);
 }

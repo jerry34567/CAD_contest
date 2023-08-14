@@ -57,7 +57,7 @@ struct pair_hash {
 class SatSolver
 {
    public : 
-      SatSolver():_solver(0) { }
+      SatSolver():_solver(0), _isConstrained(0) { }
       ~SatSolver() { if (_solver) delete _solver; }
 
       // Solver initialization and reset
@@ -68,7 +68,7 @@ class SatSolver
       void reset() {
          if (_solver) delete _solver;
          _solver = new CaDiCaL::Solver();
-         _assump.clear(); _curVar = 1;
+         _assump.clear(); _curVar = 1;_isConstrained = 0;
       }
 
       // Constructing proof model
@@ -126,8 +126,17 @@ class SatSolver
 
       // For incremental proof, use "assumeSolve()"
       void assumeRelease() { _assump.clear(); }
+      void assumeConstrainRelease(){ _isConstrained = 0;}
       void assumeProperty(Var prop, bool val) {
          _assump.push(val? Lit(prop): ~Lit(prop));
+      }
+      void assumeClause(vec<Lit>& ps){
+         assert(_isConstrained == 0);
+         for(int i = 0, n = ps.size(); i < n; ++i){
+            _solver->constrain(ps[i].litVar());
+         }
+         _solver->constrain(0);
+         _isConstrained = 1;
       }
       bool assumpSolve() {
          for(size_t i = 0, n = _assump.size(); i < n; ++i){
@@ -288,6 +297,7 @@ class SatSolver
       int status() const {return _solver->status();};
       CaDiCaL::Solver*  _solver;    // Pointer to a CaDiCaL solver
    private : 
+      bool              _isConstrained; // make sure to release after every assumeSolve
       Var               _curVar;    // Variable currently
       vec<Lit>          _assump;    // Assumption List for assumption solve
       unordered_map<pair<int,int>, Var, pair_hash> _map;

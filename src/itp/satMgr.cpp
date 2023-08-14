@@ -46,18 +46,41 @@ SatMgr::string2Var(string _s, bool isckt1, bool isinput) {
 bool
 SatMgr::outputBind(int _port1, bool _isPositive1, int _port2, string _p1,
                    string _p2) {
-    if (!_p1.empty()) _port1 = string2Var(_p1, 1, 0);
-    if (!_p2.empty()) _port2 = string2Var(_p2, 0, 0);
-    if (_port1 == -100 || _port2 == -100) {
-        cout << "in outputBind : _port1 and _port2 = " << _port1 << " "
-             << _port2 << endl;
-        return 0;
+    vector<vector<variable*>>& MO = cirmgr.MO;
+    vector<variable*> &f = cirmgr.f, &g = cirmgr.g;
+    // if (!_p1.empty()) _port1 = string2Var(_p1, 1, 0);
+    // if (!_p2.empty()) _port2 = string2Var(_p2, 0, 0);
+    // if (_port1 == -100 || _port2 == -100) {
+    //     cout << "in outputBind : _port1 and _port2 = " << _port1 << " "
+    //          << _port2 << endl;
+    //     return 0;
+    // }
+    // xorVar.push_back(verifierSolver.newVar());
+    if(isClauseExisted_MO[_port1][_port2] == 0){
+        verifierSolver.addXorCNF(xorVar[_port1][_port2], f[_port1 / 2]->getVar3(), _isPositive1, g[_port2]->getVar3(), 0);
+        isClauseExisted_MO[_port1][_port2] = 1;
     }
-    xorVar.push_back(verifierSolver.newVar());
-    verifierSolver.addXorCNF(xorVar.back(), _port1, _isPositive1, _port2, 0);
-    if (!_p1.empty() || !_p2.empty())
-        outputMatch.push_back(
-            tuple<bool, Var, Var>(!_isPositive1, _port1, _port2));
+    vec<Lit> lits;
+    lits.push(Lit(xorVar[_port1][_port2]));
+    verifierSolver.assumeClause(lits);
+    bool ret = verifierSolver.assumpSolve();
+    if(ret == 1){
+        cout << "x = " << endl;
+        for(int i = 0; i < cirmgr.x.size(); ++i){
+            cout << verifierSolver.getValue(cirmgr.x[i]->getVar3());
+        }
+        cout << endl;
+        cout << "y = " << endl;
+        for(int i = 0; i < cirmgr.y.size(); ++i){
+            cout << verifierSolver.getValue(cirmgr.y[i]->getVar3());
+        }
+        cout << endl;
+    }
+    assert(ret == 0);
+    verifierSolver.assumeConstrainRelease();
+    // if (!_p1.empty() || !_p2.empty())
+    //     outputMatch.push_back(
+    //         tuple<bool, Var, Var>(!_isPositive1, _port1, _port2));
     return 1;
 }
 /*void
@@ -345,18 +368,18 @@ SatMgr::generateResult(const string& outputFileName) {
     if (!inputGroup.empty()) {
         for (unordered_map<string, Group>::iterator i = inputGroup.begin(); i != inputGroup.end(); i++) {
             fout << "INGROUP" << endl;
-            fout << "1 + <" << (*i).first << ">" << endl;
+            fout << "1 + <" << (*i).first << ">"<< endl;
             for (vector<std::pair<std::string, bool>>::iterator j = (*i).second.group().begin(); j != (*i).second.group().end(); j++)
-                fout << "2" << ((*j).second ? " + <" : " - <") << (*j).first << ">" << endl;
+                fout << "2" << ((*j).second ? " + <" : " - <") << (*j).first  << ">"<< endl;
             fout << "END" << endl;
         }
     }
     if (!outputGroup.empty()) {
         for (unordered_map<string, Group>::iterator i = outputGroup.begin(); i != outputGroup.end(); i++) {
             fout << "OUTGROUP" << endl;
-            fout << "1 + <" << (*i).first << ">" << endl;
+            fout << "1 + <" << (*i).first << ">"<<  endl;
             for (vector<std::pair<std::string, bool>>::iterator j = (*i).second.group().begin(); j != (*i).second.group().end(); j++)
-                fout << "2" << ((*j).second ? " + <" : " - <") << (*j).first << ">" << endl;
+                fout << "2" << ((*j).second ? " + <" : " - <") << (*j).first<< ">" << endl;
             fout << "END" << endl;
         }
     }
@@ -383,46 +406,52 @@ SatMgr::printMatrix(const SatSolver& s, vector<vector<int>> const& M,
                 // input match
                 if (j == 2 * cirmgr.inputNum_ckt1) {
                     // port2 == CONST 0
-                    cout << cirmgr.portname_ckt2[i] << " ==  " << 0 << endl;
+                    cout << i << ' ' << cirmgr.portname_ckt2[i] << " ==  " << 0 << endl;
                     inputMatch.push_back(
-                        tuple<bool, Var, Var>(0, -1, y[i]->getVar3()));
+                        tuple<bool, int, int>(0, -1, i));
+                        // tuple<bool, Var, Var>(0, -1, y[i]->getVar3()));
                 } else if (j == 2 * cirmgr.inputNum_ckt1 + 1) {
                     // port2 == CONST 1
-                    cout << cirmgr.portname_ckt2[i] << " ==  " << 1 << endl;
+                    cout << i << ' ' <<cirmgr.portname_ckt2[i] << " ==  " << 1 << endl;
                     inputMatch.push_back(
-                        tuple<bool, Var, Var>(0, -2, y[i]->getVar3()));
+                        tuple<bool, int, int>(0, -2, i));
+                        // tuple<bool, Var, Var>(0, -2, y[i]->getVar3()));
                 } else if (j % 2 == 0) {
                     // port1 == port2
-                    cout << cirmgr.portname_ckt2[i]
-                         << " ==  " << cirmgr.portname_ckt1[j / 2] << endl;
-                    inputMatch.push_back(tuple<bool, Var, Var>(
-                        0, x[j / 2]->getVar3(), y[i]->getVar3()));
+                    cout << j / 2 << ' ' << cirmgr.portname_ckt2[i]
+                         << " ==  " << i << ' ' <<cirmgr.portname_ckt1[j / 2] << endl;
+                    inputMatch.push_back(tuple<bool, int, int>(
+                        0, j, i));
+                        // 0, x[j / 2]->getVar3(), y[i]->getVar3()));
                 } else {
                     // port1 == ! port2
-                    cout << cirmgr.portname_ckt2[i] << " == !"
-                         << cirmgr.portname_ckt1[j / 2] << endl;
-                    inputMatch.push_back(tuple<bool, Var, Var>(
-                        1, x[j / 2]->getVar3(), y[i]->getVar3()));
+                    cout << j / 2 << ' '<< cirmgr.portname_ckt2[i] << " == !"
+                         << i << ' '<< cirmgr.portname_ckt1[j / 2] << endl;
+                    inputMatch.push_back(tuple<bool, int, int>(
+                        1, j, i));
+                        // 1, x[j / 2]->getVar3(), y[i]->getVar3()));
                 }
             } else if (M[j][i] == 1 && IO == 2) {
                 // output match
                 if (j % 2 == 0) {
                     // port1 == port2
-                    cout << cirmgr.portname_ckt2[i + cirmgr.inputNum_ckt2]
+                    cout << j / 2 << ' '<< cirmgr.portname_ckt2[i + cirmgr.inputNum_ckt2]
                          << " ==  "
-                         << cirmgr.portname_ckt1[j / 2 + cirmgr.inputNum_ckt1]
+                         << i << ' '<< cirmgr.portname_ckt1[j / 2 + cirmgr.inputNum_ckt1]
                          << endl;
-                    outputMatch.push_back(tuple<bool, Var, Var>(
-                        0, f[j / 2]->getVar3(), g[i]->getVar3()));
+                    outputMatch.push_back(tuple<bool, int, int>(
+                        0, j, i));
+                        // 0, f[j / 2]->getVar3(), g[i]->getVar3()));
 
                 } else {
                     // port1 == ! port2
-                    cout << cirmgr.portname_ckt2[i + cirmgr.inputNum_ckt2]
+                    cout << j / 2 << ' '<< cirmgr.portname_ckt2[i + cirmgr.inputNum_ckt2]
                          << " == !"
-                         << cirmgr.portname_ckt1[j / 2 + cirmgr.inputNum_ckt1]
+                         << i << ' '<< cirmgr.portname_ckt1[j / 2 + cirmgr.inputNum_ckt1]
                          << endl;
-                    outputMatch.push_back(tuple<bool, Var, Var>(
-                        1, f[j / 2]->getVar3(), g[i]->getVar3()));
+                    outputMatch.push_back(tuple<bool, int, int>(
+                        1, j, i));
+                        // 1, f[j / 2]->getVar3(), g[i]->getVar3()));
                 }
             }
         }
@@ -1352,32 +1381,44 @@ SatMgr::initCircuit(SatSolver& s, SatSolver& s_miter, SatSolver& s_cir1, SatSolv
     // construct MI matrix
     for (int j = 1; j <= 2 * (cirmgr.inputNum_ckt1 + 1); j++) { // mI
         vector<variable*> col;
+        vector<bool> bool_col;
         for (int i = 1; i <= cirmgr.inputNum_ckt2; i++) { // nI
+            bool_col.push_back(0);
             variable* tmp =
                 new variable((j % 2 == 1) ? 'a' : 'b', i, (j + 1) / 2);
             tmp->setVar(s.newVar());
             tmp->setVar2(s_miter.newVar());
+            tmp->setVar3(s_verifier.newVar());
             col.push_back(tmp);
         }
         cirmgr.MI.push_back(col);
+        isClauseExisted_MI.push_back(bool_col);
     }
 
     // construct MO matrix
     vec<Lit> lits;
     for (int j = 1; j <= 2 * cirmgr.outputNum_ckt1; j++) { // mO
         vector<variable*> col;
+        vector<Var> var_col;
+        vector<bool>    bool_col;
         for (int i = 1; i <= cirmgr.outputNum_ckt2; i++) { // nO
+            bool_col.push_back(0);
+            var_col.push_back(s_verifier.newVar());
             variable* tmp =
                 new variable((j % 2 == 1) ? 'c' : 'd', i, (j + 1) / 2);
             Var nV   = s.newVar();
             Var nV_m = s_miter.newVar();
+            Var nV_v = s_verifier.newVar();
             tmp->setVar(nV);
             tmp->setVar2(nV_m);
+            tmp->setVar3(nV_v);
             col.push_back(tmp);
             Lit l = Lit(nV);
             lits.push(l);
         }
         cirmgr.MO.push_back(col);
+        isClauseExisted_MO.push_back(bool_col);
+        xorVar.push_back(var_col);
     }
 
     // construct MO_no_pos_neg matrix
@@ -1460,7 +1501,6 @@ SatMgr::initCircuit(SatSolver& s, SatSolver& s_miter, SatSolver& s_cir1, SatSolv
     //     solver.addClause(lits);
     //     lits.clear();
     // }
-    
     // test cmdr
     //  constraint2(s);
     constraint_Cmdr(s, cirmgr.MO, true); // commander version of constraint 2
@@ -1893,8 +1933,8 @@ SatMgr::AddLearnedClause(SatSolver& s, SatSolver& s_cir1, SatSolver& s_cir2, Sat
             lits.clear();
         }
     }
+    // cout << "AddLearnedClause end" << endl;
 
-    cout << "AddLearnedClause end" << endl;
 
 /*
     for (int i = 0; i < f.size(); i++) {
@@ -2081,44 +2121,68 @@ SatMgr::AddLearnedClause_const(SatSolver& s,
 bool
 SatMgr::addBindClause(bool isnegate, int _port1, int _port2, string _p1,
                       string _p2) {
+    vector<vector<variable*>>& MI = cirmgr.MI;
+    vector<variable*>& x = cirmgr.x, y = cirmgr.y;
     vec<Lit> lits;
-    if (!_p1.empty()) _port1 = string2Var(_p1, 1, 1);
-    if (!_p2.empty()) _port2 = string2Var(_p2, 0, 1);
-    if (_port1 == -100 || _port2 == -100) {
-        cout << "_port1 and _port2 = " << _port1 << ' ' << _port2 << endl;
-        return 0;
-    }
+    // if (!_p1.empty()) _port1 = string2Var(_p1, 1, 1);
+    // if (!_p2.empty()) _port2 = string2Var(_p2, 0, 1);
+    // if (_port1 == -100 || _port2 == -100) {
+    //     cout << "_port1 and _port2 = " << _port1 << ' ' << _port2 << endl;
+    //     return 0;
+    // }
     if (_port1 < 0) {
         verifierSolver.assumeProperty(
-            _port2,
+            y[_port2]->getVar3(),
             !(_port1 == -1)); // port1 == -1 -> _port2 bind to constant 0
-        inputMatch.push_back(tuple<bool, Var, Var>(0, _port1, _port2));
-    } else if (isnegate) {
-        // ~_port1 -> _port2
-        lits.push(Lit(_port1));
-        lits.push(Lit(_port2));
+        // inputMatch.push_back(tuple<bool, Var, Var>(0, _port1, _port2));
+    } 
+    else if(isClauseExisted_MI[_port1][_port2] == true){
+        verifierSolver.assumeProperty(MI[_port1][_port2]->getVar3(), 1);    // 其他沒assume的MI會影響結果？
+    }
+    else if (isnegate) {
+        // aij -> (~_port1 -> _port2)
+        lits.push(~Lit(MI[_port1][_port2]->getVar3()));
+        lits.push(Lit(x[_port1 / 2]->getVar3()));
+        lits.push(Lit(y[_port2]->getVar3()));
         verifierSolver.addClause(lits);
         lits.clear();
         // _port2 -> ~_port1
-        lits.push(~Lit(_port1));
-        lits.push(~Lit(_port2));
+        lits.push(~Lit(MI[_port1][_port2]->getVar3()));
+        lits.push(~Lit(x[_port1 / 2]->getVar3()));
+        lits.push(~Lit(y[_port2]->getVar3()));
+        // lits.push(~Lit(_port1));
+        // lits.push(~Lit(_port2));
 
         verifierSolver.addClause(lits);
         lits.clear();
-        inputMatch.push_back(tuple<bool, Var, Var>(1, _port1, _port2));
+
+        verifierSolver.assumeProperty(MI[_port1][_port2]->getVar3(), 1);
+        isClauseExisted_MI[_port1][_port2] = 1;
+        // inputMatch.push_back(tuple<bool, Var, Var>(1, _port1, _port2));
     } else {
         // _port1 -> _port2
-        lits.push(~Lit(_port1));
-        lits.push(Lit(_port2));
+        lits.push(~Lit(MI[_port1][_port2]->getVar3()));
+        lits.push(~Lit(x[_port1 / 2]->getVar3()));
+        lits.push(Lit(y[_port2]->getVar3()));
+        // lits.push(~Lit(_port1));
+        // lits.push(Lit(_port2));
         verifierSolver.addClause(lits);
         lits.clear();
         // _port2 -> _port1
-        lits.push(Lit(_port1));
-        lits.push(~Lit(_port2));
+        lits.push(~Lit(MI[_port1][_port2]->getVar3()));
+        lits.push(Lit(x[_port1 / 2]->getVar3()));
+        lits.push(~Lit(y[_port2]->getVar3()));
+        // lits.push(Lit(_port1));
+        // lits.push(~Lit(_port2));
         verifierSolver.addClause(lits);
         lits.clear();
-        inputMatch.push_back(tuple<bool, Var, Var>(0, _port1, _port2));
+
+        verifierSolver.assumeProperty(MI[_port1][_port2]->getVar3(), 1);
+        isClauseExisted_MI[_port1][_port2] = 1;
+        // inputMatch.push_back(tuple<bool, Var, Var>(0, _port1, _port2));
     }
+    pair<int,int> p(_port1, _port2);
+    _MIcloseto0.insert(pair<pair<int,int>, bool>(p, 1));
     return 1;
 }
 

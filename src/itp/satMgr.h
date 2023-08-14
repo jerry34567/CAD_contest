@@ -98,6 +98,8 @@ class SatMgr
                           vector<vector<int>> const& M, int IO);
         void generateResult(const string&);
         void reportResult(const SatSolver& solver, const string& outputFileName) {
+            inputMatch.clear();
+            outputMatch.clear();
             solver.printStats();
             printMatrix(solver, record_input, 1);
             printMatrix(solver, record_output, 2);
@@ -154,16 +156,23 @@ class SatMgr
         vector<vector<Var>> big_or;
 
         // record those matched input pairs
-        // tuple<isNegate, ckt1's input, ckt2's input>
+        // tuple<isNegate, ckt1's input, ckt2's input> (X)
+        // tuple<isNegate, ckt1's input index * 2, ckt2's input index>
         // if ckt2's input connect to 0(1) -> the second element would be -1(-2)
         // isNegate == True -> negate
-        vector<tuple<bool, Var, Var>> inputMatch;
-
+        vector<tuple<bool, int, int>> inputMatch;
+        // whether the clause is already exist w.r.t an aij(bij)
+        vector<vector<bool>> isClauseExisted_MI;
+        map<pair<int,int>, bool> _MIcloseto0;
         // record those match output pairs
-        // tuple<isNegate, ckt1's output, ckt2's output>
-        vector<tuple<bool, Var, Var>> outputMatch;
-
-        vector<Var> xorVar; // record the xorvar of two binded outputs' miter
+        // tuple<isNegate, ckt1's output, ckt2's output> (X)
+        // tuple<isNegate, ckt1's output index, ckt2's output index>
+        vector<tuple<bool, int, int>> outputMatch;
+        // whether the clause is already exist w.r.t an cij(dij)
+        vector<vector<bool>> isClauseExisted_MO;
+        // record the xorvar of two binded outputs' miter
+        // its index is the same as MO
+        vector<vector<Var>> xorVar; 
 
         // for inputGroup(outputGroup), inputGroup[<string var_name>] denotes
         // ckt1 variable, inputGroup[i][j] = (ckt2 variable, isPositive)
