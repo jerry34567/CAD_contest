@@ -127,11 +127,11 @@ SolverMgr::solveNP3(string& inputFilename, string& outputFilename) {
     // satmgr.addBusConstraint_outputUnateness();   
     // satmgr.addBusConstraint_inputSupportSize();
     // satmgr.addBusConstraint_outputSupportSize();
-    satmgr.addOutput0Constraint();
+    // satmgr.addOutput0Constraint();
     satmgr.addSymmSignConstraint();
-    // satmgr.fAtMostOneMatch(satmgr.solver);
-    // // satmgr.addSupportConstraint_whenInputMatch();
-    // // satmgr.addSupportConstraint_whenOutputMatch();
+    satmgr.fAtMostOneMatch(satmgr.solver);
+    // satmgr.addSupportConstraint_whenInputMatch();
+    // satmgr.addSupportConstraint_whenOutputMatch();
     // // satmgr.addBinateConstraint();
     // size_t bp = 0;
     

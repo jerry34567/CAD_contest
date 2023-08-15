@@ -418,15 +418,15 @@ SatMgr::printMatrix(const SatSolver& s, vector<vector<int>> const& M,
                         // tuple<bool, Var, Var>(0, -2, y[i]->getVar3()));
                 } else if (j % 2 == 0) {
                     // port1 == port2
-                    cout << j / 2 << ' ' << cirmgr.portname_ckt2[i]
-                         << " ==  " << i << ' ' <<cirmgr.portname_ckt1[j / 2] << endl;
+                    cout << i << ' ' << cirmgr.portname_ckt2[i]
+                         << " ==  " << j / 2 << ' ' <<cirmgr.portname_ckt1[j / 2] << endl;
                     inputMatch.push_back(tuple<bool, int, int>(
                         0, j, i));
                         // 0, x[j / 2]->getVar3(), y[i]->getVar3()));
                 } else {
                     // port1 == ! port2
-                    cout << j / 2 << ' '<< cirmgr.portname_ckt2[i] << " == !"
-                         << i << ' '<< cirmgr.portname_ckt1[j / 2] << endl;
+                    cout << i << ' '<< cirmgr.portname_ckt2[i] << " == !"
+                         << j / 2 << ' '<< cirmgr.portname_ckt1[j / 2] << endl;
                     inputMatch.push_back(tuple<bool, int, int>(
                         1, j, i));
                         // 1, x[j / 2]->getVar3(), y[i]->getVar3()));
@@ -435,9 +435,9 @@ SatMgr::printMatrix(const SatSolver& s, vector<vector<int>> const& M,
                 // output match
                 if (j % 2 == 0) {
                     // port1 == port2
-                    cout << j / 2 << ' '<< cirmgr.portname_ckt2[i + cirmgr.inputNum_ckt2]
+                    cout << i << ' '<< cirmgr.portname_ckt2[i + cirmgr.inputNum_ckt2]
                          << " ==  "
-                         << i << ' '<< cirmgr.portname_ckt1[j / 2 + cirmgr.inputNum_ckt1]
+                         << j / 2 << ' '<< cirmgr.portname_ckt1[j / 2 + cirmgr.inputNum_ckt1]
                          << endl;
                     outputMatch.push_back(tuple<bool, int, int>(
                         0, j, i));
@@ -445,9 +445,9 @@ SatMgr::printMatrix(const SatSolver& s, vector<vector<int>> const& M,
 
                 } else {
                     // port1 == ! port2
-                    cout << j / 2 << ' '<< cirmgr.portname_ckt2[i + cirmgr.inputNum_ckt2]
+                    cout << i << ' '<< cirmgr.portname_ckt2[i + cirmgr.inputNum_ckt2]
                          << " == !"
-                         << i << ' '<< cirmgr.portname_ckt1[j / 2 + cirmgr.inputNum_ckt1]
+                         << j / 2 << ' '<< cirmgr.portname_ckt1[j / 2 + cirmgr.inputNum_ckt1]
                          << endl;
                     outputMatch.push_back(tuple<bool, int, int>(
                         1, j, i));
@@ -1861,28 +1861,37 @@ SatMgr::AddLearnedClause(SatSolver& s, SatSolver& s_cir1, SatSolver& s_cir2, Sat
         vec<Lit> cir1_lits;
         Var output = f[i]->getVar4();
         cir1_lits.push(s_miter.getValue(f[i]->getVar2()) ? ~Lit(output) : Lit(output)); // negate output
-        for (vector<variable*>::iterator it = f[i]->_funcSupp.begin(); it != f[i]->_funcSupp.end(); it++) {
-            f[i]->partial.insert((*it));
-        }
-
-        for (int k = 0; k < f[i]->_funcSupp.size(); k++) {
-            vec<Lit> temp_lits;
-            cir1_lits.copyTo(temp_lits);
+        // for (vector<variable*>::iterator it = f[i]->_funcSupp.begin(); it != f[i]->_funcSupp.end(); it++) {
+        //     f[i]->partial.insert((*it));
+        // }
+        // for (int k = 0; k < f[i]->_funcSupp.size(); k++) {
+            // vec<Lit> temp_lits;
+            // cir1_lits.copyTo(temp_lits);
             for (int j = 0; j < f[i]->_funcSupp.size(); j++) {
-                if (j == k) continue;
-                else {
-                    if (!f[i]->partial.count(f[i]->_funcSupp[j])) continue;
-                    else {
-                        temp_lits.push(s_miter.getValue(f[i]->_funcSupp[j]->getVar2()) ? Lit(f[i]->_funcSupp[j]->getVar4()) : ~Lit(f[i]->_funcSupp[j]->getVar4()));
-                    }
+
+                // if (j == k) continue;
+                // else {
+                    // if (!f[i]->partial.count(f[i]->_funcSupp[j])) continue;
+                    // else {
+                        cir1_lits.push(s_miter.getValue(f[i]->_funcSupp[j]->getVar2()) ? Lit(f[i]->_funcSupp[j]->getVar4()) : ~Lit(f[i]->_funcSupp[j]->getVar4()));
+                    // }
+                // }
+            }
+            assert(s_cir1.assumpSolve(cir1_lits) == 0);
+            int cnt = 0;
+            for (int j = 0; j < f[i]->_funcSupp.size(); j++) {
+                // if(s_cir1.isInCore(f[i]->_funcSupp[j]->getVar4()) == true){
+                if(s_cir1.isInCore(cir1_lits[j + 1]) == true){
+                    f[i]->partial.insert(f[i]->_funcSupp[j]);
+                    ++cnt;
                 }
             }
-            bool result = s_cir1.assumpSolve(temp_lits);
-            if (!result) {
-                f[i]->partial.erase(f[i]->_funcSupp[k]);
-            }
-            temp_lits.clear();
-        }
+            // bool result = s_cir1.assumpSolve(temp_lits);
+            // if (!result) {
+            //     f[i]->partial.erase(f[i]->_funcSupp[k]);
+            // }
+            // temp_lits.clear();
+        // }
         cir1_lits.clear();
     }
 
@@ -1890,29 +1899,39 @@ SatMgr::AddLearnedClause(SatSolver& s, SatSolver& s_cir1, SatSolver& s_cir2, Sat
         g[i]->partial.clear();
         vec<Lit> cir2_lits;
         Var output = g[i]->getVar4();
+        // cout << g[i]->getname() << " : " << s_miter.getValue(g[i]->getVar2()) << endl;
         cir2_lits.push(s_miter.getValue(g[i]->getVar2()) ? ~Lit(output) : Lit(output)); // negate output
-        for (vector<variable*>::iterator it = g[i]->_funcSupp.begin(); it != g[i]->_funcSupp.end(); it++) {
-            g[i]->partial.insert((*it));
-        }
+        // for (vector<variable*>::iterator it = g[i]->_funcSupp.begin(); it != g[i]->_funcSupp.end(); it++) {
+        //     g[i]->partial.insert((*it));
+        // }
 
-        for (int k = 0; k < g[i]->_funcSupp.size(); k++) {
-            vec<Lit> temp_lits;
-            cir2_lits.copyTo(temp_lits);
+        // for (int k = 0; k < g[i]->_funcSupp.size(); k++) {
+            // vec<Lit> temp_lits;
+            // cir2_lits.copyTo(temp_lits);
             for (int j = 0; j < g[i]->_funcSupp.size(); j++) {
-                if (j == k) continue;
-                else {
-                    if (!g[i]->partial.count(g[i]->_funcSupp[j])) continue;
-                    else {
-                        temp_lits.push(s_miter.getValue(g[i]->_funcSupp[j]->getVar2()) ? Lit(g[i]->_funcSupp[j]->getVar4()) : ~Lit(g[i]->_funcSupp[j]->getVar4()));
-                    }
+            //     if (j == k) continue;
+            //     else {
+            //         if (!g[i]->partial.count(g[i]->_funcSupp[j])) continue;
+            //         else {
+                        cir2_lits.push(s_miter.getValue(g[i]->_funcSupp[j]->getVar2()) ? Lit(g[i]->_funcSupp[j]->getVar4()) : ~Lit(g[i]->_funcSupp[j]->getVar4()));
+            //         }
+            //     }
+            }
+
+            assert(s_cir2.assumpSolve(cir2_lits) == 0);
+            for (int j = 0; j < g[i]->_funcSupp.size(); j++) {
+                // if(s_cir2.isInCore(g[i]->_funcSupp[j]->getVar4()) == true){
+                if(s_cir2.isInCore(cir2_lits[j + 1]) == true){
+                    // cout << g[i]->_funcSupp[j]->getname() << endl;
+                    g[i]->partial.insert(g[i]->_funcSupp[j]);
                 }
             }
-            bool result = s_cir2.assumpSolve(temp_lits);
-            if (!result) {
-                g[i]->partial.erase(g[i]->_funcSupp[k]);
-            }
-            temp_lits.clear();
-        }
+            // bool result = s_cir2.assumpSolve(temp_lits);
+            // if (!result) {
+            //     g[i]->partial.erase(g[i]->_funcSupp[k]);
+            // }
+            // temp_lits.clear();
+        // }
         cir2_lits.clear();
     }
 

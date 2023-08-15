@@ -189,7 +189,9 @@ class SatSolver
 
          // return (_solver->val(v) < 0 ? 0 : 1);   // not sure what will return ???????
       }
-
+      bool isInCore(Lit l){
+         return _solver->failed(l.litVar());
+      }
       // void printStats() const { const_cast<Solver*>(_solver)->printStats(); } // not yet done
       void printStats() const { cout << "hello world" << endl; } // not yet done
 
