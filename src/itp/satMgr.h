@@ -183,6 +183,10 @@ class SatMgr
 
         // record the best match so far
         vector<vector<int>> record_input, record_output;
+
+        // record non support input match
+        vector<Var> non_supp_match;
+
         unsigned point = 0;
         size_t closeMatching_cnt;
 
