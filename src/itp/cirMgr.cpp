@@ -7,6 +7,7 @@
 #include <sstream>
 #include <iomanip>
 #include <set>
+#include <map>
 
 bool variable::checkSymmSign(map<size_t, size_t>& _ss, size_t _p, size_t _q){   //_ss is the symmSign of y[l], _p is fp, _q is gq
     bool tmp1 = _ss.find(_q) == _ss.end(), tmp2 = _symmSign.find(_p) == _symmSign.end();
@@ -64,6 +65,14 @@ CirMgr::readAAG() {
     faag2.open(faag2_name);
 
     string aag;
+    map<int,int> cir1_group_map;
+    map<int,int> cir2_group_map;
+    int cir1_input_counter = 0;
+    int cir2_input_counter = 0;
+    int cir1_output_counter = 0;
+    int cir2_output_counter = 0;
+    int idx1 = 0;
+    int idx2 = 0;
     int    maxidx, ip, latch, op, andgate;
     faag1 >> aag >> maxidx >> ip >> latch >> op >> andgate;
     int output0counter = ip + 1;
@@ -83,7 +92,31 @@ CirMgr::readAAG() {
             ++output0counter;
         if(output0counter == 0)
             flag0 = 0;
+
         faag1 >> tmp;
+        if (cir1_input_counter != inputNum_ckt1) {
+            cir1_input_counter++;
+        }
+        else {
+            if (cir1_output_counter != outputNum_ckt1) {
+                int temp_number = stoi(tmp) / 2;
+                map<int,int>::iterator it = cir1_group_map.find(temp_number);
+                if (it == cir1_group_map.end()) {
+                    cir1_group_map.insert(make_pair(temp_number,idx1));
+                    idx1++;
+                    set<int> temp_set;
+                    temp_set.insert(cir1_output_counter);
+                    cir1_output_group.push_back(temp_set);
+                }
+                else {
+                    int temp_idx = (*it).second;
+                    cir1_output_group[temp_idx].insert(cir1_output_counter);
+                }
+                cir1_output_counter++;
+            }
+        }
+    
+    
         if(tmp == "0")
             output0.push_back(output0counter);
         if (tmp == "i0") { // first line. ex: i0 a
@@ -116,6 +149,28 @@ CirMgr::readAAG() {
     while (true) {
         string tmp, tmp2;
         faag2 >> tmp;
+        if (cir2_input_counter != inputNum_ckt2) {
+            cir2_input_counter++;
+        }
+        else {
+            if (cir2_output_counter != outputNum_ckt2) {
+                int temp_numtber = stoi(tmp) / 2;
+                map<int,int>::iterator it = cir2_group_map.find(temp_numtber);
+                if (it == cir2_group_map.end()) {
+                    cir2_group_map.insert(make_pair(temp_numtber,idx2));
+                    idx2++;
+                    set<int> temp_set;
+                    temp_set.insert(cir2_output_counter);
+                    cir2_output_group.push_back(temp_set);
+                }
+                else {
+                    int temp_idx = (*it).second;
+                    cir2_output_group[temp_idx].insert(cir2_output_counter);
+                }
+                cir2_output_counter++;
+            }
+        }
+
         if (tmp == "i0") { // first line. ex: i0 a
             int cnt = 0;
             portnum_ckt2.push_back(tmp);
@@ -1454,7 +1509,7 @@ bool CirMgr::_inside_outputHeuristicMatching(vec<Lit>& output_heuristic_assump){
     if(cir1_func_supp_union.size() > cir2_func_supp_union.size() || cir1_not_func_supp_union.size() > cir2_not_func_supp_union.size()) return false;
 
     for(set<variable*>::iterator it = cir2_not_func_supp_union.begin(); it != cir2_not_func_supp_union.end(); ++it){
-        output_heuristic_assump.push(~Lit(MI[MI.size()-1][(*it)->getSub1()-1]->getVar()));
+        output_heuristic_assump.push(Lit(MI[MI.size()-2][(*it)->getSub1()-1]->getVar()));
     }
     // for(set<variable*>::iterator it1 = cir1_not_func_supp_union.begin(), it2 = cir2_not_func_supp_union.begin(), n1 = cir1_not_func_supp_union.end(), n2 = cir2_not_func_supp_union.end(); ; ++it1, ++it2){
     //     if(it1 == n1){

@@ -96,7 +96,7 @@ SolverMgr::solveNP3(string& inputFilename, string& outputFilename) {
     satmgr.cirmgr.readMAP();
     satmgr.initCircuit(satmgr.solver, satmgr.miterSolver, satmgr.cir1Solver, satmgr.cir2Solver, satmgr.verifierSolver);
     satmgr.cirmgr.readCNF(satmgr.miterSolver, satmgr.cir1Solver, satmgr.cir2Solver, satmgr.verifierSolver);
-    satmgr.cirmgr.readBus_class(satmgr.solver, inputFilename);
+    // satmgr.cirmgr.readBus_class(satmgr.solver, inputFilename);
     // satmgr.busMatchExactlyOne(satmgr.solver);
     // return; //test indexes
     // satmgr.cirmgr.readPreporcess(outputUnateness);
@@ -107,10 +107,8 @@ SolverMgr::solveNP3(string& inputFilename, string& outputFilename) {
     satmgr.cirmgr.outputGrouping();
     // satmgr.cirmgr.busSupportUnion();
     // satmgr.cirmgr.busInputSupportUnion();
-    // satmgr.cirmgr.busOutputUnateness();
     // satmgr.cirmgr.busInputUnateness();
     // satmgr.cirmgr.busOutputUnateness();
-    // satmgr.cirmgr.busInputUnateness();
     // satmgr.cirmgr.supportBusClassification();
     satmgr.cirmgr.symmSign();
     
@@ -118,7 +116,7 @@ SolverMgr::solveNP3(string& inputFilename, string& outputFilename) {
     satmgr.addSuppConstraint_input();  
     // satmgr.addUnateConstraint(1); // add input unate constraint         // !(input # of p of ckt1 > input # of p of ckt2 && input # of n of ckt1 > input # of n of ckt2) -> 關掉正的match || !((input # of n of ckt1 > input # of p of ckt2) && (input # of p of ckt1 > input # of n of ckt2))-> 關掉負的match
     // satmgr.addUnateConstraint(0); // add output unate constraint // test closeTTTTTTTTTTTTTTTTTTTTT
-    // satmgr.addOutputGroupingConstraint();
+    satmgr.addOutputGroupingConstraint();
     satmgr.cirmgr.printMIMO_valid();
     // for(int i = 0; i < 1; i++) Var t = satmgr.solver.newVar(); // test var
     // satmgr.addOutputConstraint_inputBusNum();  
@@ -177,7 +175,14 @@ SolverMgr::solveNP3(string& inputFilename, string& outputFilename) {
     // satmgr.cirmgr.printSupp();
     cout << "AA167" << endl;
 
-
+    for (int i = 0; i < satmgr.cirmgr.cir1_output_group.size(); i++) {
+        if (satmgr.cirmgr.cir1_output_group[i].size() != 1) {
+            for (set<int>::iterator it = satmgr.cirmgr.cir1_output_group[i].begin(); it != satmgr.cirmgr.cir1_output_group[i].end(); it++){
+                cout << *it << " ";
+            }
+            cout << endl;
+        }
+    }
 
     // for (int i = 0, n = satmgr.cirmgr.g[6]->symmetric_set.size(); i < n; i++) {
     //     for (auto j : satmgr.cirmgr.g[6]->symmetric_set[i]) {
@@ -252,6 +257,12 @@ SolverMgr::solveNP3(string& inputFilename, string& outputFilename) {
             updateOutputMatching = false;
             consecutiveLearn = 0;
         }
+        // binding non_supp matching
+        // if (!satmgr.non_supp_match.empty()) {
+        //     for (int i = 0, n = satmgr.non_supp_match.size(); i < n; i++) {
+        //         output_heuristic_assump.push(Lit(satmgr.non_supp_match[i]));
+        //     }
+        // }
         SAT1_result = satmgr.solver.assumpSolve(output_heuristic_assump);
         /*
         SAT1_result = satmgr.solver.assumpSolve(BusMatchAssump);
@@ -288,6 +299,7 @@ SolverMgr::solveNP3(string& inputFilename, string& outputFilename) {
             
         }
         else {
+            bool input_non_supp_binding = satmgr.non_supp_match.empty();
             vec<Lit>                  assump;
             vec<Lit>                  be_searched;
             vector<vector<variable*>>&MI = satmgr.cirmgr.MI,
@@ -295,6 +307,13 @@ SolverMgr::solveNP3(string& inputFilename, string& outputFilename) {
             for (int i = 0; i < MI.size(); i++) {
                 for (int j = 0; j < MI[0].size(); j++) {
                     if (satmgr.solver.getValue(MI[i][j]->getVar()) == 1) {
+
+                        // record non_support matching
+                        // if (input_non_supp_binding && satmgr.cirmgr.cir2_not_func_supp_union.count(satmgr.cirmgr.y[j])) {
+                        //     satmgr.non_supp_match.push_back(MI[i][j]->getVar());
+                        //     cout << "jjj: " << satmgr.cirmgr.y[j]->getname() << " ";
+                        // }
+
                         Lit v1 = ~Lit(MI[i][j]->getVar());
                         be_searched.push(v1);
 
@@ -399,6 +418,9 @@ SolverMgr::solveNP3(string& inputFilename, string& outputFilename) {
             stop = clock();
             time = double(stop - start) / CLOCKS_PER_SEC;
             if (!SAT2_result) {
+                // clear non support match binding
+                // satmgr.non_supp_match.clear();
+
                 // cout << "Match found!!" << endl;
                 next_level = true;
                 level++;

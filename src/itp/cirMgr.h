@@ -369,6 +369,9 @@ class CirMgr
 
         set<variable* > cir1_func_supp_union, cir2_func_supp_union, cir1_not_func_supp_union, cir2_not_func_supp_union;
 
+        // output group
+        vector<set<int> > cir1_output_group, cir2_output_group;
+
         // helper function
 
         void _readbus(
