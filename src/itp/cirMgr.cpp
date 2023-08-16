@@ -1509,7 +1509,7 @@ bool CirMgr::_inside_outputHeuristicMatching(vec<Lit>& output_heuristic_assump){
     if(cir1_func_supp_union.size() > cir2_func_supp_union.size() || cir1_not_func_supp_union.size() > cir2_not_func_supp_union.size()) return false;
 
     for(set<variable*>::iterator it = cir2_not_func_supp_union.begin(); it != cir2_not_func_supp_union.end(); ++it){
-        output_heuristic_assump.push(Lit(MI[MI.size()-2][(*it)->getSub1()-1]->getVar()));
+        output_heuristic_assump.push(~Lit(MI[MI.size()-1][(*it)->getSub1()-1]->getVar()));
     }
     // for(set<variable*>::iterator it1 = cir1_not_func_supp_union.begin(), it2 = cir2_not_func_supp_union.begin(), n1 = cir1_not_func_supp_union.end(), n2 = cir2_not_func_supp_union.end(); ; ++it1, ++it2){
     //     if(it1 == n1){
