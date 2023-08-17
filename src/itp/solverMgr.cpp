@@ -96,7 +96,7 @@ SolverMgr::solveNP3(string& inputFilename, string& outputFilename) {
     satmgr.cirmgr.readMAP();
     satmgr.initCircuit(satmgr.solver, satmgr.miterSolver, satmgr.cir1Solver, satmgr.cir2Solver, satmgr.verifierSolver);
     satmgr.cirmgr.readCNF(satmgr.miterSolver, satmgr.cir1Solver, satmgr.cir2Solver, satmgr.verifierSolver);
-    // satmgr.cirmgr.readBus_class(satmgr.solver, inputFilename);
+    satmgr.cirmgr.readBus_class(satmgr.solver, inputFilename);
     // satmgr.busMatchExactlyOne(satmgr.solver);
     // return; //test indexes
     // satmgr.cirmgr.readPreporcess(outputUnateness);
@@ -105,11 +105,11 @@ SolverMgr::solveNP3(string& inputFilename, string& outputFilename) {
     satmgr.cirmgr.readInputUnateness();
     satmgr.cirmgr.readSymmetric();
     satmgr.cirmgr.outputGrouping();
-    // satmgr.cirmgr.busSupportUnion();
-    // satmgr.cirmgr.busInputSupportUnion();
+    satmgr.cirmgr.busSupportUnion();
+    satmgr.cirmgr.busInputSupportUnion();
     // satmgr.cirmgr.busInputUnateness();
     // satmgr.cirmgr.busOutputUnateness();
-    // satmgr.cirmgr.supportBusClassification();
+    satmgr.cirmgr.supportBusClassification();
     satmgr.cirmgr.symmSign();
     
     satmgr.addSuppConstraint();  
@@ -119,10 +119,7 @@ SolverMgr::solveNP3(string& inputFilename, string& outputFilename) {
     satmgr.addOutputGroupingConstraint();
     satmgr.cirmgr.printMIMO_valid();
     // for(int i = 0; i < 1; i++) Var t = satmgr.solver.newVar(); // test var
-    // satmgr.addOutputConstraint_inputBusNum();  
-    // satmgr.addBusConstraint_inputUnateness();   
-    // satmgr.addBusConstraint_outputUnateness();   
-    // satmgr.addBusConstraint_outputUnateness();   
+    satmgr.addOutputConstraint_inputBusNum();  
     // satmgr.addBusConstraint_inputSupportSize();
     // satmgr.addBusConstraint_outputSupportSize();
     // satmgr.addOutput0Constraint();
@@ -258,11 +255,11 @@ SolverMgr::solveNP3(string& inputFilename, string& outputFilename) {
             consecutiveLearn = 0;
         }
         // binding non_supp matching
-        // if (!satmgr.non_supp_match.empty()) {
-        //     for (int i = 0, n = satmgr.non_supp_match.size(); i < n; i++) {
-        //         output_heuristic_assump.push(Lit(satmgr.non_supp_match[i]));
-        //     }
-        // }
+        if (!satmgr.non_supp_match.empty()) {
+            for (int i = 0, n = satmgr.non_supp_match.size(); i < n; i++) {
+                output_heuristic_assump.push(Lit(satmgr.non_supp_match[i]));
+            }
+        }
         SAT1_result = satmgr.solver.assumpSolve(output_heuristic_assump);
         /*
         SAT1_result = satmgr.solver.assumpSolve(BusMatchAssump);
@@ -419,7 +416,7 @@ SolverMgr::solveNP3(string& inputFilename, string& outputFilename) {
             time = double(stop - start) / CLOCKS_PER_SEC;
             if (!SAT2_result) {
                 // clear non support match binding
-                // satmgr.non_supp_match.clear();
+                satmgr.non_supp_match.clear();
 
                 // cout << "Match found!!" << endl;
                 next_level = true;
