@@ -904,18 +904,37 @@ void CirMgr::outputGrouping(){  // |f| = |g|
     // }
     vector<variable*> f_sorted = f, g_sorted = g; // sorted by (functional supp), structral support, fanin size
     vector<vector<variable*>> f_groups({{}}), g_groups({{}}); // set of groups of f & g
+    // vector<vector<int>> fts({{}}), gts({{}}); 
     std::sort(f_sorted.begin(), f_sorted.end(), _outputsorting);
     std::sort(g_sorted.begin(), g_sorted.end(), _outputsorting);
-    for(size_t i = 0, n = f.size(); i < n; ++i)
+    // vector<int> ft({1,2,3,5}), gt({2,2,4,6});
+    for(int i = f.size() - 1; i >= 0; --i)
+    // for(int i = ft.size() - 1; i >= 0; --i)
     {
+        f_groups.back().push_back(f_sorted[i]);
+        g_groups.back().push_back(g_sorted[i]);
+        // fts.back().push_back(ft[i]);
+        // gts.back().push_back(gt[i]);
         if(i != 0 && f_sorted[i]->suppSize() > g_sorted[i - 1]->suppSize())
+        // if(i != 0 && ft[i] > gt[i - 1])
         {
             f_groups.push_back({});
             g_groups.push_back({});
+            // fts.push_back({});
+            // gts.push_back({});
         }
-        f_groups.back().push_back(f_sorted[i]);
-        g_groups.back().push_back(g_sorted[i]);
     }
+    // return;
+    // for(size_t i = 0, n = f.size(); i < n; ++i)
+    // {
+    //     if(i != 0 && f_sorted[i]->suppSize() > g_sorted[i - 1]->suppSize())
+    //     {
+    //         f_groups.push_back({});
+    //         g_groups.push_back({});
+    //     }
+    //     f_groups.back().push_back(f_sorted[i]);
+    //     g_groups.back().push_back(g_sorted[i]);
+    // }
     for(size_t i = 0, n = f_groups.size(); i < n; ++i)
         for(vector<variable *>::iterator j = f_groups[i].begin(); j != f_groups[i].end(); j++)
             (*j)->setOutputGroupingNum(i);

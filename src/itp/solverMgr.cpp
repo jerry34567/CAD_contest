@@ -83,7 +83,6 @@ SolverMgr::solveNP3(string& inputFilename, string& outputFilename) {
     double time;
     clock_t start, stop;
     start = clock();
-
     satmgr.reset();
     // SatSolver solver, miterSolver;
     satmgr.solver.initialize();

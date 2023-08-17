@@ -11,6 +11,7 @@
 
 #include "cirMgr.h"
 #include "sat.h"
+#include "ntkMgr.h"
 // #include <cassert>
 // #include <fstream>
 // #include <iomanip>

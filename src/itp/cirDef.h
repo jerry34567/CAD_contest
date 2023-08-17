@@ -3,32 +3,46 @@
   PackageName  [ cir ]
   Synopsis     [ Define basic data or var for cir package ]
   Author       [ Chung-Yang (Ric) Huang ]
-  Copyright    [ Copyleft(c) 2010-present LaDs(III), GIEE, NTU, Taiwan ]
+  Copyright    [ Copyleft(c) 2012-present LaDs(III), GIEE, NTU, Taiwan ]
 ****************************************************************************/
 
 #ifndef CIR_DEF_H
 #define CIR_DEF_H
 
 #include <vector>
+//#include "myHashMap.h"
 
 using namespace std;
 
-class CirGate;
-class CirMgr;
+// TODO: define your own typedef or enum
 
-typedef vector<CirGate *> GateList;
-typedef vector<unsigned> IdList;
+class CirPValue;
+class CirGateV;
+class CirGate;
+class CirPiGate;
+class CirPoGate;
+class NtkMgr;
+class SatSolver;
+
+typedef vector<CirGate*>              GateList;
+typedef vector<CirGateV>              GateVList;
+typedef vector<unsigned>              IdList;
+typedef CirGate**                     GateArray;
+typedef CirPiGate**                   PiArray;
+typedef CirPoGate**                   PoArray;
+//typedef HashMap<CirPValue, IdList*>   FECHash;
+//typedef unsigned*                     SimPattern;
+//typedef vector<SimPattern>            SimVector;
 
 enum GateType
 {
-  INIT_GATE = -1, // not yet decided
-  UNDEF_GATE = 0,
-  PI_GATE = 1,
-  PO_GATE = 2,
-  AIG_GATE = 3,
-  CONST_GATE = 4,
+   UNDEF_GATE = 0,
+   PI_GATE    = 1,
+   PO_GATE    = 2,
+   AIG_GATE   = 3,
+   CONST_GATE = 4,
 
-  TOT_GATE
+   TOT_GATE
 };
 
 #endif // CIR_DEF_H

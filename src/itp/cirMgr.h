@@ -10,7 +10,8 @@
 #include <vector>
 #include <algorithm>
 #include <cmath>
-// #include "satMgr.h"
+#include "ntkMgr.h"
+// #include "cirGate.h"
 
 using namespace std;
 enum preprocess
@@ -279,7 +280,7 @@ class Bus
 
 class CirMgr
 {
-
+    friend class CirGate;
     public:
         friend class SatMgr;
         friend class SolverMgr;
@@ -314,8 +315,10 @@ class CirMgr
         void updateOutputHeuristic_Success(); // if Match Found -> call this to     MO_suppdiff_chosen_row++, update chosen output matching
         bool updateOutputHeuristic_Fail();    //return false if really NO MATCH!!!   if Match Not Found -> call this to chosen col idx++, if idx == MO_valid.size()-1 -> MO_suppdiff_chosen_row--, update chosen output matching. IF impossible(real No match) -> return false.
         void throwToLastRow(int row);  // throw MO_suppdiff_chosen_row row to last
+        void test(){ntkmgr.readCircuit("top1.aag");};
     private:
         int inputNum_ckt1, outputNum_ckt1, inputNum_ckt2, outputNum_ckt2;
+        NtkMgr ntkmgr;
         // portnum: i0, i1.., o0, o1..
         // portname: a,  b... , g, f..
         vector<string> portnum_ckt1, portname_ckt1, portnum_ckt2, portname_ckt2;
