@@ -1190,13 +1190,30 @@ void SatMgr::addOutputConstraint_inputBusNum(){
     for (size_t i = 0, ni = f.size(); i < ni; ++i) {
         for (size_t j = 0, nj = g.size(); j < nj; ++j) {
             bool _close = 0;
-            // if (f[i]->suppBus_distribution()->size() > g[j]->suppBus_distribution()->size()) // g's # of bus should >= f's
-            // _close = 1;
-            for(size_t k = 0, nk = f[i]->suppBus_distribution()->size() < g[j]->suppBus_distribution()->size() ? f[i]->suppBus_distribution()->size() : g[j]->suppBus_distribution()->size(); k < nk; ++k)
-                if(f[i]->suppBus_distribution()->at(k).second > g[j]->suppBus_distribution()->at(k).second){
-                    _close = 1;
-                    break;   
-                }
+            if (f[i]->suppBus_distribution()->size() > g[j]->suppBus_distribution()->size()) // g's # of bus should >= f's
+                _close = 1;
+            else{
+                for(size_t k = 0, nk = f[i]->suppBus_distribution()->size() - 1; k < nk; ++k)
+                    if(f[i]->suppBus_distribution()->at(k).second > g[j]->suppBus_distribution()->at(k).second){
+                        _close = 1;
+                        break;   
+                    }
+            }
+            if(f[i]->suppBus_distribution()->back() > g[j]->suppBus_distribution()->back())
+                _close = 1;
+
+            // if(g[j]->suppSize() == 194 && f[i]->suppSize() == 169){
+            //     cout << "f = " << endl;
+            //     for(auto xx : *(f[i]->suppBus_distribution())){
+            //         cout << "( " << xx.first << " , " << xx.second << " )";
+            //     }
+            //     cout << endl;
+            //     cout << "g = " << endl;
+            //     for(auto xx : *(g[j]->suppBus_distribution())){
+            //         cout << "( " << xx.first << " , " << xx.second << " )";
+            //     }
+            //     cout << endl;
+            // }
             if(_close == 1){
                 // cout << "_close" << endl;cnt++;
                 closeMatching(lits, i * 2, j, 0);    //close output positve matching
@@ -1241,22 +1258,26 @@ void SatMgr::addSymmSignConstraint(){
                         if(x[k]->checkSymmSign(y[l]->symmSign(), i, j) == false && cirmgr.MI_valid[k][l] == true){
                             cout << "f" << i << " <-> " << "g" << j << " ; " << "( " << k << " ," << l << " )" << endl;
                             vec<Lit> lits;
-                            lits.push(~Lit(cirmgr.MO[i * 2][j]->getVar()));
-                            lits.push(~Lit(cirmgr.MI[k * 2][l]->getVar()));
+                            lits.push(~Lit(cirmgr.MO_valid[i][j]));
+                            lits.push(~Lit(cirmgr.MI_valid[k][l]));
                             solver.addClause(lits);
-                            lits.clear();
-                            lits.push(~Lit(cirmgr.MO[i * 2][j]->getVar()));
-                            lits.push(~Lit(cirmgr.MI[k * 2 + 1][l]->getVar()));
-                            solver.addClause(lits);
-                            lits.clear();
-                            lits.push(~Lit(cirmgr.MO[i * 2 + 1][j]->getVar()));
-                            lits.push(~Lit(cirmgr.MI[k * 2][l]->getVar()));
-                            solver.addClause(lits);
-                            lits.clear();
-                            lits.push(~Lit(cirmgr.MO[i * 2 + 1][j]->getVar()));
-                            lits.push(~Lit(cirmgr.MI[k * 2 + 1][l]->getVar()));
-                            solver.addClause(lits);
-                            lits.clear();
+                            // vec<Lit> lits;
+                            // lits.push(~Lit(cirmgr.MO[i * 2][j]->getVar()));
+                            // lits.push(~Lit(cirmgr.MI[k * 2][l]->getVar()));
+                            // solver.addClause(lits);
+                            // lits.clear();
+                            // lits.push(~Lit(cirmgr.MO[i * 2][j]->getVar()));
+                            // lits.push(~Lit(cirmgr.MI[k * 2 + 1][l]->getVar()));
+                            // solver.addClause(lits);
+                            // lits.clear();
+                            // lits.push(~Lit(cirmgr.MO[i * 2 + 1][j]->getVar()));
+                            // lits.push(~Lit(cirmgr.MI[k * 2][l]->getVar()));
+                            // solver.addClause(lits);
+                            // lits.clear();
+                            // lits.push(~Lit(cirmgr.MO[i * 2 + 1][j]->getVar()));
+                            // lits.push(~Lit(cirmgr.MI[k * 2 + 1][l]->getVar()));
+                            // solver.addClause(lits);
+                            // lits.clear();
 
                         }
                     }

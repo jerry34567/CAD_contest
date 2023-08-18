@@ -916,6 +916,24 @@ void CirMgr::outputGrouping(){  // |f| = |g|
         f_groups.back().push_back(f_sorted[i]);
         g_groups.back().push_back(g_sorted[i]);
     }
+    cout << "\nf = \n { ";
+    for(auto i : f_groups){
+        cout << "( ";
+        for(auto j : i){
+            cout << j->suppSize() << " ,";
+        }
+        cout << " ) ; ";
+    }
+    cout << " }" << endl;
+    cout << "\ng = \n { ";
+    for(auto i : g_groups){
+        cout << "( ";
+        for(auto j : i){
+            cout << j->suppSize() << " ,";
+        }
+        cout << " ) ; ";
+    }
+    cout << " }" << endl;
     for(size_t i = 0, n = f_groups.size(); i < n; ++i)
         for(vector<variable *>::iterator j = f_groups[i].begin(); j != f_groups[i].end(); j++)
             (*j)->setOutputGroupingNum(i);
@@ -1090,16 +1108,22 @@ void CirMgr::feasibleBusMatching(){
 void CirMgr::supportBusClassification(){
     for(size_t i = 0, ni = f.size(); i < ni; ++i){
         vector<variable*>& functionalSupport = f[i]->_funcSupp;
+        pair<size_t, size_t> tmp(-1, 0);
         for(size_t j = 0, nj = functionalSupport.size(); j < nj; ++j){
-            if(functionalSupport[j]->busIndex() != -1){
-                if(f[i]->suppBus().insert(pair<size_t, bool>(functionalSupport[j]->busIndex(), 1)).second == false)
-                    ++f[i]->suppBus()[functionalSupport[j]->busIndex()];    // if not exist -> insert a new element; else, increment by one
-
+            if(functionalSupport[j]->busIndexs()[0] != -1){
+                for(size_t k = 0, nk = functionalSupport[j]->busIndexs().size(); k < nk; ++k){
+                    if(f[i]->suppBus().insert(pair<size_t, bool>(functionalSupport[j]->busIndexs()[k], 1)).second == false)
+                        ++f[i]->suppBus()[functionalSupport[j]->busIndexs()[k]];    // if not exist -> insert a new element; else, increment by one
+                }
+            }
+            else{
+                ++tmp.second;
             }
         }
         f[i]->suppBus_distribution() = new vector<pair<size_t, size_t>>(f[i]->suppBus().begin(), f[i]->suppBus().end());
         std::sort(f[i]->suppBus_distribution()->begin(), f[i]->suppBus_distribution()->end(), [](pair<size_t, size_t> a, pair<size_t, size_t> b){ 
             return a.second > b.second;});  // sort in non-increasing order
+        f[i]->suppBus_distribution()->push_back(tmp);
         // for(auto k : *(f[i]->suppBus_distribution()))
         //     cout<< "( " << k.first << " : " << k.second << " )";
         // cout << endl;
@@ -1107,19 +1131,28 @@ void CirMgr::supportBusClassification(){
     
     for(size_t i = 0, ni = g.size(); i < ni; ++i){
         vector<variable*>& functionalSupport = g[i]->_funcSupp;
+        pair<size_t, size_t> tmp(-1, 0);
+        int cnt = 0;
         for(size_t j = 0, nj = functionalSupport.size(); j < nj; ++j){
-            if(functionalSupport[j]->busIndex() != -1){
-                if(g[i]->suppBus().insert(pair<size_t, bool>(functionalSupport[j]->busIndex(), 1)).second == false)
-                    ++g[i]->suppBus()[functionalSupport[j]->busIndex()];    // if not exist -> insert a new element; else, increment by one
-
+            if(functionalSupport[j]->busIndexs()[0] != -1){
+            for(size_t k = 0, nk = functionalSupport[j]->busIndexs().size(); k < nk; ++k){
+                if(g[i]->suppBus().insert(pair<size_t, bool>(functionalSupport[j]->busIndexs()[k], 1)).second == false)
+                    ++g[i]->suppBus()[functionalSupport[j]->busIndexs()[k]];    // if not exist -> insert a new element; else, increment by one
+                }
+            }
+            else{
+                ++tmp.second;
             }
         }
+        cout << endl;
         g[i]->suppBus_distribution() = new vector<pair<size_t, size_t>>(g[i]->suppBus().begin(), g[i]->suppBus().end());
         std::sort(g[i]->suppBus_distribution()->begin(), g[i]->suppBus_distribution()->end(), [](pair<size_t, size_t> a, pair<size_t, size_t> b){ 
             return a.second > b.second;});  // sort in non-increasing order
+        g[i]->suppBus_distribution()->push_back(tmp);
         // for(auto k : *(g[i]->suppBus_distribution()))
         //     cout<< "( " << k.first << " : " << k.second << " )";
         // cout << endl;
+        // g[i];
     }
     return;
 } 
