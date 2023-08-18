@@ -893,6 +893,8 @@ void CirMgr::readSymmetric() {
 }
 
 void CirMgr::outputGrouping(){  // |f| = |g|
+    if(f.size() != g.size())
+        return;
     // cout << "bus : \n";
     // for(auto j : bus_ckt1_input){
 
@@ -941,6 +943,25 @@ void CirMgr::outputGrouping(){  // |f| = |g|
     for(size_t i = 0, n = g_groups.size(); i < n; ++i)
         for(vector<variable *>::iterator j = g_groups[i].begin(); j != g_groups[i].end(); j++)
             (*j)->setOutputGroupingNum(i);
+    cout << "f = { ";
+    for(auto i : f_groups){
+        cout << "( ";
+        for(auto j : i){
+            cout << j->suppSize() << " ,";
+        }
+        cout << " ) ; ";
+    }
+    cout << " }"<<endl;
+    cout << "g = { ";
+    for(auto i : g_groups){
+        cout << "( ";
+        for(auto j : i){
+            cout << j->suppSize() << " ,";
+        }
+        cout << " ) ; ";
+    }
+    cout << " }"<<endl;
+    return;
     // exit(0);
 }
 void CirMgr::symmSign(){

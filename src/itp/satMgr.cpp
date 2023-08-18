@@ -1190,10 +1190,10 @@ void SatMgr::addOutputConstraint_inputBusNum(){
                     _close = 1;
                     break;   
                 }
-            if(_close == 1){
+            if(_close == 1 || f[i]->suppBus_distribution()->size() < g[j]->suppBus_distribution()->size()){
                 cout << "_close" << endl;cnt++;
-                closeMatching(lits, i * 2, j, 0);    //close output positve matching
-                closeMatching(lits, i * 2 + 1, j, 0);    //close output negative matching
+                // closeMatching(lits, i * 2, j, 0);    //close output positve matching
+                // closeMatching(lits, i * 2 + 1, j, 0);    //close output negative matching
                 cirmgr.MO_valid[i][j] = false;
             }
         }

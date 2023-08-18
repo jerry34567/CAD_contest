@@ -108,7 +108,7 @@ SolverMgr::solveNP3(string& inputFilename, string& outputFilename) {
     // satmgr.cirmgr.busInputSupportUnion();
     // satmgr.cirmgr.busInputUnateness();
     // satmgr.cirmgr.busOutputUnateness();
-    // satmgr.cirmgr.supportBusClassification();
+    satmgr.cirmgr.supportBusClassification();
     satmgr.cirmgr.symmSign();
     
     satmgr.addSuppConstraint();  
@@ -118,7 +118,7 @@ SolverMgr::solveNP3(string& inputFilename, string& outputFilename) {
     satmgr.addOutputGroupingConstraint();
     satmgr.cirmgr.printMIMO_valid();
     // for(int i = 0; i < 1; i++) Var t = satmgr.solver.newVar(); // test var
-    // satmgr.addOutputConstraint_inputBusNum();  
+    satmgr.addOutputConstraint_inputBusNum();  
     // satmgr.addBusConstraint_inputUnateness();   
     // satmgr.addBusConstraint_outputUnateness();   
     // satmgr.addBusConstraint_outputUnateness();   

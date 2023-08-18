@@ -121,7 +121,7 @@ class variable
         size_t                              suppSize() { return _suppSize; }
         size_t                              maxInputSymmGroupIndex(){return _maxInputSymmGroupIndex;}
         map<size_t, size_t>&      suppBus() { return _suppBus;}
-        vector<pair<size_t, size_t> >*&      suppBus_distribution(){return _suppBus_distribution;}
+        vector<pair<size_t, size_t> >*&     suppBus_distribution(){return _suppBus_distribution;}
         vector<size_t>&                     inputSymmGroupSize(){return _inputSymmGroupSize;}
         symmObj*                            symmOutput(){return _symmOutput;}
         symmObj*                            symmInput(){return _symmInput;}
