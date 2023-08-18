@@ -902,6 +902,7 @@ void SatMgr::addSuppConstraint()
                 // solver.addClause(lits);
                 // lits.clear();
                 cirmgr.MO_valid[i][j] = false;
+                if(j==59) cout << "addSuppConstraint i: " << i << " j: " << j << endl;
             }
         }
     }
@@ -1088,6 +1089,7 @@ void SatMgr::addSameSuppSizeConstraint(SatSolver& s)
 
 void SatMgr::addOutputGroupingConstraint()  // will not match outputs with different group number if |f| != |g|
 {
+    int test = 0;
     vector<variable*>&f = cirmgr.f, &g = cirmgr.g;
     vec<Lit> lits;
     for (size_t i = 0, ni = f.size(); i < ni; ++i) {
@@ -1102,9 +1104,14 @@ void SatMgr::addOutputGroupingConstraint()  // will not match outputs with diffe
                 // solver.addClause(lits);
                 // lits.clear();
                 cirmgr.MO_valid[i][j] = false;
+                if(j == 59){
+                    test++;
+                    cout << "addOutputGroupingConstraint i: " << i << " j: " << j << endl;
+                }
             }
         }
     }
+    cout << "test " << test << endl;
     return;
 }
 void SatMgr::addBusConstraint_inputUnateness(){
@@ -1191,14 +1198,15 @@ void SatMgr::addOutputConstraint_inputBusNum(){
                     break;   
                 }
             if(_close == 1){
-                cout << "_close" << endl;cnt++;
+                // cout << "_close" << endl;cnt++;
                 closeMatching(lits, i * 2, j, 0);    //close output positve matching
                 closeMatching(lits, i * 2 + 1, j, 0);    //close output negative matching
                 cirmgr.MO_valid[i][j] = false;
+                if(j==59)    cout << "addOutputConstraint_inputBusNum i: " << i << " j: " << j << endl;
             }
         }
     }
-    cout << "cnt = " << cnt << endl;
+    // cout << "cnt = " << cnt << endl;
     return;
     /*int cnt = 0;
     for (size_t i = 0, ni = f.size(); i < ni; ++i) {

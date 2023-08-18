@@ -38,11 +38,12 @@ class Supp_Difference{ // Output heuristic pair need to sort support difference,
 };
 class Supp_Diff_Row{
     public:
-        Supp_Diff_Row(int _ori_idx, int _max_diff): original_row_index(_ori_idx), max_diff(_max_diff) {}    
+        Supp_Diff_Row(int _ori_idx, int _max_diff, int _g): original_row_index(_ori_idx), max_diff(_max_diff), g_suppsize(_g) {}    
         Supp_Diff_Row() {}    
         ~Supp_Diff_Row() {}    
         int original_row_index;
         int max_diff;
+        int g_suppsize;
         vector<int> suppdiff_cnt_arr; // suppdiff_cnt_arr[0]: number of X in a row, suppdiff_cnt_arr[1]: number of 0 in a row. Valid matching choice started from index: suppdiff_cnt_arr[0]
 };
 class symmObj{
@@ -400,7 +401,7 @@ class CirMgr
             for(int i = 0; i < (a.suppdiff_cnt_arr.size() < b.suppdiff_cnt_arr.size() ? a.suppdiff_cnt_arr.size() : b.suppdiff_cnt_arr.size()); i++){
                 if(a.suppdiff_cnt_arr[i] != b.suppdiff_cnt_arr[i]) return a.suppdiff_cnt_arr[i] > b.suppdiff_cnt_arr[i];
             }
-            return a.suppdiff_cnt_arr.size() > b.suppdiff_cnt_arr.size();
+            return a.g_suppsize < b.g_suppsize;
         }
         static bool _suppdiff_weight_sort(Supp_Difference* a, Supp_Difference* b){return a->weight_sort < b->weight_sort;}
         void _symmSign(bool _isCkt1); // give each input variables a symmsign
