@@ -93,7 +93,8 @@ class variable
 {
     public:
         variable(char type, Var sub1, Var sub2)
-            : _outputBinateNum(0),_inputSymmGroupIndex(-1),_maxInputSymmGroupIndex(0), _isInSymmGroup(0), _type(type), _sub1(sub1), _sub2(sub2), _busIndex(-1), _busSize(0),_suppSize(0), _inputUnateNum_p(0),_inputUnateNum_n(0),_outputUnateNum(0), _outputGroupingNum(0), _inputUnates(""), _symmGroupIndex(-2){
+            : _outputBinateNum(0),_inputSymmGroupIndex(-1),_maxInputSymmGroupIndex(0), _isInSymmGroup(0), _type(type), _sub1(sub1), _sub2(sub2), _busSize(0),_suppSize(0), _inputUnateNum_p(0),_inputUnateNum_n(0),_outputUnateNum(0), _outputGroupingNum(0), _inputUnates(""), _symmGroupIndex(-2){
+        _busIndexs.push_back(-1);
         }
         ~variable() {delete _symmOutput;}
 
@@ -113,13 +114,15 @@ class variable
         Var                                 getVar2() const { return _var2; }
         Var                                 getVar3() const { return _var3; }
         Var                                 getVar4() const { return _var4; }
-        int                                 busIndex() { return _busIndex; }
+        // int                                 busIndex() { return _busIndex; }
+        vector<int>&                        busIndexs(){return _busIndexs;}
+        // int                                 busIndex(const int _i) { return find(_busIndexs.begin(), _busIndexs.end(), _i); }
         int                                 symmGroupIndex(){return _symmGroupIndex;}
         int                                 inputSymmGroupIndex(){return _inputSymmGroupIndex;}
         size_t                              busSize() { return _busSize; }
         size_t                              suppSize() { return _suppSize; }
         size_t                              maxInputSymmGroupIndex(){return _maxInputSymmGroupIndex;}
-        map<size_t, size_t>&      suppBus() { return _suppBus;}
+        map<size_t, size_t>&                suppBus() { return _suppBus;}
         vector<pair<size_t, size_t> >*&      suppBus_distribution(){return _suppBus_distribution;}
         vector<size_t>&                     inputSymmGroupSize(){return _inputSymmGroupSize;}
         symmObj*                            symmOutput(){return _symmOutput;}
@@ -142,7 +145,8 @@ class variable
         void                                setVar2(const Var& v) { _var2 = v; }
         void                                setVar3(const Var& v) { _var3 = v; }
         void                                setVar4(const Var& v) { _var4 = v; }
-        void                                setBusIndex(const int _i) { _busIndex = _i; }
+        // void                                setBusIndex(const int _i) { _busIndex = _i;}
+        void                                setBusIndex(const int _i) { if(_busIndexs.front() == -1) _busIndexs.front() = _i; else _busIndexs.push_back(_i);}
         void                                setBusSize(const size_t _s) { _busSize = _s; }
         void                                setSuppSize(const size_t _s) { _suppSize = _s; }
         void                                setInputUnateNum_p(const size_t _s) { _inputUnateNum_p = _s; }
@@ -173,8 +177,9 @@ class variable
         Var     _var2;     // for miter solver
         Var     _var3;     // for verification solver
         Var     _var4;     // for circuit solver
-        int     _busIndex; // bus_index denotes the position of the bus it
+        // int     _busIndex; // bus_index denotes the position of the bus it
                           // belongs to in bus vector
+        vector<int> _busIndexs; // some inputs are in multiple buses simultaneously
         int    _symmGroupIndex; // the postiion in symmGroup
         int    _inputSymmGroupIndex; // the position in _inputSymmGroup (for symmSign)
         size_t _busSize;  // bus_size denotes the number of the elements in the
