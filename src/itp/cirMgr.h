@@ -346,6 +346,7 @@ class CirMgr
         int                             MO_suppdiff_omit_row; // store those
         // int                             MO_suppdiff_success_count; 
         // int                             MO_suppdiff_fail_count; 
+        int                             MO_suppdiff_cons_fail_rows; // consecutive fail rows, if > a specific number, backtrack and choose next col, also reshuffle the following rows.
 
         vector<vector<Var>>       MIbus_Var, MObus_Var;       // record bus match Var, bus_ckt1_input * bus_ckt2_input
         vector<vector<bool>>      MIbus_valid, MObus_valid;   // record bus valid

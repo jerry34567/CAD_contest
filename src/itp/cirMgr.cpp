@@ -1576,7 +1576,7 @@ bool CirMgr::updateOutputHeuristic_Fail(){
         MO_suppdiff_chosen_col_idxes[MO_suppdiff_chosen_row] = MO_suppdiff_row[MO_suppdiff_chosen_row].suppdiff_cnt_arr[0];
         if(MO_suppdiff_chosen_row == 0) return false;
         else{
-            throwToLastRow(MO_suppdiff_chosen_row);
+            // throwToLastRow(MO_suppdiff_chosen_row);
             MO_suppdiff_chosen_row--;
             // MO_suppdiff_chosen_col_idxes[MO_suppdiff_chosen_row]++;
             if (updateOutputHeuristic_Fail()) return true;
