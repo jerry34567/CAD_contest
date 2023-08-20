@@ -62,7 +62,7 @@ unateness.txt
 preprocess/*
 abc.tar.gz
 gv
-output
+output*
 .nfs*
 .vscode
 bmatch
