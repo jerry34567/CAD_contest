@@ -368,25 +368,30 @@ SatMgr::generateResult(const string& outputFileName) {
     if (!inputGroup.empty()) {
         for (unordered_map<string, Group>::iterator i = inputGroup.begin(); i != inputGroup.end(); i++) {
             fout << "INGROUP" << endl;
-            fout << "1 + <" << (*i).first << ">"<< endl;
+            fout << "1 + " << (*i).first << endl;
+            // fout << "1 + <" << (*i).first << ">"<< endl;
             for (vector<std::pair<std::string, bool>>::iterator j = (*i).second.group().begin(); j != (*i).second.group().end(); j++)
-                fout << "2" << ((*j).second ? " + <" : " - <") << (*j).first  << ">"<< endl;
+                fout << "2" << ((*j).second ? " + " : " - ") << (*j).first << endl;
+                // fout << "2" << ((*j).second ? " + <" : " - <") << (*j).first  << ">"<< endl;
             fout << "END" << endl;
         }
     }
     if (!outputGroup.empty()) {
         for (unordered_map<string, Group>::iterator i = outputGroup.begin(); i != outputGroup.end(); i++) {
             fout << "OUTGROUP" << endl;
-            fout << "1 + <" << (*i).first << ">"<<  endl;
+            fout << "1 + " << (*i).first << endl;
+            // fout << "1 + <" << (*i).first << ">"<<  endl;
             for (vector<std::pair<std::string, bool>>::iterator j = (*i).second.group().begin(); j != (*i).second.group().end(); j++)
-                fout << "2" << ((*j).second ? " + <" : " - <") << (*j).first<< ">" << endl;
+                fout << "2" << ((*j).second ? " + " : " - ") << (*j).first << endl;
+                // fout << "2" << ((*j).second ? " + <" : " - <") << (*j).first<< ">" << endl;
             fout << "END" << endl;
         }
     }
     if (!constGroup.empty()) {
         fout << "CONSTGROUP" << endl;
         for (unordered_map<string, bool>::iterator i = constGroup.begin(); i != constGroup.end(); i++)
-            fout << ((*i).second ? "- <" : "+ <") << (*i).first << ">" << endl;
+            fout << ((*i).second ? "- " : "+ ") << (*i).first << endl;
+            // fout << ((*i).second ? "- <" : "+ <") << (*i).first << ">" << endl;
         fout << "END" << endl;
     }
     fout.close();

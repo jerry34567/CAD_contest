@@ -1439,7 +1439,7 @@ void CirMgr::sortSuppDiff(){  // initially read in MO_valid and sort Supp Differ
     }
 
     for(int j = 0; j < MO_valid[0].size(); j++){
-        Supp_Diff_Row newRow(j, MO_suppdiff[MO_suppdiff.size()-1][j]->suppdiff, g[j]->_funcSupp.size());
+        Supp_Diff_Row newRow(j, MO_suppdiff[MO_suppdiff.size()-1][j]->suppdiff, g[j]->_funcSupp.size(), f.size());
         newRow.suppdiff_cnt_arr.reserve(newRow.max_diff+2);
         // cout << "newRow.suppdiff_cnt_arr.capacity()" << newRow.suppdiff_cnt_arr.capacity() << endl;
         for(int k = 0; k < newRow.max_diff+2; k++){
