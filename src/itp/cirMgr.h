@@ -38,13 +38,15 @@ class Supp_Difference{ // Output heuristic pair need to sort support difference,
 };
 class Supp_Diff_Row{
     public:
-        Supp_Diff_Row(int _ori_idx, int _max_diff, int _g, int _f): original_row_index(_ori_idx), max_diff(_max_diff), g_suppsize(_g), f_size(_f) {}    
+        Supp_Diff_Row(int _ori_idx, int _max_diff, int _g, int _f, int _y): original_row_index(_ori_idx), max_diff(_max_diff), g_suppsize(_g), f_size(_f), y_size(_y) {}    
         Supp_Diff_Row() {}    
         ~Supp_Diff_Row() {}    
         int original_row_index;
         int max_diff;
         int g_suppsize;
         int f_size;
+        int y_size;
+        // int sort_weighted; // non X size/f_size + g_suppsize/y.size()
         vector<int> suppdiff_cnt_arr; // suppdiff_cnt_arr[0]: number of X in a row, suppdiff_cnt_arr[1]: number of 0 in a row. Valid matching choice started from index: suppdiff_cnt_arr[0]
 };
 class symmObj{
@@ -319,7 +321,7 @@ class CirMgr
         void outputHeuristicMatching(vec<Lit>& output_heuristic_assump); // output match according to MO_suppdiff_row[MO_suppdiff_chosen_row], MO_suppdiff -> output match -> support input port match (can't match outside)
         bool _inside_outputHeuristicMatching(vec<Lit>& output_heuristic_assump); // output match according to MO_suppdiff_row[MO_suppdiff_chosen_row], MO_suppdiff -> output match -> support input port match (can't match outside)
         void updateOutputHeuristic_Success(); // if Match Found -> call this to     MO_suppdiff_chosen_row++, update chosen output matching
-        bool updateOutputHeuristic_Fail();    //return false if really NO MATCH!!!   if Match Not Found -> call this to chosen col idx++, if idx == MO_valid.size()-1 -> MO_suppdiff_chosen_row--, update chosen output matching. IF impossible(real No match) -> return false.
+        bool updateOutputHeuristic_Fail(bool isBackTrack);    //return false if really NO MATCH!!!   if Match Not Found -> call this to chosen col idx++, if idx == MO_valid.size()-1 -> MO_suppdiff_chosen_row--, update chosen output matching. IF impossible(real No match) -> return false.
         void throwToLastRow(int row);  // throw MO_suppdiff_chosen_row row to last
     private:
         int inputNum_ckt1, outputNum_ckt1, inputNum_ckt2, outputNum_ckt2;
@@ -342,6 +344,7 @@ class CirMgr
         vector<vector<Supp_Difference* >> MO_suppdiff; //     (sort in row)       record row-sorted according to support difference 
         vector<Supp_Diff_Row>           MO_suppdiff_row; // (sort between rows) record each row's suppdiff count of each number for sorting: most X at top -> if same: most 0 at top...  this is to increase output matching success rate (heuristic)
         vector<int>                     MO_suppdiff_chosen_col_idxes; // store each row's currently chosen output heuristic matching column index
+        vector<int>                     MO_suppdiff_throwtimes; // store each row's currently chosen output heuristic matching column index
         int                             MO_suppdiff_chosen_row; // currently chosen output heuristic row
         // vector<int>                     MO_suppdiff_omit_rows; // store those
         int                             MO_suppdiff_omit_row; // store those
@@ -405,11 +408,15 @@ class CirMgr
         }
         static bool _suppdiff_increasing(Supp_Difference* a, Supp_Difference* b){return a->suppdiff < b->suppdiff;}
         static bool _suppdiff_cnt_arr_decreasing(Supp_Diff_Row a, Supp_Diff_Row b){
+            /*
             if(a.suppdiff_cnt_arr[0] == a.f_size - 1 && b.suppdiff_cnt_arr[0] == b.f_size - 1) return a.g_suppsize < b.g_suppsize;
             for(int i = 0; i < (a.suppdiff_cnt_arr.size() < b.suppdiff_cnt_arr.size() ? a.suppdiff_cnt_arr.size() : b.suppdiff_cnt_arr.size()); i++){
                 if(a.suppdiff_cnt_arr[i] != b.suppdiff_cnt_arr[i]) return a.suppdiff_cnt_arr[i] > b.suppdiff_cnt_arr[i];
             }
             return a.g_suppsize < b.g_suppsize;
+            */
+           float p1 = 5.0;
+           return float(a.f_size - a.suppdiff_cnt_arr[0])/float(a.f_size) + p1*float(a.g_suppsize)/float(a.y_size) < float(b.f_size - b.suppdiff_cnt_arr[0])/float(b.f_size) + p1*float(b.g_suppsize)/float(b.y_size);
         }
         static bool _suppdiff_weight_sort(Supp_Difference* a, Supp_Difference* b){return a->weight_sort < b->weight_sort;}
         void _symmSign(bool _isCkt1); // give each input variables a symmsign

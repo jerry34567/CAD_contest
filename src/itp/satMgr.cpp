@@ -897,7 +897,8 @@ void SatMgr::addSuppConstraint()
     vec<Lit> lits;
     for (size_t i = 0, ni = f.size(); i < ni; ++i) {
         for (size_t j = 0, nj = g.size(); j < nj; ++j) {
-            if (f[i]->suppSize() > g[j]->suppSize()) {
+            if (f[i]->suppSize() > g[j]->suppSize() || ((g[j]->suppSize() - f[i]->suppSize()) > (cirmgr.y.size() - cirmgr.x.size() +1 )) ) {
+            // if (f[i]->suppSize() > g[j]->suppSize()) {
                 closeMatching(lits, i * 2, j, 0);    //close output positve matching
                 closeMatching(lits, i * 2 + 1, j, 0);    //close output negative matching
                 // lits.push(~Lit(cirmgr.MO[i * 2][j]->getVar()));

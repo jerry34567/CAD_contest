@@ -119,7 +119,7 @@ SolverMgr::solveNP3(string& inputFilename, string& outputFilename) {
     satmgr.addOutputGroupingConstraint();
     satmgr.cirmgr.printMIMO_valid();
     // for(int i = 0; i < 1; i++) Var t = satmgr.solver.newVar(); // test var
-    satmgr.addOutputConstraint_inputBusNum();  
+    // satmgr.addOutputConstraint_inputBusNum();  
     // satmgr.addBusConstraint_inputSupportSize();
     // satmgr.addBusConstraint_outputSupportSize();
     // satmgr.addOutput0Constraint();
@@ -169,13 +169,21 @@ SolverMgr::solveNP3(string& inputFilename, string& outputFilename) {
     satmgr.cirmgr.sortSuppDiff();
     satmgr.cirmgr.printMO_suppDiff_notab();
     satmgr.cirmgr.print_suppdiff_cnt_arr();
+    for(int i = 0; i < satmgr.cirmgr.x.size(); i++){
+        if(satmgr.cirmgr.x[i]->_funcSupp_PI.size() == 0)
+            cout << "x fuPI == 0  " << i << endl;
+    }
+    for(int i = 0; i < satmgr.cirmgr.x.size(); i++){
+        if(satmgr.cirmgr.x[i]->_funcSupp_PI.size() == 0)
+            cout << "x fuPI == 0  " << i << endl;
+    }
     // satmgr.cirmgr.printSupp();
     cout << "AA167" << endl;
 
-    for (int i = 0; i < satmgr.cirmgr.cir1_output_group.size(); i++) {
-        if (satmgr.cirmgr.cir1_output_group[i].size() != 1) {
-            for (set<int>::iterator it = satmgr.cirmgr.cir1_output_group[i].begin(); it != satmgr.cirmgr.cir1_output_group[i].end(); it++){
-                cout << *it << " ";
+    for (int i = 0; i < satmgr.cirmgr.cir2_output_group.size(); i++) {
+        if (satmgr.cirmgr.cir2_output_group[i].size() != 1) {
+            for (set<int>::iterator it = satmgr.cirmgr.cir2_output_group[i].begin(); it != satmgr.cirmgr.cir2_output_group[i].end(); it++){
+                cout << satmgr.cirmgr.g[*it]->getname() << " ";
             }
             cout << endl;
         }
@@ -288,7 +296,7 @@ SolverMgr::solveNP3(string& inputFilename, string& outputFilename) {
             // else{
             //     enable_constant = true;
             // }
-            if(!satmgr.cirmgr.updateOutputHeuristic_Fail()){
+            if(!satmgr.cirmgr.updateOutputHeuristic_Fail(false)){
                 cout << "No match!!" << endl;
                 break;
             }
@@ -475,7 +483,12 @@ SolverMgr::solveNP3(string& inputFilename, string& outputFilename) {
             } else {
                 // cout << "ELSE" << endl;
                 satmgr.AddLearnedClause(satmgr.solver, satmgr.cir1Solver, satmgr.cir2Solver, satmgr.miterSolver);
-                // cout << "consecutiveLearn: " << consecutiveLearn++ << endl;
+                cout << "consecutiveLearn: " << consecutiveLearn++ << endl;
+                if(consecutiveLearn == satmgr.cirmgr.x.size()/4){
+                    satmgr.cirmgr.MO_suppdiff_chosen_col_idxes[satmgr.cirmgr.MO_suppdiff_chosen_row] = satmgr.cirmgr.MO_suppdiff_row[satmgr.cirmgr.MO_suppdiff_chosen_row].suppdiff_cnt_arr[0];
+                    satmgr.cirmgr.throwToLastRow(satmgr.cirmgr.MO_suppdiff_chosen_row);
+                    consecutiveLearn = 0;
+                }
                 // AddLearnedClause_const(solver, miterSolver);
                 // if(finding_output){
                 //     satmgr.funcSuppInputConstraint(MO_no_pos_neg_pair, BusMatchIdx_I, BusMatchIdx_O, find_input_given_output_assump);

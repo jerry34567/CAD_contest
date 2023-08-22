@@ -1439,7 +1439,7 @@ void CirMgr::sortSuppDiff(){  // initially read in MO_valid and sort Supp Differ
     }
 
     for(int j = 0; j < MO_valid[0].size(); j++){
-        Supp_Diff_Row newRow(j, MO_suppdiff[MO_suppdiff.size()-1][j]->suppdiff, g[j]->_funcSupp.size(), f.size());
+        Supp_Diff_Row newRow(j, MO_suppdiff[MO_suppdiff.size()-1][j]->suppdiff, g[j]->_funcSupp.size(), f.size(), y.size());
         newRow.suppdiff_cnt_arr.reserve(newRow.max_diff+2);
         // cout << "newRow.suppdiff_cnt_arr.capacity()" << newRow.suppdiff_cnt_arr.capacity() << endl;
         for(int k = 0; k < newRow.max_diff+2; k++){
@@ -1460,12 +1460,15 @@ void CirMgr::sortSuppDiff(){  // initially read in MO_valid and sort Supp Differ
     MO_suppdiff_chosen_row = 0;
     // MO_suppdiff_success_count = 0;
     // MO_suppdiff_fail_count = 0;
+    for(int i = 0; i < g.size(); i++){
+        MO_suppdiff_throwtimes.push_back(0);
+    }
     
 }
 
 void CirMgr::outputHeuristicMatching(vec<Lit>& output_heuristic_assump){ 
     while(!_inside_outputHeuristicMatching(output_heuristic_assump)){
-        updateOutputHeuristic_Fail();
+        updateOutputHeuristic_Fail(false);
     }
 }
 bool CirMgr::_inside_outputHeuristicMatching(vec<Lit>& output_heuristic_assump){ // output match according to MO_suppdiff_row[MO_suppdiff_chosen_row], MO_suppdiff -> output match -> support input port match (can't match outside)
@@ -1565,26 +1568,42 @@ bool CirMgr::_inside_outputHeuristicMatching(vec<Lit>& output_heuristic_assump){
 }
 
 void CirMgr::updateOutputHeuristic_Success(){
-    cout << "updateOutputHeuristic_Success row: " << MO_suppdiff_chosen_row << endl;
+    cout << "updateOutputHeuristic_Success row: " << MO_suppdiff_chosen_row << " " << MO_suppdiff_chosen_col_idxes[MO_suppdiff_chosen_row] << endl;
     MO_suppdiff_chosen_row++;
+    for(int i = 0; i < MO_suppdiff_throwtimes.size(); i++){
+        MO_suppdiff_throwtimes[i] = 0;
+    }
 }
 
-bool CirMgr::updateOutputHeuristic_Fail(){
+bool CirMgr::updateOutputHeuristic_Fail(bool isBackTrack){
     cout << "updateOutputHeuristic_Fail row: " << MO_suppdiff_chosen_row << " col: " << MO_suppdiff_chosen_col_idxes[MO_suppdiff_chosen_row] << endl;
 
     if(MO_suppdiff_chosen_col_idxes[MO_suppdiff_chosen_row] == MO_valid.size()-1){
         MO_suppdiff_chosen_col_idxes[MO_suppdiff_chosen_row] = MO_suppdiff_row[MO_suppdiff_chosen_row].suppdiff_cnt_arr[0];
         if(MO_suppdiff_chosen_row == 0) return false;
         else{
-            // throwToLastRow(MO_suppdiff_chosen_row);
+            throwToLastRow(MO_suppdiff_chosen_row);
             MO_suppdiff_chosen_row--;
+            MO_suppdiff_throwtimes[MO_suppdiff_chosen_row]++;
+            // for(int i = 0; i < MO_suppdiff_throwtimes.size(); i++){
+            //     if(MO_suppdiff_throwtimes[i] != 0) cout << "MO_suppdiff_throwtimes: " << i << " " << MO_suppdiff_throwtimes[i] << endl;
+            // }
+            cout << endl;
             // MO_suppdiff_chosen_col_idxes[MO_suppdiff_chosen_row]++;
-            if (updateOutputHeuristic_Fail()) return true;
+            if (updateOutputHeuristic_Fail(true)) return true;
             else return false;
         }
     }
     else{
-        MO_suppdiff_chosen_col_idxes[MO_suppdiff_chosen_row]++;
+        if(!isBackTrack){
+            MO_suppdiff_chosen_col_idxes[MO_suppdiff_chosen_row]++;
+        }
+        else if(MO_suppdiff_throwtimes[MO_suppdiff_chosen_row] == 2){
+            MO_suppdiff_chosen_col_idxes[MO_suppdiff_chosen_row]++;
+            for(int i = 0; i < g.size() - MO_suppdiff_chosen_row - 2; i++){
+                throwToLastRow(MO_suppdiff_chosen_row+1);
+            }
+        }
     }
     return true;
     // MO_suppdiff_row[MO_suppdiff_chosen_row].original_row_index
