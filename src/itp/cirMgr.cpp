@@ -1439,7 +1439,7 @@ void CirMgr::sortSuppDiff(){  // initially read in MO_valid and sort Supp Differ
     }
 
     for(int j = 0; j < MO_valid[0].size(); j++){
-        Supp_Diff_Row newRow(j, MO_suppdiff[MO_suppdiff.size()-1][j]->suppdiff, g[j]->_funcSupp.size(), f.size());
+        Supp_Diff_Row newRow(j, MO_suppdiff[MO_suppdiff.size()-1][j]->suppdiff, g[j]->_funcSupp.size(), f.size(), y.size());
         newRow.suppdiff_cnt_arr.reserve(newRow.max_diff+2);
         // cout << "newRow.suppdiff_cnt_arr.capacity()" << newRow.suppdiff_cnt_arr.capacity() << endl;
         for(int k = 0; k < newRow.max_diff+2; k++){
@@ -1451,7 +1451,7 @@ void CirMgr::sortSuppDiff(){  // initially read in MO_valid and sort Supp Differ
         MO_suppdiff_row.push_back(newRow);
     }
 
-    sort(MO_suppdiff_row.begin(), MO_suppdiff_row.end(), _suppdiff_cnt_arr_decreasing);
+    sort(MO_suppdiff_row.begin(), MO_suppdiff_row.end(), _suppdiff_cnt_arr_decreasing_p1);
     
     // MO_suppdiff_chosen_col_idxes.reserve(MO_valid[0].size());
     for(int i = 0; i < MO_valid[0].size(); i++){
@@ -1576,7 +1576,7 @@ bool CirMgr::updateOutputHeuristic_Fail(){
         MO_suppdiff_chosen_col_idxes[MO_suppdiff_chosen_row] = MO_suppdiff_row[MO_suppdiff_chosen_row].suppdiff_cnt_arr[0];
         if(MO_suppdiff_chosen_row == 0) return false;
         else{
-            // throwToLastRow(MO_suppdiff_chosen_row);
+            if(restartMode == 2)  throwToLastRow(MO_suppdiff_chosen_row);
             MO_suppdiff_chosen_row--;
             // MO_suppdiff_chosen_col_idxes[MO_suppdiff_chosen_row]++;
             if (updateOutputHeuristic_Fail()) return true;

@@ -206,9 +206,45 @@ SolverMgr::solveNP3(string& inputFilename, string& outputFilename) {
     // }
     vec<Lit> output_heuristic_assump;
     bool updateOutputMatching = true;
+    bool restart = false;
+    satmgr.cirmgr.restartMode = 1;
     int consecutiveLearn = 0;
-
+    int firstCnt = 0;
     while (satmgr.point != (satmgr.cirmgr.outputNum_ckt1 + satmgr.cirmgr.outputNum_ckt2) && time < 3570) {
+        if(time > 600 && satmgr.cirmgr.restartMode == 0){
+            satmgr.cirmgr.restartMode = 1;
+        }
+        if(time > 1000 && satmgr.cirmgr.restartMode == 2){
+            satmgr.cirmgr.restartMode = 3;
+        }
+
+        if(satmgr.cirmgr.restartMode == 0 && (restart || satmgr.cirmgr.MO_suppdiff_chosen_row == 2)){
+            satmgr.cirmgr.MO_suppdiff_chosen_row = 0;
+            satmgr.cirmgr.throwToLastRow(0);
+            firstCnt++;
+            restart = false;
+            if(firstCnt == satmgr.cirmgr.MO_valid[0].size()){
+                satmgr.cirmgr.restartMode = 1;
+            }
+        }
+        if(satmgr.cirmgr.restartMode == 1){
+            sort(satmgr.cirmgr.MO_suppdiff_row.begin(), satmgr.cirmgr.MO_suppdiff_row.end(), satmgr.cirmgr._suppdiff_cnt_arr_decreasing_p1);
+            satmgr.cirmgr.MO_suppdiff_chosen_col_idxes.clear();
+            for(int i = 0; i < satmgr.cirmgr.MO_valid[0].size(); i++){
+                satmgr.cirmgr.MO_suppdiff_chosen_col_idxes.push_back(satmgr.cirmgr.MO_suppdiff_row[i].suppdiff_cnt_arr[0]);
+            }
+            satmgr.cirmgr.MO_suppdiff_chosen_row = 0;
+            satmgr.cirmgr.restartMode = 2;
+        }
+        if(satmgr.cirmgr.restartMode == 3){
+            sort(satmgr.cirmgr.MO_suppdiff_row.begin(), satmgr.cirmgr.MO_suppdiff_row.end(), satmgr.cirmgr._suppdiff_cnt_arr_decreasing);
+            satmgr.cirmgr.MO_suppdiff_chosen_col_idxes.clear();
+            for(int i = 0; i < satmgr.cirmgr.MO_valid[0].size(); i++){
+                satmgr.cirmgr.MO_suppdiff_chosen_col_idxes.push_back(satmgr.cirmgr.MO_suppdiff_row[i].suppdiff_cnt_arr[0]);
+            }
+            satmgr.cirmgr.MO_suppdiff_chosen_row = 0;
+            satmgr.cirmgr.restartMode = 4;
+        }
         // if (level == 0 && next_level){
         //     cout << "a0" << endl;
         //     satmgr.solver.addAtLeast(vec_var, satmgr.cirmgr.outputNum_ckt2 / 4, 0, 0);
@@ -290,7 +326,8 @@ SolverMgr::solveNP3(string& inputFilename, string& outputFilename) {
             // }
             if(!satmgr.cirmgr.updateOutputHeuristic_Fail()){
                 cout << "No match!!" << endl;
-                break;
+                restart = true;
+                // break;
             }
             updateOutputMatching = true;
             
@@ -476,6 +513,10 @@ SolverMgr::solveNP3(string& inputFilename, string& outputFilename) {
                 // cout << "ELSE" << endl;
                 satmgr.AddLearnedClause(satmgr.solver, satmgr.cir1Solver, satmgr.cir2Solver, satmgr.miterSolver);
                 // cout << "consecutiveLearn: " << consecutiveLearn++ << endl;
+                if(consecutiveLearn == 50){
+                    restart = true;
+                    consecutiveLearn = 0;
+                }
                 // AddLearnedClause_const(solver, miterSolver);
                 // if(finding_output){
                 //     satmgr.funcSuppInputConstraint(MO_no_pos_neg_pair, BusMatchIdx_I, BusMatchIdx_O, find_input_given_output_assump);
