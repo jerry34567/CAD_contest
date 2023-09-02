@@ -11,6 +11,8 @@
 #include <algorithm>
 #include <cmath>
 #include "ntkMgr.h"
+#include "cirGate.h"
+#include "util.h"
 // #include "cirGate.h"
 
 using namespace std;
@@ -94,7 +96,7 @@ class variable
 {
     public:
         variable(char type, Var sub1, Var sub2)
-            : _outputBinateNum(0),_inputSymmGroupIndex(-1),_maxInputSymmGroupIndex(0), _isInSymmGroup(0), _type(type), _sub1(sub1), _sub2(sub2), _busIndex(-1), _busSize(0),_suppSize(0), _inputUnateNum_p(0),_inputUnateNum_n(0),_outputUnateNum(0), _outputGroupingNum(0), _inputUnates(""), _symmGroupIndex(-2){
+            : _pValue(0ULL),_simEnable1(-1), _outputBinateNum(0),_inputSymmGroupIndex(-1),_maxInputSymmGroupIndex(0), _isInSymmGroup(0), _type(type), _sub1(sub1), _sub2(sub2), _busIndex(-1), _busSize(0),_suppSize(0), _inputUnateNum_p(0),_inputUnateNum_n(0),_outputUnateNum(0), _outputGroupingNum(0), _inputUnates(""), _symmGroupIndex(-2){
         }
         ~variable() {delete _symmOutput;}
 
@@ -114,14 +116,18 @@ class variable
         Var                                 getVar2() const { return _var2; }
         Var                                 getVar3() const { return _var3; }
         Var                                 getVar4() const { return _var4; }
+        bool                                getPattern(const size_t i) const { return ((_pValue & (1ULL << i)) != 0);}
+        Var                                 getSimEnable1() const { return _simEnable1; }
         int                                 busIndex() { return _busIndex; }
         int                                 symmGroupIndex(){return _symmGroupIndex;}
         int                                 inputSymmGroupIndex(){return _inputSymmGroupIndex;}
         size_t                              busSize() { return _busSize; }
         size_t                              suppSize() { return _suppSize; }
         size_t                              maxInputSymmGroupIndex(){return _maxInputSymmGroupIndex;}
-        map<size_t, size_t>&      suppBus() { return _suppBus;}
+        unsigned long long                  pValue() { return _pValue; }
+        map<size_t, size_t>&                suppBus() { return _suppBus;}
         vector<pair<size_t, size_t> >*&     suppBus_distribution(){return _suppBus_distribution;}
+        vector<short>&                      simResult() { return _simResult; }
         vector<size_t>&                     inputSymmGroupSize(){return _inputSymmGroupSize;}
         symmObj*                            symmOutput(){return _symmOutput;}
         symmObj*                            symmInput(){return _symmInput;}
@@ -133,16 +139,21 @@ class variable
         size_t                              inputUnateNum_p() { return _inputUnateNum_p; }
         size_t                              inputUnateNum_n() { return _inputUnateNum_n; }
         size_t                              outputGroupingNum() { return _outputGroupingNum; }
+        vector<string>&                     in0_supp(){return _in0_supp;}
+        vector<string>&                     in1_supp(){return _in1_supp;}
         int                                 getSelected_times() {return selected_times;}
         void                                settype(const char& v) { _type = v; }
+        // void                                setSimResult(const int bits){ return (1 << bits);}
         void                                setIsInSymmGroup(const bool _b){_isInSymmGroup = _b;}
         void                                setname(const string& name) { _name = name; }
+        void                                setPValue(const unsigned long long s){ _pValue = s;}
         void                                setSub1(const Var& v) { _sub1 = v; }
         void                                setSub2(const Var& v) { _sub2 = v; }
         void                                setVar(const Var& v) { _var = v; }
         void                                setVar2(const Var& v) { _var2 = v; }
         void                                setVar3(const Var& v) { _var3 = v; }
         void                                setVar4(const Var& v) { _var4 = v; }
+        void                                setSimEnable1(const Var& v) { assert(_simEnable1 == -1 || _simEnable1 == v); _simEnable1 = v; }
         void                                setBusIndex(const int _i) { _busIndex = _i; }
         void                                setBusSize(const size_t _s) { _busSize = _s; }
         void                                setSuppSize(const size_t _s) { _suppSize = _s; }
@@ -163,7 +174,8 @@ class variable
         void                                addOutputBinateNum() { ++_outputBinateNum; }
         void                                inputSymmGroupClassification(size_t _input1, size_t _input2);
         void                                setSelected_times(int _s) {selected_times = _s;}
-
+        void                                resetSimResult() { _simResult.clear(); }
+        bool                                isSimResultEqual(vector<short>& re){ for(size_t i = 0, ni = re.size(); i < ni; ++i) if(_simResult[i] != re[i]) return 0; return 1;}
     private:
         char    _type;
         bool    _isInSymmGroup; // whehter this input is positive symm with other inputs
@@ -174,6 +186,7 @@ class variable
         Var     _var2;     // for miter solver
         Var     _var3;     // for verification solver
         Var     _var4;     // for circuit solver
+        Var     _simEnable1; // for output matched type I simulation enable Var
         int     _busIndex; // bus_index denotes the position of the bus it
                           // belongs to in bus vector
         int    _symmGroupIndex; // the postiion in symmGroup
@@ -189,6 +202,7 @@ class variable
         size_t _outputUnateNum; // the number of output unate variables(i.e., the number of input that makes this output unate)
         string _inputUnates; // the detail input unate of this output
         size_t _outputGroupingNum; // index of the output grouping
+        unsigned long long _pValue; // the pattern for simulation
         symmObj* _symmOutput; // record the outputs that this input variable is positive symmetric to
         symmObj* _symmInput; // record the inputs that is positive symmetric to this output variable
         // collect those buses that this output's support inputs lie in    
@@ -198,6 +212,8 @@ class variable
         map<size_t, size_t>  _symmSign; // the symmetry signature of each inputs; map[i].first == the output port index in f / g, map[i].second == the number of inputs in the symm group w.r.t f[map[i].first] / g[map[i].first]
         map<size_t, size_t> _inputSymmGroup; // to classify each input symmetry group of this output variable; map[i].first = the input port index in x / y, map[i]->second = the group index 
         vector<size_t> _inputSymmGroupSize; // the vector of input symmGroup size, the index is identical to the one in the map.second
+        vector<string> _in0_supp, _in1_supp; // to record the supp of the "two" input of PO
+        vector<short>   _simResult; // (from LSB) 1st : one-hot, 2nd : one-cold ; each element correspond to a matchedOutput
         // unsigned long long _suppBus; 
         // Var _aigVar; do we need this??
         int     selected_times; // record selected times in output heuristic pair (only for f variables)
@@ -284,7 +300,8 @@ class CirMgr
     public:
         friend class SatMgr;
         friend class SolverMgr;
-        CirMgr(){};
+        friend class NtkMgr;
+        CirMgr():ntkmgr1(0), ntkmgr2(0), keyPattern(-1){};
         ~CirMgr(){};
         void reset();
         void readAAG();
@@ -295,6 +312,7 @@ class CirMgr
         void recordPIsupportPO(); // record those POs affected by each PI, record in each PI's _funcSupp_PI
         void readInputUnateness();  // mix positive / negative unate together
         void readSymmetric();
+        void readPOFaninSupp(); // read each PO's fanin's supp
         void outputGrouping();
         void busSupportUnion(); // collect the union support size of output bus and close the infeasible bus matching
         void busInputSupportUnion();
@@ -315,10 +333,19 @@ class CirMgr
         void updateOutputHeuristic_Success(); // if Match Found -> call this to     MO_suppdiff_chosen_row++, update chosen output matching
         bool updateOutputHeuristic_Fail();    //return false if really NO MATCH!!!   if Match Not Found -> call this to chosen col idx++, if idx == MO_valid.size()-1 -> MO_suppdiff_chosen_row--, update chosen output matching. IF impossible(real No match) -> return false.
         void throwToLastRow(int row);  // throw MO_suppdiff_chosen_row row to last
-        void test(){ntkmgr.readCircuit("top1.aag");};
+        void typeIsim();
+        void resetMatchedInput(){matchedInput_x.clear(); matchedInput_y.clear(); matchedOutput_ff.clear(); matchedOutput_gg.clear();}
+        void resetMatchedOutput(){matchedOutput_f.clear(); matchedOutput_g.clear();}
+        // keyPatterns are the index of the pattern that make the outputs inconsistent. NOTE : the first(ckt1) & second(ckt2) element is the MO index of the unmatched output
+        // use _miter_duration to decide how many time should we sim
+        bool randomSimulation(double _sample_miter_duration); // use multiple pattern to preprocess if this matching if legal, if not, we can skip this iteration of miter solver
+        // bool randomSimulation(vector<size_t>& keyPatterns); // use multiple pattern to preprocess if this matching if legal, if not, we can skip this iteration of miter solver
     private:
         int inputNum_ckt1, outputNum_ckt1, inputNum_ckt2, outputNum_ckt2;
-        NtkMgr ntkmgr;
+        // keyPattern is the index of the pattern that make the outputs inconsistent. 
+        int keyPattern;
+        double _estimated_miter_duration;
+        NtkMgr* ntkmgr1, *ntkmgr2; // ntkmgr1 for ckt1, ntkmgr2 for ckt2
         // portnum: i0, i1.., o0, o1..
         // portname: a,  b... , g, f..
         vector<string> portnum_ckt1, portname_ckt1, portnum_ckt2, portname_ckt2;
@@ -332,6 +359,8 @@ class CirMgr
         vector<vector<variable*>> MI, MO;
         // vector<vector<Var>> MO_no_pos_neg; // MO but without positive/negative match, half the size of MO
         vector<variable*>         x, y, f, g; // sub2 = -1
+        vector<variable*>         matchedOutput_f, matchedOutput_g; // record this iteration's output heuristic matched output for simulation
+        vector<size_t>            matchedInput_x, matchedInput_y, matchedOutput_ff, matchedOutput_gg; // record the MI index (so we can know the negation) 
         vector<vector<bool>>      MI_valid, MO_valid; // record valid match (without +-)(true: can match, false: invalid match) (matrix version of candidates) (including constant)
         vector<vector<Var>>       MI_valid_Var, MO_valid_Var; // record valid match (without +-)(true: can match, false: invalid match) (matrix version of candidates) (including constant)
         
@@ -371,12 +400,15 @@ class CirMgr
         unordered_map<string, int> u_name_busIndex_input_ckt1, u_name_busIndex_output_ckt1, u_name_busIndex_input_ckt2, u_name_busIndex_output_ckt2; // index for bus_ckt1_input, bus_ckt2_input
 
         set<variable* > cir1_func_supp_union, cir2_func_supp_union, cir1_not_func_supp_union, cir2_not_func_supp_union;
-
+        // keyPatterns are the index of the pattern that make the outputs inconsistent. NOTE : the first(ckt1) & second(ckt2) element is the MO index of the unmatched output
+        vector<size_t> keyPatterns;
         // output group
         vector<set<int> > cir1_output_group, cir2_output_group;
 
         // helper function
-
+        void _setEstimatedMiterDuraion(double _s){ double a = 0.25; _estimated_miter_duration = (1.0 - a) * _estimated_miter_duration + a * _s;}
+        void _resetKeyPattern(){keyPattern = -1;}
+        void _resetKeyPatterns(){keyPatterns.clear();}
         void _readbus(
             ifstream& fbus, vector<vector<string>>& bus_list_ckt,
             bool _isCkt1); // _ckti = 1 denotes is reading ckt1; = 0 -> ckt2

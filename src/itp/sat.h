@@ -16,7 +16,7 @@
 #include <vector>
 #include <unordered_map>
 #include <map>
-
+#include <time.h>
 using namespace std;
 
 typedef int Var;
@@ -127,6 +127,7 @@ class SatSolver
       // For incremental proof, use "assumeSolve()"
       void assumeRelease() { _assump.clear(); }
       void assumeConstrainRelease(){ _isConstrained = 0;}
+      // void myAssumeConstrainRelease(){ _assumeClauses.clear();}
       void assumeProperty(Var prop, bool val) {
          _assump.push(val? Lit(prop): ~Lit(prop));
       }
@@ -138,6 +139,12 @@ class SatSolver
          _solver->constrain(0);
          _isConstrained = 1;
       }
+      // void myAssumeClause(vec<Lit>& ps){
+      //    for(size_t i = 0, ni = ps.size(); i < ni; ++i){
+      //       _solver->myConstrain(ps[i].litVar());
+      //    }
+      //    _solver->myConstrain(0);
+      // }
       bool assumpSolve() {
          for(size_t i = 0, n = _assump.size(); i < n; ++i){
             _solver->assume(_assump[i].litVar());
@@ -152,7 +159,9 @@ class SatSolver
       }
       
       // my version assumpSolve 2023 5 13
-      bool assumpSolve(vec<Lit>& _as) { 
+      bool assumpSolve(vec<Lit>& _as, double* _miter_duration = 0) { 
+         clock_t start, stop;
+         start = clock();
          for(size_t i = 0, n = _as.size(); i < n; ++i){
             _solver->assume(_as[i].litVar());
          }
@@ -162,12 +171,16 @@ class SatSolver
          // for(size_t i = 0, n = _as.size(); i < n; ++i){
          //    _solver->assume(_as[i].litVar());
          // }
+         stop = clock();
+         if(_miter_duration != 0)
+            *_miter_duration = double(stop - start);
          return ret == 10;
       }
 
       // For one time proof, use "solve"
       void assertProperty(Var prop, bool val) {
          _solver->add(val ? prop: -prop);
+         _solver->add(0);
          // _solver->addUnit(val? Lit(prop): ~Lit(prop));
       }
       bool solve(){
@@ -303,6 +316,7 @@ class SatSolver
       Var               _curVar;    // Variable currently
       vec<Lit>          _assump;    // Assumption List for assumption solve
       unordered_map<pair<int,int>, Var, pair_hash> _map;
+      // vector<vec<Lit>>     _assumeClauses;
       map<Var, bool> _currentValOfEachVar;
       void _recordCurrentVarVal(int _state);
 };

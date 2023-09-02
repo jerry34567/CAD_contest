@@ -16,6 +16,7 @@
 #include <algorithm>
 #include "rnGen.h"
 #include "myUsage.h"
+#include <random>
 
 using namespace std;
 
@@ -74,4 +75,12 @@ size_t getHashSize(size_t s) {
    if (s < 536870912) return 5000011;
    return 7000003;
 }
-
+unsigned long long getRandomULL(unsigned long long const& min, unsigned long long const& max)
+{
+   //  srand(time(NULL));
+   random_device rd;
+   default_random_engine generator( rd() );
+   uniform_int_distribution<unsigned long long> unif(min, max);
+   return unif(generator);
+   //  return (((unsigned long long)(unsigned int)rd() << 32) + (unsigned long long)(unsigned int)rd()) % (max - min) + min;
+}

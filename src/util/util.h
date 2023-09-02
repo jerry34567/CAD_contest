@@ -70,5 +70,6 @@ removeData(T& l, const D& d) {
     }
     l.resize(des);
 }
-
+unsigned long long 
+getRandomULL(unsigned long long const& min, unsigned long long const& max);
 #endif // UTIL_H

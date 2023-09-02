@@ -14,6 +14,8 @@
 #include <ctype.h>
 #include <cassert>
 #include <cstring>
+#include <bitset>
+#include <set>
 #include "ntkMgr.h"
 #include "cirGate.h"
 #include "util.h"
@@ -227,7 +229,7 @@ void NtkMgr::selfSim(bool is1){
    string pattern2 = "000000000000";
    for(size_t i = 0; i < _numDecl[PI]; i++){
       if(is1){
-         _piList[i]->setPValue(CirPValue(pattern1[i] == '0' ? 0ULL : 1ULL));
+         _piList[i]->setPValue(1ULL << i);
       }
       else{
          _piList[i]->setPValue(CirPValue(pattern2[i] == '0' ? 0ULL : 1ULL));
@@ -236,19 +238,19 @@ void NtkMgr::selfSim(bool is1){
    for(auto i : _dfsList){
       i->pSim();
    }
-   if(is1){
-      cout << _poList[2]->getPValue()() << endl;
-   }
-   else{
-      cout << _poList[1]->getPValue()() << endl;
-   }
-   return;
+   // if(is1){
+   //    cout << _poList[2]->getPValue()() << endl;
+   // }
+   // else{
+   //    cout << _poList[1]->getPValue()() << endl;
+   // }
+   // return;
    for(size_t j = 0; j < _numDecl[PI]; ++j){
       for(size_t i = 0; i < _numDecl[PI]; i++){
          // _piList[i][0].setPValue(CirPValue(~0ULL - (1ULL << i)));
-         if(i == j)
-            _piList[i][0].setPValue(CirPValue(~0ULL));
-         else
+         // if(i == j)
+         //    _piList[i][0].setPValue(CirPValue(~0ULL));
+         // else
             _piList[i][0].setPValue(CirPValue(1ULL << i));
       }
       for(auto i : _dfsList){
@@ -353,11 +355,129 @@ NtkMgr::readCircuit(const string& fileName)
    genDfsList();
    checkFloatList();
    checkUnusedList();
-   selfSim((fileName[11] == '1'));
+   genFaninSupp();
+   // printNetlist();
+   // selfSim((fileName[11] == '1'));
 
    return true;
 }
+void
+NtkMgr::randomSimulation(vector<variable*>& outputVector, vector<variable*>& inputVector, vector<variable*>* inputVector_x, vector<size_t>* matchedInput_x, vector<size_t>* matchedInput_y){
+   set<size_t> PValueSet;
+   if(matchedInput_x != 0){
+      for(size_t i = 0, ni = matchedInput_y->size(); i < ni; ++i){
+         unsigned long long tmp = 0ULL;
+         if(matchedInput_x->at(i) / 2 == inputVector_x->size())
+            tmp = matchedInput_x->at(i) % 2 == 0 ? 0ULL : ~0ULL;
+         else
+            tmp = matchedInput_x->at(i) % 2 == 0 ? inputVector_x->at(matchedInput_x->at(i) / 2)->pValue() : ~(inputVector_x->at(matchedInput_x->at(i) / 2)->pValue());
+         getPi(matchedInput_y->at(i))->setPValue(tmp);
+         inputVector[matchedInput_y->at(i)]->setPValue(tmp);
+         PValueSet.insert(matchedInput_y->at(i));
+      }
+   }
+   for(size_t i = 0, ni = getNumPIs(); i < ni; ++i){
+      if(PValueSet.count(i))
+         continue;
+      getPi(i)->setPValue(getRandomULL(0, ULLONG_MAX));
+      inputVector[i]->setPValue(getPi(i)->getPValue()());
+   }
+   for(size_t j = 0, nj = _dfsList.size() ; j < nj; ++j){
+         _dfsList[j]->pSim();
+   }
+   for(size_t i = 0, ni = outputVector.size(); i < ni; ++i){
+      outputVector[i]->setPValue(getPo(outputVector[i]->getSub1() - 1)->getPValue()());
+   }
+}
+void
+NtkMgr::np3Sim(vector<variable*>& matchedOutput, vector<variable*>& inputVector, bool _isTypeI){   // if more than 64 inputs???
+   for(size_t i = 0, ni = inputVector.size() / 64 + 1; i < ni; ++i){
+      // for(int j = 0, nj = getNumPOs(); j < nj; ++j)
+      //    getPo(j)->setPValue(0ULL);
+      for(size_t j = 0, nj =( (i == ni - 1) ? inputVector.size() % 64 : 64); j < nj; ++j){
+            getPi(i * 64 + j)->setPValue(1ULL << j);
+      }
+      for(size_t j = 0, nj = _dfsList.size() ; j < nj; ++j){
+         _dfsList[j]->pSim();
+      }
+      for(size_t j = 0, nj = matchedOutput.size(); j < nj; ++j){
+         // assert(matchedOutput[j]->getname() == string(getPo(matchedOutput[j]->getSub1() - 1)->getName()));
+         unsigned long long target = getPo(matchedOutput[j]->getSub1() - 1)->getPValue()();
+         vector<variable*> &funcSupp = matchedOutput[j]->_funcSupp;
+         set<size_t> funcSuppIndex;
+         for(size_t k = 0, nk = funcSupp.size(); k < nk; ++k){
+               funcSuppIndex.insert(funcSupp[k]->getSub1() - 1);
+         }
+         for(size_t k = 0, nk =( (i == ni - 1) ? inputVector.size() % 64 : 64); k < nk; ++k){
+               if(funcSuppIndex.count(i * 64 + k)){
+                  inputVector[i * 64 + k]->simResult().push_back(((target & (1ULL << k)) == 0) ? 0 : 1);
+                  cout << "input name = "<<inputVector[i * 64 + k]->getname() << endl;
+                  cout << "output name = "<<matchedOutput[j]->getname() << endl;
+                  cout << "==================================\n";
+                  cout << "target = " << endl;
+                  cout << bitset<64>(target) << endl;
+                  cout << bitset<64>(1ULL << k) << endl;
+                  cout << bitset<64>(target & (1ULL << k)) << endl;
+                  cout << "==================================\n";
+               }
+         }
+      }
+    }
+    cout << "Input = \n";
+    for(size_t i = 0; i < getNumPIs(); ++i){
+      cout << setw(3)<<getPi(i)->getName() << " : " <<bitset<64>(getPi(i)->getPValue()()) << endl;
+   }
+   cout << "===============================" << endl;
+    cout << "Output = \n";
+   for(size_t i = 0; i < getNumPOs(); ++i){
+      cout << setw(3)<<getPo(i)->getName() << " : " << bitset<64>(getPo(i)->getPValue()()) << endl;
+   }
+   cout << "===============================" << endl;
+   /*for(size_t i = 0, ni = cirmgr->x.size() / 64 + 1; i < ni; ++i){
+      for(size_t j = 0, nj =( (i == ni - 1) ? cirmgr->x.size() % 64 : 64); j < nj; ++j){
+            getPi(i * 64 + j)->setPValue(1ULL << j);
+      }
+      for(size_t j = 0, nj = _dfsList.size() ; j < nj; ++j){
+         _dfsList[j]->pSim();
+      }
+      for(size_t j = 0, nj = matchedOutput.size(); j < nj; ++j){
+         unsigned long long target = getPo(matchedOutput[j]->getSub1() - 1)->getPValue()();
+         set<size_t> funcSuppIndex;
+         vector<variable*> output0, output1; // collect PIs whose one hot encoding makes output = 0(1)
+         for(size_t k = 0, nk = matchedOutput[j]->_funcSupp.size(); k < nk; ++k){
+            matchedOutput[j]->_funcSupp[k]->resetSimResult();
+            funcSuppIndex.insert(matchedOutput[j]->_funcSupp[k]->getSub1() - 1);
+         }
+         for(size_t k = 0, nk =( (i == ni - 1) ? cirmgr->x.size() % 64 : 64); k < nk; ++k){
+            if(funcSuppIndex.count(i * 64 + k)){
+               if((target & (1ULL << k)) != 0)
+                  // cirmgr->x[i * 64 + k]->setSimResult(0);
+               (target & (1ULL << k)) == 0 ? output0.push_back(cirmgr->x[i * 64 + k]) : output1.push_back(cirmgr->x[i * 64 + k]);
+            }
+         }
 
+         cout <<  endl <<matchedOutput[j]->getname() << endl <<"output0 = \n";
+         for(auto i : output0)
+            cout << i->getname() << endl;
+         cout << "output1 = \n";
+         for(auto i : output1)
+            cout << i->getname() << endl;
+         
+      }
+
+   }
+   
+   // for(size_t i = 0, ni = funcSuppIndex.size(); i < ni; ++i)
+   //       getPi(i)->setPValue(1ULL << shift++);
+   // // for(size_t i = 0, ni = getNumPIs(); i < ni; ++i){
+   // //       getPi(i)->setPValue(1ULL << shift++);
+   // // }
+   // unsigned long long target = getPo(outputIndex)->getPValue()();
+   // for(size_t i = 0, ni = funcSuppIndex.size(); i < ni; ++i){
+   //    ;// result.push_back((target & (1ULL << funcSuppIndex[i])) != 0);
+   // }*/
+
+}
 void
 NtkMgr::deleteCircuit()
 {
@@ -676,6 +796,51 @@ NtkMgr::genDfsList()
       getPo(i)->genDfsList(_dfsList);
 }
 
+void 
+NtkMgr::genFaninSupp(){
+   for (unsigned i = 0, n = getNumPOs(); i < n; ++i){
+      CirGate::setGlobalRef();
+      if(!getPo(i)->getIn0().gate()->isAig()){
+         getPo(i)->genDfsList(getPo(i)->getIn0Supp());
+         cout << "in0 supp only = " << endl;
+         for(auto j : getPo(i)->getIn0Supp()){
+            if(j->isPi())
+               cout << j->getName() << ' ';
+            else if(j->isConst())
+               cout << "000000000000" << ' ';
+         }
+         cout << endl;
+         continue;
+      }
+      CirGate* g = getPo(i)->getIn0().gate()->getIn0().gate();
+      if (!g->isGlobalRef()){
+         g->genDfsList(getPo(i)->getIn0Supp());
+      }
+      CirGate::setGlobalRef();
+      g = getPo(i)->getIn0().gate()->getIn1().gate();
+      if (!g->isGlobalRef()){
+         g->genDfsList(getPo(i)->getIn1Supp());
+      }
+      // cout << "in0 supp = " << endl;
+      // for(auto j : getPo(i)->getIn0Supp()){
+      //    if(j->isPi())
+      //       cout << j->getName() << ' ';
+      //    else if(j->isConst())
+      //       cout << "000000000000" << ' ';
+      // }
+      // cout << endl;
+      // cout << "in1 supp = " << endl;
+      // for(auto j : getPo(i)->getIn1Supp()){
+      //    if(j->isPi())
+      //       cout << j->getName() << ' ';
+      //    else if(j->isConst())
+      //       cout << "000000000000" << ' ';
+      // }
+      // cout << endl;
+      // getPo(i);
+   }
+} 
+
 void
 CirPiGate::genDfsList(GateList& gateList)
 {
@@ -698,11 +863,28 @@ CirAigGate::genDfsList(GateList& gateList)
 {
    setToGlobalRef();
    CirGate* g = _in0.gate();
-   if (!g->isGlobalRef())
+   // GateList::iterator begin1 = gateList.end();
+   if (!g->isGlobalRef()){
       g->genDfsList(gateList);
+      // if(_faninSpecific){
+      //    for(GateList::iterator it = begin1, n = gateList.end(); it != n; ++it){
+      //       if((*it)->getType() == PI_GATE)
+      //          g->increaseNum_TFI();
+      //    }
+      // }
+   }
+   
    g = _in1.gate();
-   if (!g->isGlobalRef())
+   // begin1 = gateList.end();
+   if (!g->isGlobalRef()){
       g->genDfsList(gateList);
+      // if(_faninSpecific){
+      //    for(GateList::iterator it = begin1, n = gateList.end(); it != n; ++it){
+      //       if((*it)->getType() == PI_GATE)
+      //          g->increaseNum_TFI();
+      //    }
+      // }
+   }
    gateList.push_back(this);
 }
 

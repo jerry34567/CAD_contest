@@ -39,7 +39,7 @@ class SatMgr
 
     public:
         friend class SolverMgr;
-        SatMgr() {closeMatching_cnt = 0;}
+        SatMgr() {closeMatching_cnt = 0;_isFirstNoMatch = 1;}
         ~SatMgr() {}
 
         int string2Var(string _s, bool isckt1, bool isinput);
@@ -51,7 +51,8 @@ class SatMgr
         void reset();
         // void verification(bool isManualBinded = 0);
         // void solveNP3();
-
+        bool isFirstNoMatch(){return _isFirstNoMatch;}
+        void setIsFirstNoMatch(const bool b){_isFirstNoMatch = b;}
         void constructCmdr(
             SatSolver& s); // recursive construct Cmdr variable from bottom
         void cmdrExactlyOne(SatSolver& s, Cmdr* parent, bool is_MO); // recursive addClause
@@ -64,6 +65,7 @@ class SatMgr
         void constraint4_miter(SatSolver& s);
         void constraint5_miter(SatSolver& s);
         void AddLearnedClause(SatSolver& s, SatSolver& s_cir1, SatSolver& s_cir2, SatSolver& s_miter);
+        void AddLearnedClause_sim(SatSolver& s, SatSolver& s_cir1, SatSolver& s_cir2, SatSolver& s_miter);
         void AddLearnedClause_const(SatSolver& s, SatSolver& s_miter);
         void addSuppConstraint(); // currently : structral support, |SSo1| <= |SSo2|
         void addSuppConstraint_input(); // currently : structral support, |SSo1| <= |SSo2|, for PI constraint, using _funcSupp_PI.size() 
@@ -86,6 +88,8 @@ class SatMgr
         void addSupportConstraint_whenOutputMatch(); // if ith output & jth output matched, their support's input can't match with those outside of the support
         void addBinateConstraint(); // base on the concept that bind to constant only turn binate into unate(not true for opisite direction ==> if f's binate < g's binate -> cannot match
         void fAtMostOneMatch(SatSolver& s);
+        void addPoFaninSuppConstraint();
+        void addTypeISimConstraint(vec<Lit>& assump);
         // only bind input
         // use int _port1, int _port2 to check if _port1 < 0 and if _port2 < 0
         // _p1, _p2 is for command to bind two port with their mnemonics
@@ -95,9 +99,11 @@ class SatMgr
                         string _p1 = "", string _p2 = "");
         void printMatrix(const SatSolver& s, vector<vector<int>> const& M,
                          int IO);
+        void closePOFaninSuppConstraint(){solver.assumeConstrainRelease(); vec<Lit> lits; lits.push(~Lit(_enablePoFaninSuppConstraint)); solver.addClause(lits); lits.clear();}
         void recordResult(const SatSolver&                 s,
                           vector<vector<int>> const& M, int IO);
         void generateResult(const string&);
+        void test(const string&);
         void reportResult(const SatSolver& solver, const string& outputFileName) {
             inputMatch.clear();
             outputMatch.clear();
@@ -150,12 +156,14 @@ class SatMgr
         vector<tuple<bool, Var, Var>>& getOutputMatch() { return outputMatch; }
 
     private:
+        bool                _isFirstNoMatch;
+        Var                 _enablePoFaninSuppConstraint; // assume(Lit(_enablePoFaninSuppConstraint)) -> must ==; assert(~Lit(_enablePoFaninSuppConstraint)) -> f <= g
         SatSolver solver, miterSolver, cir1Solver, cir2Solver,
             verifierSolver; // verifysolver is for verification
         CirMgr cirmgr;
+        
 
         vector<vector<Var>> big_or;
-
         // record those matched input pairs
         // tuple<isNegate, ckt1's input, ckt2's input> (X)
         // tuple<isNegate, ckt1's input index * 2, ckt2's input index>
@@ -187,7 +195,8 @@ class SatMgr
 
         // record non support input match
         vector<Var> non_supp_match;
-
+        set<Var> typeISimEnable_var, typeISimEnable_allVar; // typeISimEnable_var is for those constraint that should be open this iteration, the other should be disable
+        
         unsigned point = 0;
         size_t closeMatching_cnt;
 

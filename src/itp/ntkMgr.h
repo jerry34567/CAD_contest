@@ -15,6 +15,9 @@
 #include <tuple>
 #include <iostream>
 #include <unordered_map>
+#include <set>
+#include "cirMgr.h"
+#include "util.h"
 
 using namespace std;
 
@@ -22,12 +25,15 @@ using namespace std;
 
 #include "cirDef.h"
 
+class CirMgr;
+class variable;
 class NtkMgr;
 static unordered_map<unsigned long long, string> m1, m2;
 static unordered_map<string ,unsigned long long> m11, m22;
 
 class NtkMgr
 {
+   friend class CirMgr;
    enum CirMgrFlag { NO_FEC = 0x1 };
    enum ParsePorts { VARS = 0, PI, LATCH, PO, AIG, TOT_PARSE_PORTS };
 
@@ -59,6 +65,7 @@ public:
    void deleteCircuit();
    void genConnections();
    void genDfsList();
+   void genFaninSupp(); // gen the support list of "two" fanin of each PO
 //   void updateUndefList();
    void checkFloatList();
    void checkUnusedList();
@@ -75,8 +82,10 @@ public:
 
    // Member functions about simulation
   void randomSim();
+  void randomSimulation(vector<variable*>& outputVector, vector<variable*>& inputVector, vector<variable*>* inputVector_x = 0, vector<size_t>* matchedInput_x = 0, vector<size_t>* matchedInput_y = 0); // for miter solver
   void fileSim(ifstream&);
    void selfSim(bool);
+   void np3Sim(vector<variable*>& matchedOutput, vector<variable*>& inputVector, bool _isTypeI);
    void setSimLog(ofstream *logFile) { _simLog = logFile; }
 
    // Member functions about fraig

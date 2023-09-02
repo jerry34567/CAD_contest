@@ -392,6 +392,39 @@ SatMgr::generateResult(const string& outputFileName) {
     fout.close();
 }
 void
+SatMgr::test(const string& outputFileName) {
+    ofstream fout;
+    fout.open(outputFileName);
+    if (!inputGroup.empty()) {
+        for (unordered_map<string, Group>::iterator i = inputGroup.begin(); i != inputGroup.end(); i++) {
+            fout << "INGROUP" << endl;
+            fout << cirmgr.u_name_index_ckt1[(*i).first] << endl;
+            for (vector<std::pair<std::string, bool>>::iterator j = (*i).second.group().begin(); j != (*i).second.group().end(); j++)
+                fout << ((*j).second ? "+" : "-") << cirmgr.u_name_index_ckt2[(*j).first]  << endl;
+            fout << "END" << endl;
+        }
+    }
+    if (!outputGroup.empty()) {
+        for (unordered_map<string, Group>::iterator i = outputGroup.begin(); i != outputGroup.end(); i++) {
+            fout << "OUTGROUP" << endl;
+            fout << cirmgr.u_name_index_ckt1[(*i).first] << endl;
+            // fout << "1 + <" << (*i).first << ">"<<  endl;
+            for (vector<std::pair<std::string, bool>>::iterator j = (*i).second.group().begin(); j != (*i).second.group().end(); j++)
+                fout << ((*j).second ? "+" : "-") << cirmgr.u_name_index_ckt2[(*j).first]  << endl;
+                // fout << "2" << ((*j).second ? " + <" : " - <") << (*j).first<< ">" << endl;
+            fout << "END" << endl;
+        }
+    }
+    if (!constGroup.empty()) {
+        fout << "CONSTGROUP" << endl;
+        for (unordered_map<string, bool>::iterator i = constGroup.begin(); i != constGroup.end(); i++)
+            fout << ((*i).second ? "+" : "-") << cirmgr.u_name_index_ckt2[(*i).first]  << endl;
+            // fout << ((*i).second ? "- " : "+ ") << (*i).first << ">" << endl;
+        fout << "END" << endl;
+    }
+    fout.close();
+}
+void
 SatMgr::printMatrix(const SatSolver& s, vector<vector<int>> const& M,
                     int IO) { // IO: 1 -> MI, 2 -> MO
     vector<variable*>&x = cirmgr.x, &y = cirmgr.y, &f = cirmgr.f, &g = cirmgr.g;
@@ -933,6 +966,66 @@ void SatMgr::addSuppConstraint_input()
     return;
 
 }
+void SatMgr::addTypeISimConstraint(vec<Lit>& assump){
+    typeISimEnable_var.clear();
+    vector<variable*>& x = cirmgr.x, &y = cirmgr.y, &matchedOutput_f = cirmgr.matchedOutput_f, &matchedOutput_g = cirmgr.matchedOutput_g;
+    vec<Lit> lits;
+    // Var _enable = solver.newVar();
+    for(size_t i = 0, ni = matchedOutput_f.size(); i < ni; ++i){
+        if(typeISimEnable_allVar.count(cirmgr.MO[(matchedOutput_f[i]->getSub1() - 1) * 2][matchedOutput_g[i]->getSub1() - 1]->getSimEnable1())){
+            typeISimEnable_var.insert(cirmgr.MO[(matchedOutput_f[i]->getSub1() - 1) * 2][matchedOutput_g[i]->getSub1() - 1]->getSimEnable1());
+            continue;
+        }
+        else if(typeISimEnable_allVar.count(cirmgr.MO[(matchedOutput_f[i]->getSub1() - 1) * 2 + 1][matchedOutput_g[i]->getSub1() - 1]->getSimEnable1())){
+            typeISimEnable_var.insert(cirmgr.MO[(matchedOutput_f[i]->getSub1() - 1) * 2 + 1][matchedOutput_g[i]->getSub1() - 1]->getSimEnable1());
+            continue;
+        }        
+        Var _enable = solver.newVar();
+        for(size_t j = 0, nj = matchedOutput_f[i]->_funcSupp.size(); j < nj; ++j){
+            for(size_t k = 0, nk = matchedOutput_g[i]->_funcSupp.size(); k < nk; ++k){
+                if(!matchedOutput_f[i]->_funcSupp[j]->isSimResultEqual(matchedOutput_g[i]->_funcSupp[k]->simResult())){
+                    // if(typeISimEnable_allVar.count(cirmgr.MO[(matchedOutput_f[i]->getSub1() - 1) * 2][matchedOutput_g[i]->getSub1() - 1]->getSimEnable1())){
+                    //     typeISimEnable_var.insert(cirmgr.MO[(matchedOutput_f[i]->getSub1() - 1) * 2][matchedOutput_g[i]->getSub1() - 1]->getSimEnable1());
+                    //     continue;
+                    // }
+                    lits.push(~Lit(_enable));
+                    typeISimEnable_allVar.insert(_enable);
+                    typeISimEnable_var.insert(_enable);
+                    cirmgr.MO[(matchedOutput_f[i]->getSub1() - 1) * 2][matchedOutput_g[i]->getSub1() - 1]->setSimEnable1(_enable);
+                    lits.push(~Lit(cirmgr.MO[(matchedOutput_f[i]->getSub1() - 1) * 2][matchedOutput_g[i]->getSub1() - 1]->getVar()));
+                    lits.push(~Lit(cirmgr.MI_valid_Var[matchedOutput_f[i]->_funcSupp[j]->getSub1() - 1][matchedOutput_g[i]->_funcSupp[k]->getSub1() - 1]));
+                }
+                else{
+                    // if(typeISimEnable_allVar.count(cirmgr.MO[(matchedOutput_f[i]->getSub1() - 1) * 2 + 1][matchedOutput_g[i]->getSub1() - 1]->getSimEnable1())){
+                    //     typeISimEnable_var.insert(cirmgr.MO[(matchedOutput_f[i]->getSub1() - 1) * 2 + 1][matchedOutput_g[i]->getSub1() - 1]->getSimEnable1());
+                    //     continue;
+                    // }
+                    typeISimEnable_allVar.insert(_enable);
+                    typeISimEnable_var.insert(_enable);
+                    lits.push(~Lit(_enable));
+                    cirmgr.MO[(matchedOutput_f[i]->getSub1() - 1) * 2 + 1][matchedOutput_g[i]->getSub1() - 1]->setSimEnable1(_enable);
+                    lits.push(~Lit(cirmgr.MO[(matchedOutput_f[i]->getSub1() - 1) * 2 + 1][matchedOutput_g[i]->getSub1() - 1]->getVar()));
+                    lits.push(~Lit(cirmgr.MI_valid_Var[matchedOutput_f[i]->_funcSupp[j]->getSub1() - 1][matchedOutput_g[i]->_funcSupp[k]->getSub1() - 1]));
+                }
+                solver.addClause(lits);
+                lits.clear();
+            }
+        }
+        // for(size_t j = 0, nj = y.size(); j < nj; ++j){
+        //     for(size_t k = 0, nk = x[i]->simResult().size(); k < nk; ++k){
+        //         if(x[i]->simResult()[k] != y[j]->simResult()[k])
+        //             assump.push(~Lit(cirmgr.MI_valid_Var[i][j]));
+        //     }
+        // }
+    }
+    for(set<Var>::iterator it = typeISimEnable_allVar.begin(), end = typeISimEnable_allVar.end(); it != end; ++it){
+        if(typeISimEnable_var.count(*it))
+            assump.push(Lit(*it));
+        else
+            assump.push(~Lit(*it));
+
+    }
+}
 void SatMgr::addUnateConstraint(bool _isInput)// |Uo1| <= |Uo2| ; |Ui1| <= |Ui2|
 {
     vector<variable*>&x = cirmgr.x, &y = cirmgr.y, &f = cirmgr.f, &g = cirmgr.g;
@@ -1141,6 +1234,36 @@ void SatMgr::addBusConstraint_outputUnateness(){
     }
     cout << "cnt = " << cnt << endl;
 }
+void SatMgr::addPoFaninSuppConstraint(){
+    _enablePoFaninSuppConstraint = solver.newVar();
+    vector<variable*>&f = cirmgr.f, &g = cirmgr.g;
+    vector<int> f_suppSize, g_suppSize;
+    vec<Lit> lits;
+    for(size_t i = 0, ni = f.size(); i < ni; ++i){
+        for(size_t j = 0, nj = g.size(); j < nj; ++j){
+            f_suppSize.push_back(f[i]->in0_supp().size());
+            f_suppSize.push_back(f[i]->in1_supp().size());
+            g_suppSize.push_back(g[j]->in0_supp().size());
+            g_suppSize.push_back(g[j]->in1_supp().size());
+            sort(f_suppSize.begin(), f_suppSize.end(), std::greater<int>());
+            sort(g_suppSize.begin(), g_suppSize.end(), std::greater<int>());
+            if(f_suppSize[0] > g_suppSize[0] || f_suppSize[1] > g_suppSize[1]){
+                cirmgr.MO_valid[i][j] = 0;
+            }
+            // if(f_suppSize[0] != g_suppSize[0] || f_suppSize[1] != g_suppSize[1]){
+            //     lits.push(~Lit(cirmgr.MO_valid_Var[i][j]));
+            //     lits.push(~Lit(_enablePoFaninSuppConstraint));
+            //     solver.addClause(lits);
+            //     lits.clear();
+            // }
+        }
+    }
+    // lits.clear();
+    // lits.push(Lit(_enablePoFaninSuppConstraint));
+    // solver.assumeClause(lits);
+    // lits.clear();
+}
+
 void SatMgr::addBusConstraint_outputSupportSize(){
     vector<Bus*>& bus_ckt1_output = cirmgr.bus_ckt1_output, &bus_ckt2_output = cirmgr.bus_ckt2_output;
     vec<Lit> lits;
@@ -2107,6 +2230,148 @@ SatMgr::AddLearnedClause(SatSolver& s, SatSolver& s_cir1, SatSolver& s_cir2, Sat
     }
     // lits.push(e); s.addClause(lits); lits.clear();
     */
+}
+void
+SatMgr::AddLearnedClause_sim(SatSolver& s, SatSolver& s_cir1, SatSolver& s_cir2, SatSolver& s_miter) {
+    // cout << "AddLearnedClause start" << endl;
+    vec<Lit>                  lits, lits_e; // ex: lits_e:  (not e + not c11)...
+    // vec<Lit>                  temp_lits;
+    vector<vector<variable*> >&MI = cirmgr.MI, &MO = cirmgr.MO;
+    vector<variable*>&x = cirmgr.x, &y = cirmgr.y, &f = cirmgr.f, &g = cirmgr.g;
+    int keyPattern = cirmgr.keyPattern;
+    for (int i = 0; i < f.size(); i++) {
+        f[i]->partial.clear();
+        vec<Lit> cir1_lits;
+        Var output = f[i]->getVar4();
+        cir1_lits.push(f[i]->getPattern(keyPattern) ? ~Lit(output) : Lit(output)); // negate output
+        // cir1_lits.push(s_miter.getValue(f[i]->getVar2()) ? ~Lit(output) : Lit(output)); // negate output
+        // for (vector<variable*>::iterator it = f[i]->_funcSupp.begin(); it != f[i]->_funcSupp.end(); it++) {
+        //     f[i]->partial.insert((*it));
+        // }
+        // cout << setw(5)<<f[i]->getname()<< " = " << bitset<64>(f[i]->pValue()) << endl;
+        // for (int k = 0; k < f[i]->_funcSupp.size(); k++) {
+            // vec<Lit> temp_lits;
+            // cir1_lits.copyTo(temp_lits);
+            // cout << "input name = " << endl;
+            for (int j = 0; j < f[i]->_funcSupp.size(); j++) {
+                // if (j == k) continue;
+                // else {
+                    // if (!f[i]->partial.count(f[i]->_funcSupp[j])) continue;
+                    // else {
+                        // cout << setw(5) <<f[i]->_funcSupp[j]->getname() << " = " << (f[i]->_funcSupp[j]->pValue()) << endl;
+                        cir1_lits.push(f[i]->_funcSupp[j]->getPattern(keyPattern) ? Lit(f[i]->_funcSupp[j]->getVar4()) : ~Lit(f[i]->_funcSupp[j]->getVar4()));
+                        // cir1_lits.push(s_miter.getValue(f[i]->_funcSupp[j]->getVar2()) ? Lit(f[i]->_funcSupp[j]->getVar4()) : ~Lit(f[i]->_funcSupp[j]->getVar4()));
+                    // }
+                // }
+            }
+            // cout << endl;
+            assert(s_cir1.assumpSolve(cir1_lits) == 0);
+            int cnt = 0;
+            for (int j = 0; j < f[i]->_funcSupp.size(); j++) {
+                // if(s_cir1.isInCore(f[i]->_funcSupp[j]->getVar4()) == true){
+                if(s_cir1.isInCore(cir1_lits[j + 1]) == true){
+                    f[i]->partial.insert(f[i]->_funcSupp[j]);
+                    ++cnt;
+                }
+            }
+            // bool result = s_cir1.assumpSolve(temp_lits);
+            // if (!result) {
+            //     f[i]->partial.erase(f[i]->_funcSupp[k]);
+            // }
+            // temp_lits.clear();
+        // }
+        cir1_lits.clear();
+    }
+
+    for (int i = 0; i < g.size(); i++) {
+        g[i]->partial.clear();
+        vec<Lit> cir2_lits;
+        Var output = g[i]->getVar4();
+        // cout << g[i]->getname() << " : " << s_miter.getValue(g[i]->getVar2()) << endl;
+        // cir2_lits.push(s_miter.getValue(g[i]->getVar2()) ? ~Lit(output) : Lit(output)); // negate output
+        cir2_lits.push(g[i]->getPattern(keyPattern) ? ~Lit(output) : Lit(output)); // negate output
+        // for (vector<variable*>::iterator it = g[i]->_funcSupp.begin(); it != g[i]->_funcSupp.end(); it++) {
+        //     g[i]->partial.insert((*it));
+        // }
+
+        // for (int k = 0; k < g[i]->_funcSupp.size(); k++) {
+            // vec<Lit> temp_lits;
+            // cir2_lits.copyTo(temp_lits);
+            for (int j = 0; j < g[i]->_funcSupp.size(); j++) {
+            //     if (j == k) continue;
+            //     else {
+            //         if (!g[i]->partial.count(g[i]->_funcSupp[j])) continue;
+            //         else {
+                        // cir2_lits.push(s_miter.getValue(g[i]->_funcSupp[j]->getVar2()) ? Lit(g[i]->_funcSupp[j]->getVar4()) : ~Lit(g[i]->_funcSupp[j]->getVar4()));
+                        cir2_lits.push(g[i]->_funcSupp[j]->getPattern(keyPattern) ? Lit(g[i]->_funcSupp[j]->getVar4()) : ~Lit(g[i]->_funcSupp[j]->getVar4()));
+            //         }
+            //     }
+            }
+
+            assert(s_cir2.assumpSolve(cir2_lits) == 0);
+            for (int j = 0; j < g[i]->_funcSupp.size(); j++) {
+                // if(s_cir2.isInCore(g[i]->_funcSupp[j]->getVar4()) == true){
+                if(s_cir2.isInCore(cir2_lits[j + 1]) == true){
+                    // cout << g[i]->_funcSupp[j]->getname() << endl;
+                    g[i]->partial.insert(g[i]->_funcSupp[j]);
+                }
+            }
+            // bool result = s_cir2.assumpSolve(temp_lits);
+            // if (!result) {
+            //     g[i]->partial.erase(g[i]->_funcSupp[k]);
+            // }
+            // temp_lits.clear();
+        // }
+        cir2_lits.clear();
+    }
+
+    for (int i = 0; i < f.size(); i++) {
+        for (int j = 0; j < g.size(); j++) {
+            if (f[i]->getPattern(keyPattern) == g[j]->getPattern(keyPattern)) {
+            // if (s_miter.getValue(f[i]->getVar2()) == s_miter.getValue(g[j]->getVar2())) {
+                Var dV = MO[2 * i + 1][j]->getVar();
+                lits.push(~Lit(dV)); // ex: f2 == g5 -> not d2,5 f2@f[1];
+                                          // g5@g[4]; d2,5@MI[9][1]
+            }
+            else {
+                Var cV = MO[2 * i][j]->getVar();
+                lits.push(~Lit(cV)); // ex: f2 != g5 -> not c2,5 f2@x[1];
+                                          // g5@y[4]; c2,5@MI[8][1]
+            }
+            for (set<variable*>::iterator it = f[i]->partial.begin(); it != f[i]->partial.end(); it++) {
+                for (set<variable*>::iterator it2 = g[j]->partial.begin(); it2 != g[j]->partial.end(); it2++) {
+                    
+                    int index1 = cirmgr.u_name_index_ckt1[(*it)->getname()];
+                    int index2 = cirmgr.u_name_index_ckt2[(*it2)->getname()];
+                    // cout << "i: " << (*it)->getname() << " " << index1 << "  j: " << (*it2)->getname() << " " << index2 << endl;
+                    // if (s_miter.getValue(x[index1]->getVar2()) == s_miter.getValue(y[index2]->getVar2())) {
+                    if (x[index1]->getPattern(keyPattern) == y[index2]->getPattern(keyPattern)) {
+                        lits.push(Lit(MI[2 * index1 + 1][index2]->getVar())); // ex: x2 == y5 -> b2,5 x2@x[1];
+                                                        // y5@y[4]; b2,5@MI[9][1]
+                    }
+                    else {
+                        lits.push(Lit(MI[2 * index1][index2]->getVar())); // ex: x2 != y5 -> a2,5 x2@x[1];
+                                                    // y5@y[4]; b2,5@MI[8][1]
+                    }
+                }
+            }
+
+            for (set<variable*>::iterator it2 = g[j]->partial.begin(); it2 != g[j]->partial.end(); it2++) {
+                int index2 = cirmgr.u_name_index_ckt2[(*it2)->getname()];
+                if (y[index2]->getPattern(keyPattern) == 1) {
+                    lits.push(Lit(MI[MI.size() - 2][index2]->getVar())); // ex: x2 == y5 -> b2,5 x2@x[1];
+                                                    // y5@y[4]; b2,5@MI[9][1]
+                } else {
+                    lits.push(Lit(MI[MI.size() - 1][index2]->getVar())); // ex: x2 != y5 -> a2,5 x2@x[1];
+                                                    // y5@y[4]; b2,5@MI[8][1]
+                }
+            }
+            s.addClause(lits);
+            lits.clear();
+        }
+    }
+    // cout << "AddLearnedClause end" << endl;
+
 }
 void
 SatMgr::AddLearnedClause_const(SatSolver& s,

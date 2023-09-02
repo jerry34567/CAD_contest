@@ -1,7 +1,7 @@
 #ifndef _cadical_hpp_INCLUDED
 #define _cadical_hpp_INCLUDED
 
-#include <cstdint>
+// #include <cstdint>
 #include <cstdio>
 #include <vector>
 
@@ -611,13 +611,15 @@ public:
   //   ensure (VALID)
   //
   int active () const;          // Number of active variables.
-  int64_t redundant () const;   // Number of active redundant clauses.
-  int64_t irredundant () const; // Number of active irredundant clauses.
+  long long redundant () const;   // Number of active redundant clauses.
+  // int64_t redundant () const;   // Number of active redundant clauses.
+  long long irredundant () const; // Number of active irredundant clauses.
+  // int64_t irredundant () const; // Number of active irredundant clauses.
 
   //------------------------------------------------------------------------
   // This function executes the given number of preprocessing rounds. It is
   // similar to 'solve' with 'limits ("preprocessing", rounds)' except that
-  // no CDCL nor local search, nor lucky phases are executed.  The result
+  // no CDCL nor local search, nor lucky phases are executed.  The resultㄅ˙
   // values are also the same: 0=unknown, 10=satisfiable, 20=unsatisfiable.
   // As 'solve' it resets current assumptions and limits before returning.
   // The numbers of rounds should not be negative.  If the number of rounds

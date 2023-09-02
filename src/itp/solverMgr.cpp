@@ -1,4 +1,5 @@
 #include "solverMgr.h"
+#include <time.h>
 
 void
 SolverMgr::verification(bool isManualBinded) {
@@ -80,7 +81,8 @@ SolverMgr::verification(bool isManualBinded) {
 
 void
 SolverMgr::solveNP3(string& inputFilename, string& outputFilename) {
-    double time;
+    bool _isFirst = 1;
+    double time, _miter_duration = 0.0;
     clock_t start, stop;
     start = clock();
     satmgr.reset();
@@ -95,6 +97,7 @@ SolverMgr::solveNP3(string& inputFilename, string& outputFilename) {
     satmgr.cirmgr.readMAP();
     satmgr.initCircuit(satmgr.solver, satmgr.miterSolver, satmgr.cir1Solver, satmgr.cir2Solver, satmgr.verifierSolver);
     satmgr.cirmgr.readCNF(satmgr.miterSolver, satmgr.cir1Solver, satmgr.cir2Solver, satmgr.verifierSolver);
+    satmgr.cirmgr.readPOFaninSupp();
     // satmgr.cirmgr.readBus_class(satmgr.solver, inputFilename);
     // satmgr.busMatchExactlyOne(satmgr.solver);
     // return; //test indexes
@@ -126,6 +129,7 @@ SolverMgr::solveNP3(string& inputFilename, string& outputFilename) {
     // satmgr.addBusConstraint_outputSupportSize();
     // satmgr.addOutput0Constraint();
     satmgr.addSymmSignConstraint();
+    satmgr.addPoFaninSuppConstraint();
     satmgr.fAtMostOneMatch(satmgr.solver);
     // satmgr.addSupportConstraint_whenInputMatch();
     // satmgr.addSupportConstraint_whenOutputMatch();
@@ -262,6 +266,8 @@ SolverMgr::solveNP3(string& inputFilename, string& outputFilename) {
         //         output_heuristic_assump.push(Lit(satmgr.non_supp_match[i]));
         //     }
         // }
+        // satmgr.cirmgr.typeIsim();
+        // satmgr.addTypeISimConstraint(output_heuristic_assump);
         SAT1_result = satmgr.solver.assumpSolve(output_heuristic_assump);
         /*
         SAT1_result = satmgr.solver.assumpSolve(BusMatchAssump);
@@ -291,8 +297,14 @@ SolverMgr::solveNP3(string& inputFilename, string& outputFilename) {
             //     enable_constant = true;
             // }
             if(!satmgr.cirmgr.updateOutputHeuristic_Fail()){
-                cout << "No match!!" << endl;
-                break;
+                // if(satmgr.isFirstNoMatch()){
+                //     satmgr.closePOFaninSuppConstraint();
+                //     satmgr.setIsFirstNoMatch(0);
+                // }
+                // else{
+                    cout << "No match!!" << endl;
+                    break;
+                // }
             }
             updateOutputMatching = true;
             
@@ -315,7 +327,8 @@ SolverMgr::solveNP3(string& inputFilename, string& outputFilename) {
 
                         Lit v1 = ~Lit(MI[i][j]->getVar());
                         be_searched.push(v1);
-
+                        satmgr.cirmgr.matchedInput_x.push_back(i);
+                        satmgr.cirmgr.matchedInput_y.push_back(j);
                         Lit v = Lit(MI[i][j]->getVar2());
                         assump.push(v);
                         // cout << "MI i: " << i << "\tj: " << j << " val: "
@@ -348,7 +361,8 @@ SolverMgr::solveNP3(string& inputFilename, string& outputFilename) {
                     if (satmgr.solver.getValue(MO[i][j]->getVar()) == 1) {
                         Lit v1 = ~Lit(MO[i][j]->getVar());
                         be_searched.push(v1);
-
+                        satmgr.cirmgr.matchedOutput_ff.push_back(i);
+                        satmgr.cirmgr.matchedOutput_gg.push_back(j);
                         Lit v = Lit(MO[i][j]->getVar2());
                         assump.push(v);
                         // cout << "MO i: " << i << " j: " << j << " val: "
@@ -412,8 +426,21 @@ SolverMgr::solveNP3(string& inputFilename, string& outputFilename) {
             satmgr.solver.addClause(be_searched);
             be_searched.clear();
             // cout << endl;
-
-            SAT2_result = satmgr.miterSolver.assumpSolve(assump);
+            // vector<size_t> keyPatterns;
+            // satmgr.cirmgr.randomSimulation(keyPatterns);
+            if(!satmgr.cirmgr.randomSimulation(_miter_duration)){
+            // if(!satmgr.cirmgr.randomSimulation(double(stop_sim - start_sim))){
+                satmgr.AddLearnedClause_sim(satmgr.solver, satmgr.cir1Solver, satmgr.cir2Solver, satmgr.miterSolver);
+                satmgr.cirmgr.resetMatchedInput();
+                assump.clear();
+                stop = clock();
+                time = double(stop - start) / CLOCKS_PER_SEC;
+                continue;
+            }
+            satmgr.cirmgr.resetMatchedInput();
+            // if(keyPatterns.empty())
+            //     exit(0);
+            SAT2_result = satmgr.miterSolver.assumpSolve(assump, &_miter_duration);
             stop = clock();
             time = double(stop - start) / CLOCKS_PER_SEC;
             if (!SAT2_result) {

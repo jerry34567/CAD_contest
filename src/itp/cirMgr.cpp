@@ -8,6 +8,7 @@
 #include <iomanip>
 #include <set>
 #include <map>
+#include <time.h>
 
 bool variable::checkSymmSign(map<size_t, size_t>& _ss, size_t _p, size_t _q){   //_ss is the symmSign of y[l], _p is fp, _q is gq
     bool tmp1 = _ss.find(_q) == _ss.end(), tmp2 = _symmSign.find(_p) == _symmSign.end();
@@ -891,7 +892,209 @@ void CirMgr::readSymmetric() {
     }
     return;
 }
+void CirMgr::readPOFaninSupp(){
+    ntkmgr1 = new NtkMgr;
+    ntkmgr1->readCircuit("top1.aag");
+    assert(f.size() == ntkmgr1->getNumPOs());
+    for(size_t i = 0, n = f.size(); i < n; ++i){
+        assert(!ntkmgr1->getPo(i)->getIn0Supp().empty());
+        for(size_t j = 0, nj = ntkmgr1->getPo(i)->getIn0Supp().size(); j < nj; ++j){
+            if(ntkmgr1->getPo(i)->getIn0Supp()[j]->isPi())
+                f[i]->in0_supp().push_back(string(ntkmgr1->getPo(i)->getIn0Supp()[j]->getName()));
+            else if(ntkmgr1->getPo(i)->getIn0Supp()[j]->isConst())
+                f[i]->in0_supp().push_back("0");
+        }
+        // f[i]->in0_supp().assign(ntkmgr->getPo(i)->getIn0Supp().begin(), ntkmgr->getPo(i)->getIn0Supp().end());
+        if(!ntkmgr1->getPo(i)->getIn1Supp().empty()){
+            for(size_t j = 0, nj = ntkmgr1->getPo(i)->getIn1Supp().size(); j < nj; ++j){
+                if(ntkmgr1->getPo(i)->getIn1Supp()[j]->isPi())
+                    f[i]->in1_supp().push_back(string(ntkmgr1->getPo(i)->getIn1Supp()[j]->getName()));
+                else if(ntkmgr1->getPo(i)->getIn1Supp()[j]->isConst())
+                    f[i]->in1_supp().push_back("0");
+            }
+        }
+        // cout << "in0 = { ";
+        // for(auto kk : f[i]->in0_supp()){
+        //     if(kk == "0")
+        //         exit(0);
+        //     cout << "\"" << kk << "\" , ";
+        // }
+        // cout << " }" << endl;
+        // cout << "in1 = { ";
+        // for(auto kk : f[i]->in1_supp()){
+        //     if(kk == "0")
+        //         exit(0);
+        //     cout << "\"" << kk << "\" , ";
+        // }
+        // cout << " }" << endl;
+    }
+    ntkmgr2 = new NtkMgr;
+    ntkmgr2->readCircuit("top2.aag");
+    assert(g.size() == ntkmgr2->getNumPOs());
+    for(size_t i = 0, n = g.size(); i < n; ++i){
+        assert(!ntkmgr2->getPo(i)->getIn0Supp().empty());
+        for(size_t j = 0, nj = ntkmgr2->getPo(i)->getIn0Supp().size(); j < nj; ++j){
+            if(ntkmgr2->getPo(i)->getIn0Supp()[j]->isPi())
+                g[i]->in0_supp().push_back(string(ntkmgr2->getPo(i)->getIn0Supp()[j]->getName()));
+            else if(ntkmgr2->getPo(i)->getIn0Supp()[j]->isConst())
+                g[i]->in0_supp().push_back("0");
+        }
+        // g[i]->in0_supp().assign(ntkmgr2->getPo(i)->getIn0Supp().begin(), ntkmgr2->getPo(i)->getIn0Supp().end());
+        if(!ntkmgr2->getPo(i)->getIn1Supp().empty()){
+            for(size_t j = 0, nj = ntkmgr2->getPo(i)->getIn1Supp().size(); j < nj; ++j){
+                if(ntkmgr2->getPo(i)->getIn1Supp()[j]->isPi())
+                    g[i]->in1_supp().push_back(string(ntkmgr2->getPo(i)->getIn1Supp()[j]->getName()));
+                else if(ntkmgr2->getPo(i)->getIn1Supp()[j]->isConst())
+                    g[i]->in1_supp().push_back("0");
+            }
+        }
+        // cout << "in0 = { ";
+        // for(auto kk : g[i]->in0_supp())
+        //     cout << "\"" << kk << "\" , ";
+        // cout << " }" << endl;
+        // cout << "in1 = { ";
+        // for(auto kk : g[i]->in1_supp())
+        //     cout << "\"" << kk << "\" , ";
+        // cout << " }" << endl;
+    }
+}
+void CirMgr::typeIsim(){
+    // current implementation would end up many simulation --> modify so that only simulate once (obtain the desired information later on)
+    for(size_t i = 0, ni = x.size(); i < ni; ++i){
+        x[i]->resetSimResult();
+    }
+    for(size_t i = 0, ni = y.size(); i < ni; ++i){
+        y[i]->resetSimResult();
+    }
+    ntkmgr1->np3Sim(matchedOutput_f, x, 1);
+    ntkmgr2->np3Sim(matchedOutput_g, y, 1);
+    return;
+    /*
+    for(size_t i = 0, ni = x.size() / 64 + 1; i < ni; ++i){
+      for(size_t j = 0, nj =( (i == ni - 1) ? x.size() % 64 : 64); j < nj; ++j){
+            ntkmgr1->getPi(i * 64 + j)->setPValue(1ULL << j);
+      }
+      for(size_t j = 0, nj = ntkmgr1->_dfsList.size() ; j < nj; ++j){
+         ntkmgr1->_dfsList[j]->pSim();
+      }
+      for(size_t j = 0, nj = matchedOutput_f.size(); j < nj; ++j){
+        unsigned long long target =ntkmgr1->getPo(matchedOutput_f[j]->getSub1() - 1)->getPValue()();
+        vector<variable*> &funcSupp = matchedOutput_f[j]->_funcSupp;
+        set<size_t> funcSuppIndex;
+        for(size_t k = 0, nk = funcSupp.size(); k < nk; ++k){
+            funcSuppIndex.insert(funcSupp[k]->getSub1() - 1);
+        }
+        for(size_t k = 0, nk =( (i == ni - 1) ? x.size() % 64 : 64); k < nk; ++k){
+            if(funcSuppIndex.count(i * 64 + k))
+                x[i * 64 + k]->simResult().push_back(((target & (1ULL << k)) == 0) ? 0 : 1);
+        }
+      }
+    }*/
+    /*  for(size_t j = 0, nj = matchedOutput.size(); j < nj; ++j){
+         unsigned long long target = getPo(matchedOutput[j]->getSub1() - 1)->getPValue()();
+         set<size_t> funcSuppIndex;
+         vector<variable*> output0, output1; // collect PIs whose one hot encoding makes output = 0(1)
+         for(size_t k = 0, nk = matchedOutput[j]->_funcSupp.size(); k < nk; ++k){
+            matchedOutput[j]->_funcSupp[k]->resetSimResult();
+            funcSuppIndex.insert(matchedOutput[j]->_funcSupp[k]->getSub1() - 1);
+         }
+         for(size_t k = 0, nk =( (i == ni - 1) ? cirmgr->x.size() % 64 : 64); k < nk; ++k){
+            if(funcSuppIndex.count(i * 64 + k)){
+               if((target & (1ULL << k)) != 0)
+                  // cirmgr->x[i * 64 + k]->setSimResult(0);
+               (target & (1ULL << k)) == 0 ? output0.push_back(cirmgr->x[i * 64 + k]) : output1.push_back(cirmgr->x[i * 64 + k]);
+            }
+         }
 
+         cout <<  endl <<matchedOutput[j]->getname() << endl <<"output0 = \n";
+         for(auto i : output0)
+            cout << i->getname() << endl;
+         cout << "output1 = \n";
+         for(auto i : output1)
+            cout << i->getname() << endl;
+         
+      }
+
+   }
+   for(size_t i = 0; i < getNumPIs(); ++i){
+      cout << setw(3)<<getPi(i)->getName() << " : " <<bitset<64>(getPi(i)->getPValue()()) << endl;
+   }
+   cout << "===============================" << endl;
+   for(size_t i = 0; i < getNumPOs(); ++i){
+      cout << setw(3)<<getPo(i)->getName() << " : " << bitset<64>(getPo(i)->getPValue()()) << endl;
+   }
+    for(size_t i = 0, ni = matchedOutput_f.size(); i < ni; ++i){
+        ntkmgr1->np3Sim(matchedOutput_f, assump, 1);
+        vector<variable*>& funcSupp_f = matchedOutput_f[i]->_funcSupp, funcSupp_g = matchedOutput_g[i]->_funcSupp;
+        // vector<size_t> funcSuppIndex;
+        // for(size_t j = 0, nj = funcSupp.size(); j < nj; ++j){
+        //     funcSuppIndex.push_back(funcSupp[j]->getSub1() - 1);
+        // }
+        vector<bool> result;
+    }*/
+}
+// bool CirMgr::randomSimulation(vector<size_t>& keyPatterns){
+bool CirMgr::randomSimulation(double _miter_duration){
+    // _resetKeyPatterns();
+    _setEstimatedMiterDuraion(_miter_duration);
+    int count_sim = 0, base = 2;
+    double time = 0, percentage = 0.05;
+    clock_t start, stop;
+    start = clock();
+    while(count_sim++ < base || time < _estimated_miter_duration * percentage){
+        _resetKeyPattern();
+        ntkmgr1->randomSimulation(f, x);
+        ntkmgr2->randomSimulation(g, y, &x, &matchedInput_x, &matchedInput_y);
+        for(size_t i = 0, ni = matchedOutput_ff.size(); i < ni; ++i){
+            if(matchedOutput_ff[i] % 2 == 0){
+                if(f[matchedOutput_ff[i] / 2]->pValue() != g[matchedOutput_gg[i]]->pValue()){
+                    // cout << "matchedoutput positive connected but not equal" << endl;
+                    // cout << setw(5) << f[matchedOutput_ff[i] / 2]->getname() << " = " << bitset<64>(f[matchedOutput_ff[i] / 2]->pValue())  << endl;
+                    // cout << setw(5) << g[matchedOutput_gg[i]]->getname() << " = " << bitset<64>(g[matchedOutput_gg[i]]->pValue())  << endl;
+                    // keyPatterns.push_back(matchedOutput_ff[i]);
+                    // keyPatterns.push_back(matchedOutput_gg[i]);
+                    unsigned long long tmp = f[matchedOutput_ff[i] / 2]->pValue() ^ g[matchedOutput_gg[i]]->pValue();
+                    size_t count = 0;
+                    while(tmp){
+                        if(tmp & 1){
+                            keyPattern = count;
+                            // keyPatterns.push_back(count);
+                            // cout << "keyPattern = " << count << endl;
+                            return 0;
+                        }
+                        ++count;
+                        tmp >>= 1;
+                    }
+                }
+            }
+            else{
+                if(f[matchedOutput_ff[i] / 2]->pValue() != ~(g[matchedOutput_gg[i]]->pValue())){
+                    // keyPatterns.push_back(matchedOutput_ff[i]);
+                    // keyPatterns.push_back(matchedOutput_gg[i]);
+                    // cout << "matchedoutput negative connected but not equal" << endl;
+                    // cout << setw(5) << f[matchedOutput_ff[i] / 2]->getname() << " = " << bitset<64>(f[matchedOutput_ff[i] / 2]->pValue())  << endl;
+                    // cout << setw(5) << g[matchedOutput_gg[i]]->getname() << " = " << bitset<64>(g[matchedOutput_gg[i]]->pValue())  << endl;
+                    unsigned long long tmp = f[matchedOutput_ff[i] / 2]->pValue() ^ (~g[matchedOutput_gg[i]]->pValue());
+                    size_t count = 0;
+                    while(tmp){
+                        if(tmp & 1){
+                            // keyPatterns.push_back(count);
+                            keyPattern = count;
+                            // cout << "keyPattern = " << count << endl;
+                            return 0;
+                        }
+                        ++count;
+                        tmp >>= 1;
+                    }
+                }
+            }
+        }
+        stop = clock();
+        time = double(stop - start);
+
+    }
+    return 1;
+}
 void CirMgr::outputGrouping(){  // |f| = |g|
     if(f.size() != g.size())
         return;
@@ -1480,6 +1683,7 @@ bool CirMgr::_inside_outputHeuristicMatching(vec<Lit>& output_heuristic_assump){
     // output match according to MO_suppdiff_row[MO_suppdiff_chosen_row], MO_suppdiff -> output match -> support input port match (can't match outside)
     // cout << "outputHeuristicMatching" << endl;
     output_heuristic_assump.clear();
+    resetMatchedOutput();
     cir1_func_supp_union.clear();
     cir2_func_supp_union.clear();
     cir1_not_func_supp_union.clear();
@@ -1512,12 +1716,16 @@ bool CirMgr::_inside_outputHeuristicMatching(vec<Lit>& output_heuristic_assump){
         for(int i = 0; i < MO_valid.size(); i++){
             if(i == idx1){
                 output_heuristic_assump.push(Lit(MO_valid_Var[i][idx2]));
+                matchedOutput_f.push_back(f[i]);
+                matchedOutput_g.push_back(g[idx2]);
                 // cout << "T " << i << " " << idx2 << endl; 
             }
             else{
                 output_heuristic_assump.push(~Lit(MO_valid_Var[i][idx2]));
                 // cout << "F " << i << " " << idx2 << endl; 
             } 
+
+            
         }
     }
 

@@ -31,7 +31,7 @@ class CirGate;
 class CirPValue
 {
 public:
-   CirPValue(unsigned long long v = 0): _pValue(v) {}
+   CirPValue(unsigned long long v = 0ULL): _pValue(v) {}
 
 //   void rand();
 
@@ -92,8 +92,8 @@ private:
 class CirGate
 {
 public:
-   CirGate(unsigned g, unsigned l) : _gid(g), _lineNo(l), _pValue(0),
-                   _fecId(UINT_MAX), _eqGate(0), _ref(0) {}
+   CirGate(unsigned g, unsigned l) : _gid(g), _lineNo(l), _pValue(0ULL),
+                   _fecId(UINT_MAX), _eqGate(0), _ref(0), _num_TFI(-1) {}
 //                   _fecId(UINT_MAX), _eqGate(0), _satVar(0), _ref(0) {}
    virtual ~CirGate() {}
 
@@ -164,7 +164,8 @@ public:
                                  _ref = unsigned(_globalRef_s - diff); }
    static void setGlobalRef() { _globalRef_s++; }
    static void setGlobalRef(unsigned offset) { _globalRef_s += offset; }
-
+   void  increaseNum_TFI(){ ++_num_TFI;}
+   int   getNum_TFI(){ return _num_TFI;}
 //   friend ostream& operator << (ostream& os, const CirAigGate* g);
 
 private:
@@ -182,7 +183,7 @@ protected:
    mutable unsigned      _ref;
 
    static unsigned       _globalRef_s;
-
+   int                   _num_TFI;
    // Protected methods about circuit optimization
    // [Note] The original fanin will become invalid!!
    virtual void replaceFanin(CirGate*, CirGate*, bool) {}
@@ -225,6 +226,8 @@ public:
    string getTypeStr() const { return "PO"; }
    CirGateV getIn0() const { return _in0; }
    CirGate* getIn0Gate() const { return _in0.gate(); }
+   GateList& getIn0Supp() {return _in0_supp;}
+   GateList& getIn1Supp() {return _in1_supp;}
    unsigned getNumFanins() const { return 1; }
    void setName(char *s) { _name = s; }
    char* getName() const { return _name; }
@@ -232,6 +235,7 @@ public:
 
    // Methods about circuit construction
    void genConnections(NtkMgr* );
+   // void genDfsList(vector<CirGate*>&, bool _faninSpecific = 0); // _faninSpecific = 1 if we want to get its fanin data
    void genDfsList(vector<CirGate*>&);
 
    // Methods about circuit simulation
@@ -249,7 +253,8 @@ public:
 private:
    CirGateV    _in0;
    char       *_name;
-
+   GateList   _in0_supp;
+   GateList   _in1_supp;
    // Private methods about circuit optimization
    // [Note] old must == _in0, DO NOT CHECK!
    void replaceFanin(CirGate*, CirGate *n, bool inv) {
@@ -277,6 +282,7 @@ public:
    // Methods about circuit construction
    void genConnections(NtkMgr* );
    void genDfsList(vector<CirGate*>&);
+   // void genDfsList(vector<CirGate*>&, bool _faninSpecific = 0); // _faninSpecific = 1 if we want to get its fanin data
 
    // Methods about circuit optimization
    CirGateV optimize(bool, GateList&);
